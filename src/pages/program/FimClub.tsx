@@ -1,155 +1,137 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { GraduationCap, Briefcase, Heart, Palette, Globe, Leaf, Code, Music } from "lucide-react";
+import { Briefcase, BookOpen, Plane, GraduationCap, Pen, Award, Gamepad2, Languages, Code, Palette, Dumbbell, Users, Heart, Coffee, Flag, DollarSign, Waves, Brain } from "lucide-react";
 
 const FimClub = () => {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
 
   const clubs = [
     {
-      name: "FIM Pendidikan",
+      name: "FC Policy",
+      category: "Kebijakan",
+      icon: Briefcase,
+      description: "Komunitas alumni yang fokus pada kajian kebijakan publik dan advokasi",
+      activities: ["Policy research", "Public forum", "Advocacy"],
+    },
+    {
+      name: "FC Dongeng",
+      category: "Literasi",
+      icon: BookOpen,
+      description: "Komunitas pendongeng untuk membangun literasi dan imajinasi anak-anak Indonesia",
+      activities: ["Storytelling", "Book reading", "Children education"],
+    },
+    {
+      name: "FC Traventure",
+      category: "Travel",
+      icon: Plane,
+      description: "Komunitas pecinta traveling dan petualangan yang menjelajahi Indonesia",
+      activities: ["Travel exploration", "Adventure trips", "Cultural visits"],
+    },
+    {
+      name: "FC Pendidikan",
       category: "Pendidikan",
       icon: GraduationCap,
       description: "Komunitas alumni yang bergerak di bidang pendidikan dan pengajaran",
-      members: 450,
-      activities: ["Workshop guru", "Beasiswa", "Mentoring siswa"],
+      activities: ["Teaching", "Education advocacy", "Mentoring"],
     },
     {
-      name: "FIM Bisnis & Entrepreneurship",
-      category: "Bisnis",
-      icon: Briefcase,
-      description: "Wadah alumni wirausahawan dan profesional bisnis",
-      members: 380,
-      activities: ["Business networking", "Startup mentoring", "Investment club"],
+      name: "FC Literatur",
+      category: "Literasi",
+      icon: Pen,
+      description: "Komunitas penulis dan pecinta sastra Indonesia",
+      activities: ["Writing workshop", "Book club", "Literary events"],
     },
     {
-      name: "FIM Sosial & Kemanusiaan",
-      category: "Sosial",
-      icon: Heart,
-      description: "Gerakan kemanusiaan dan kepedulian sosial",
-      members: 520,
-      activities: ["Aksi sosial", "Tanggap bencana", "Volunteer program"],
+      name: "FC Scholarship",
+      category: "Beasiswa",
+      icon: Award,
+      description: "Komunitas yang membantu persiapan dan informasi beasiswa",
+      activities: ["Scholarship info", "Application mentoring", "Study abroad prep"],
     },
     {
-      name: "FIM Kreatif & Media",
-      category: "Kreatif",
-      icon: Palette,
-      description: "Komunitas kreator konten dan industri kreatif",
-      members: 290,
-      activities: ["Content creation", "Film making", "Design workshop"],
+      name: "FC Games",
+      category: "Gaming",
+      icon: Gamepad2,
+      description: "Komunitas gamers dan esports enthusiast FIM",
+      activities: ["Gaming tournament", "Esports", "Game development"],
     },
     {
-      name: "FIM Hubungan Internasional",
-      category: "Internasional",
-      icon: Globe,
-      description: "Jaringan alumni di luar negeri dan diplomasi publik",
-      members: 180,
-      activities: ["Cultural exchange", "Study abroad", "International forum"],
+      name: "FC Polyglot",
+      category: "Bahasa",
+      icon: Languages,
+      description: "Komunitas pecinta bahasa dan pembelajar multibahasa",
+      activities: ["Language exchange", "Translation", "Cultural learning"],
     },
     {
-      name: "FIM Lingkungan",
-      category: "Lingkungan",
-      icon: Leaf,
-      description: "Gerakan peduli lingkungan dan sustainability",
-      members: 240,
-      activities: ["Tree planting", "Beach cleanup", "Eco education"],
-    },
-    {
-      name: "FIM Teknologi",
+      name: "FC IT-Desain Kreatif-Startup",
       category: "Teknologi",
       icon: Code,
-      description: "Komunitas tech enthusiast dan developer",
-      members: 320,
-      activities: ["Hackathon", "Tech talks", "Coding bootcamp"],
+      description: "Komunitas tech enthusiast, designer, dan startup founder",
+      activities: ["Tech talks", "Design workshop", "Startup mentoring"],
     },
     {
-      name: "FIM Seni & Budaya",
-      category: "Budaya",
-      icon: Music,
-      description: "Pelestarian dan promosi seni budaya Indonesia",
-      members: 210,
-      activities: ["Cultural festival", "Art exhibition", "Traditional dance"],
-    },
-    {
-      name: "FIM Kesehatan",
-      category: "Kesehatan",
-      icon: Heart,
-      description: "Komunitas tenaga kesehatan dan advokasi kesehatan masyarakat",
-      members: 280,
-      activities: ["Medical mission", "Health education", "Blood donation"],
-    },
-    {
-      name: "FIM Hukum & Advokasi",
-      category: "Hukum",
-      icon: Briefcase,
-      description: "Jaringan praktisi hukum dan advokasi kebijakan publik",
-      members: 150,
-      activities: ["Legal aid", "Policy advocacy", "Public law education"],
-    },
-    {
-      name: "FIM Olahraga",
-      category: "Olahraga",
-      icon: Heart,
-      description: "Komunitas pecinta olahraga dan gaya hidup sehat",
-      members: 260,
-      activities: ["Sports tournament", "Fitness challenge", "Outdoor adventure"],
-    },
-    {
-      name: "FIM Pertanian & Pangan",
-      category: "Pertanian",
-      icon: Leaf,
-      description: "Gerakan ketahanan pangan dan pertanian berkelanjutan",
-      members: 140,
-      activities: ["Urban farming", "Food security", "Agritech"],
-    },
-    {
-      name: "FIM Pariwisata",
-      category: "Pariwisata",
-      icon: Globe,
-      description: "Promosi pariwisata Indonesia dan sustainable tourism",
-      members: 170,
-      activities: ["Travel community", "Local tourism", "Eco tourism"],
-    },
-    {
-      name: "FIM Keuangan",
-      category: "Keuangan",
-      icon: Briefcase,
-      description: "Literasi keuangan dan investasi",
-      members: 200,
-      activities: ["Financial literacy", "Investment club", "Fintech"],
-    },
-    {
-      name: "FIM Komunikasi",
-      category: "Komunikasi",
+      name: "FC Liberal Arts",
+      category: "Seni & Budaya",
       icon: Palette,
-      description: "Komunitas media dan public relations",
-      members: 230,
-      activities: ["Media training", "PR workshop", "Journalism"],
+      description: "Komunitas pecinta seni, humaniora, dan budaya",
+      activities: ["Art exhibition", "Cultural discussion", "Creative projects"],
     },
     {
-      name: "FIM Psikologi",
-      category: "Psikologi",
-      icon: Heart,
-      description: "Kesehatan mental dan pengembangan diri",
-      members: 190,
-      activities: ["Mental health", "Counseling", "Self development"],
+      name: "FC Tennis",
+      category: "Olahraga",
+      icon: Dumbbell,
+      description: "Komunitas pecinta olahraga tenis",
+      activities: ["Tennis practice", "Friendly matches", "Tennis tournament"],
     },
     {
-      name: "FIM Maritim",
-      category: "Maritim",
-      icon: Globe,
-      description: "Gerakan kelautan dan maritim Indonesia",
-      members: 100,
-      activities: ["Marine conservation", "Fishery", "Maritime awareness"],
+      name: "FC People & Organization Development",
+      category: "HR & Development",
+      icon: Users,
+      description: "Komunitas praktisi pengembangan SDM dan organisasi",
+      activities: ["HR training", "Organization development", "Leadership coaching"],
     },
     {
-      name: "FIM Pemerintahan",
-      category: "Pemerintahan",
-      icon: Briefcase,
-      description: "Alumni di sektor publik dan pemerintahan",
-      members: 160,
-      activities: ["Policy making", "Public service", "Governance"],
+      name: "FC Run",
+      category: "Olahraga",
+      icon: Dumbbell,
+      description: "Komunitas pelari dan pecinta olahraga lari",
+      activities: ["Running events", "Marathon prep", "Fun run"],
+    },
+    {
+      name: "FC Swim & Dive",
+      category: "Olahraga",
+      icon: Waves,
+      description: "Komunitas pecinta renang dan diving",
+      activities: ["Swimming practice", "Diving trips", "Water sports"],
+    },
+    {
+      name: "FC Mental Health",
+      category: "Kesehatan",
+      icon: Brain,
+      description: "Komunitas peduli kesehatan mental dan well-being",
+      activities: ["Mental health awareness", "Support group", "Wellness workshop"],
+    },
+    {
+      name: "FC Coffeinary",
+      category: "Lifestyle",
+      icon: Coffee,
+      description: "Komunitas pecinta kopi dan kuliner nusantara",
+      activities: ["Coffee tasting", "Culinary exploration", "Barista workshop"],
+    },
+    {
+      name: "FC Politics",
+      category: "Politik",
+      icon: Flag,
+      description: "Komunitas yang tertarik dengan politik dan pemerintahan",
+      activities: ["Political discussion", "Civic education", "Election watch"],
+    },
+    {
+      name: "FC Finance Investment",
+      category: "Keuangan",
+      icon: DollarSign,
+      description: "Komunitas literasi keuangan dan investasi",
+      activities: ["Financial literacy", "Investment club", "Stock analysis"],
     },
   ];
 
@@ -159,29 +141,23 @@ const FimClub = () => {
     ? clubs 
     : clubs.filter((c) => c.category === selectedCategory);
 
-  const totalMembers = clubs.reduce((sum, c) => sum + c.members, 0);
-
   return (
     <Layout>
       <PageHero
         title="FIM Club"
-        subtitle="Komunitas alumni FIM berdasarkan bidang minat dan keahlian. 18 klub dengan ribuan anggota aktif."
+        subtitle="18 komunitas alumni FIM berdasarkan bidang minat dan keahlian"
       />
 
       {/* Stats */}
       <section className="py-12 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div className="bg-card rounded-xl p-6 text-center shadow-lg">
               <div className="text-3xl lg:text-4xl font-bold text-primary mb-1">18</div>
               <div className="text-sm text-muted-foreground">FIM Club</div>
             </div>
             <div className="bg-card rounded-xl p-6 text-center shadow-lg">
-              <div className="text-3xl lg:text-4xl font-bold text-supporting mb-1">{totalMembers.toLocaleString()}</div>
-              <div className="text-sm text-muted-foreground">Anggota Aktif</div>
-            </div>
-            <div className="bg-card rounded-xl p-6 text-center shadow-lg">
-              <div className="text-3xl lg:text-4xl font-bold text-accent-foreground mb-1">50+</div>
+              <div className="text-3xl lg:text-4xl font-bold text-supporting mb-1">50+</div>
               <div className="text-sm text-muted-foreground">Kegiatan/Tahun</div>
             </div>
           </div>
@@ -209,7 +185,7 @@ const FimClub = () => {
       <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-8">
-            Daftar FIM Club
+            Daftar 18 FIM Club
           </h2>
 
           {/* Category Filter */}
@@ -251,7 +227,7 @@ const FimClub = () => {
                 
                 <p className="text-muted-foreground text-sm mb-4">{club.description}</p>
                 
-                <div className="flex flex-wrap gap-1.5 mb-4">
+                <div className="flex flex-wrap gap-1.5">
                   {club.activities.map((activity) => (
                     <span
                       key={activity}
@@ -260,10 +236,6 @@ const FimClub = () => {
                       {activity}
                     </span>
                   ))}
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">{club.members}</span> anggota aktif
                 </div>
               </div>
             ))}

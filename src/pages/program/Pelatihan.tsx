@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award } from "lucide-react";
+import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Star, Zap, Heart, Globe, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pelatihan = () => {
@@ -37,10 +37,38 @@ const Pelatihan = () => {
   ];
 
   const stats = [
-    { icon: Calendar, value: "24", label: "Angkatan" },
-    { icon: Users, value: "5000+", label: "Alumni" },
-    { icon: MapPin, value: "60+", label: "Regional" },
+    { icon: Calendar, value: "30+", label: "Angkatan" },
+    { icon: Users, value: "4000+", label: "Alumni" },
+    { icon: MapPin, value: "61", label: "Regional" },
     { icon: Award, value: "100+", label: "Proyek Sosial/Tahun" },
+  ];
+
+  const programUnggulan = [
+    {
+      icon: Star,
+      title: "Leadership Camp",
+      description: "Program pelatihan kepemimpinan intensif selama satu minggu dengan berbagai aktivitas outdoor dan indoor",
+    },
+    {
+      icon: Zap,
+      title: "Social Project",
+      description: "Program aksi nyata di masyarakat yang dirancang dan dilaksanakan oleh kader FIM",
+    },
+    {
+      icon: Heart,
+      title: "Tanggap Bencana",
+      description: "Program respons cepat dan bantuan kemanusiaan untuk korban bencana alam",
+    },
+    {
+      icon: Globe,
+      title: "FIM Goes International",
+      description: "Program pertukaran dan kerjasama dengan organisasi pemuda internasional",
+    },
+    {
+      icon: BookOpen,
+      title: "FIM Mengajar",
+      description: "Program pengabdian di bidang pendidikan untuk anak-anak di daerah terpencil",
+    },
   ];
 
   return (
@@ -91,7 +119,7 @@ const Pelatihan = () => {
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
               { title: "Pengembangan Karakter", desc: "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan" },
-              { title: "Jaringan Nasional", desc: "Terhubung dengan ribuan alumni dari 60+ regional di Indonesia" },
+              { title: "Jaringan Nasional", desc: "Terhubung dengan ribuan alumni dari 61 regional di Indonesia" },
               { title: "Dampak Nyata", desc: "Kesempatan untuk berkontribusi melalui proyek sosial" },
             ].map((benefit, index) => (
               <div
@@ -110,11 +138,39 @@ const Pelatihan = () => {
         </div>
       </section>
 
-      {/* Tahapan Program */}
+      {/* 5 Program Unggulan */}
       <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
+            5 Program Unggulan FIM
+          </h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Program-program utama yang menjadi andalan Forum Indonesia Muda
+          </p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {programUnggulan.map((program, index) => (
+              <div
+                key={program.title}
+                className="bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                  <program.icon className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-bold text-foreground text-lg mb-2">{program.title}</h3>
+                <p className="text-muted-foreground text-sm">{program.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Tahapan Program */}
+      <section className="py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12">
-            Tahapan Program
+            Tahapan Program Kaderisasi
           </h2>
 
           <div className="max-w-4xl mx-auto space-y-8">
@@ -162,7 +218,7 @@ const Pelatihan = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 lg:py-20 bg-background">
+      <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Siap Menjadi Bagian dari FIM?
