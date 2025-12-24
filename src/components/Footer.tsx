@@ -13,9 +13,9 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: Instagram, href: "https://instagram.com/forumindonesiamuda", label: "Instagram" },
+    { icon: Instagram, href: "https://instagram.com/fimnews", label: "Instagram" },
     { icon: Facebook, href: "https://facebook.com/forumindonesiamuda", label: "Facebook" },
-    { icon: Linkedin, href: "https://linkedin.com/company/fim", label: "LinkedIn" },
+    { icon: Linkedin, href: "https://linkedin.com/company/forum-indonesia-muda", label: "LinkedIn" },
   ];
 
   return (

@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Heart, Users, Target, Lightbulb, BookOpen, Globe, Compass, Shield, Star, Zap, Award } from "lucide-react";
+import { Target, Compass, User, Users, Briefcase, Building2 } from "lucide-react";
 
 const Tentang = () => {
   const sejarah = [
@@ -9,27 +9,44 @@ const Tentang = () => {
     { year: "2010", event: "Peluncuran program kaderisasi tahunan nasional" },
     { year: "2015", event: "Pembentukan FIM Club untuk alumni" },
     { year: "2020", event: "Transformasi digital dan perluasan ke 60+ regional" },
-    { year: "2024", event: "Memasuki angkatan ke-24 dengan ribuan alumni aktif" },
+    { year: "2024", event: "Memasuki angkatan ke-30+ dengan 4000+ alumni aktif" },
   ];
 
-  const pilarKarakter = [
-    { icon: Heart, name: "Integritas", desc: "Konsisten dalam nilai dan tindakan" },
-    { icon: Users, name: "Kolaborasi", desc: "Bekerja sama untuk tujuan bersama" },
-    { icon: Target, name: "Keberanian", desc: "Berani mengambil langkah maju" },
-    { icon: Lightbulb, name: "Kreativitas", desc: "Inovasi dalam setiap solusi" },
-    { icon: BookOpen, name: "Pembelajaran", desc: "Terus bertumbuh dan berkembang" },
-    { icon: Globe, name: "Kepedulian", desc: "Peduli terhadap sesama dan lingkungan" },
-    { icon: Compass, name: "Visioner", desc: "Melihat jauh ke depan" },
+  const strukturYayasan = [
+    { name: "Elmir Amien", position: "Founder / Ketua Dewan Pembina" },
+    { name: "Tatty Elmir", position: "Founder / Anggota Dewan Pembina" },
+    { name: "Maghleb Elmir", position: "Ketua Dewan Pengawas" },
+    { name: "JetC Elmir", position: "Anggota Dewan Pengawas" },
+    { name: "Mandira Bienna Elmir", position: "Ketua Pengurus Yayasan" },
+    { name: "Ivan Ahda", position: "Sekretaris Pengurus Yayasan" },
+    { name: "Ferly Ferdyant", position: "Bendahara Pengurus Yayasan" },
   ];
 
-  const pilarKepemimpinan = [
-    { icon: Shield, name: "Servant Leadership", desc: "Memimpin dengan melayani" },
-    { icon: Star, name: "Authentic Leadership", desc: "Memimpin dengan autentik" },
-    { icon: Zap, name: "Transformational", desc: "Membawa perubahan positif" },
-    { icon: Award, name: "Ethical Leadership", desc: "Memimpin dengan etika" },
-    { icon: Users, name: "Collaborative", desc: "Membangun tim yang solid" },
-    { icon: Target, name: "Strategic Thinking", desc: "Berpikir strategis" },
-    { icon: Heart, name: "Empathy", desc: "Memahami perspektif orang lain" },
+  const bph = [
+    { name: "Dicky Adra Pratama", position: "Direktur Eksekutif" },
+    { name: "Anisah Fitriana Rakhman", position: "Sekretaris Bendahara" },
+    { name: "M Rafif Quthronada", position: "Sekretaris Jenderal" },
+    { name: "Umi Rif'atus S", position: "Wakil Sekretaris Jenderal" },
+  ];
+
+  const biroInternal = [
+    { name: "Chairul Sinaga", position: "Anggota Biro Internal" },
+    { name: "Aisyah Hasim", position: "Anggota Biro Internal" },
+    { name: "Arian Handika", position: "Anggota Biro Internal" },
+    { name: "Dita Amallya", position: "Anggota Biro Internal" },
+  ];
+
+  const divisi = [
+    { name: "Nurul Aini", position: "Kepala Biro Media & Komunikasi" },
+    { name: "Ayu Rahma Dania", position: "Kepala Divisi Pelatihan" },
+    { name: "Mutia Intan Permana G", position: "Kepala Divisi Partnership & Eksternal" },
+    { name: "M Aridha Firdaus", position: "Wakil Kepala Divisi Partnership & Eksternal" },
+    { name: "Ilham Ramodhan", position: "Kepala Divisi Pengembangan Regional" },
+    { name: "RM Agung Dian Perdana", position: "Wakil Kepala Divisi Pengembangan Regional" },
+    { name: "Ulfa Rodiah", position: "Kepala Divisi Pengembangan Komunitas" },
+    { name: "Arif Setiawan", position: "Kepala Divisi Tanggap Bencana dan Kemanusiaan" },
+    { name: "Helmi Anwar R.W.", position: "Wakil Kepala Divisi Tanggap Bencana dan Kemanusiaan" },
+    { name: "RM Kuncoro Probojati", position: "Kepala Bisnis Usaha" },
   ];
 
   return (
@@ -49,10 +66,11 @@ const Tentang = () => {
                 <Target className="h-8 w-8 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-4">Visi</h2>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Menjadi wadah terdepan dalam membentuk generasi muda Indonesia yang 
-                memiliki karakter kuat, jiwa kepemimpinan, dan semangat untuk berkontribusi 
-                bagi kemajuan bangsa.
+              <p className="text-muted-foreground leading-relaxed">
+                Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, 
+                berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. 
+                Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik 
+                dan berkepribadian dalam kebudayaan.
               </p>
             </div>
 
@@ -65,19 +83,19 @@ const Tentang = () => {
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">1.</span>
-                  Menyelenggarakan program pelatihan kepemimpinan berkualitas
+                  Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">2.</span>
-                  Membangun jaringan pemuda lintas daerah dan latar belakang
+                  Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">3.</span>
-                  Mendorong kontribusi nyata bagi masyarakat
+                  Menyatukan dan mengoptimalkan berbagai potensi pemuda dan mahasiswa dalam forum silaturahim dengan berbagai latar belakang.
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">4.</span>
-                  Menjadi platform kolaborasi dan pengembangan diri
+                  Membuhul solidaritas sosial untuk saling menguatkan antar sesama saudara sebangsa dan setanah air.
                 </li>
               </ul>
             </div>
@@ -134,58 +152,120 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* 7 Pilar Karakter */}
+      {/* Struktur Pengurus Section */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            7 Pilar Karakter
+            Struktur Pengurus
           </h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Fondasi karakter yang kami tanamkan kepada setiap kader FIM
+            Organisasi yang menggerakkan Forum Indonesia Muda
           </p>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pilarKarakter.map((pilar, index) => (
-              <div
-                key={pilar.name}
-                className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <pilar.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{pilar.name}</h3>
-                <p className="text-sm text-muted-foreground">{pilar.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* 7 Pilar Kepemimpinan */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            7 Pilar Kepemimpinan
-          </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Prinsip kepemimpinan yang menjadi panduan bagi alumni FIM
-          </p>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pilarKepemimpinan.map((pilar, index) => (
-              <div
-                key={pilar.name}
-                className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center mb-4">
-                  <pilar.icon className="h-6 w-6 text-supporting" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{pilar.name}</h3>
-                <p className="text-sm text-muted-foreground">{pilar.desc}</p>
+          {/* Struktur Yayasan */}
+          <div className="max-w-5xl mx-auto mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-primary" />
               </div>
-            ))}
+              <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {strukturYayasan.map((person, index) => (
+                <div
+                  key={person.name}
+                  className="bg-card rounded-xl p-5 shadow-lg hover:shadow-xl transition-all animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="h-8 w-8 text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-center mb-1">{person.name}</h4>
+                  <p className="text-sm text-muted-foreground text-center">{person.position}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Struktur Pengurus FIM */}
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-supporting" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
+            </div>
+
+            {/* BPH */}
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                Badan Pengurus Harian (BPH)
+              </h4>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {bph.map((person, index) => (
+                  <div
+                    key={person.name}
+                    className="bg-card rounded-xl p-5 shadow-lg hover:shadow-xl transition-all animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="w-14 h-14 bg-supporting/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="h-7 w-7 text-supporting" />
+                    </div>
+                    <h5 className="font-semibold text-foreground text-center text-sm mb-1">{person.name}</h5>
+                    <p className="text-xs text-muted-foreground text-center">{person.position}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Biro Internal */}
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-foreground mb-4">Biro Internal</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {biroInternal.map((person, index) => (
+                  <div
+                    key={person.name}
+                    className="bg-muted rounded-xl p-4 text-center animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                    <h5 className="font-medium text-foreground text-sm">{person.name}</h5>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Kepala Divisi/Biro */}
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-foreground mb-4">Kepala Divisi & Biro</h4>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {divisi.map((person, index) => (
+                  <div
+                    key={person.name + person.position}
+                    className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all animate-fade-in flex items-center gap-4"
+                    style={{ animationDelay: `${index * 0.03}s` }}
+                  >
+                    <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-6 w-6 text-accent" />
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
+                      <p className="text-xs text-muted-foreground">{person.position}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Note */}
+            <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-2xl p-6 text-center">
+              <p className="text-muted-foreground">
+                Di bawah struktur FIM Pusat terdapat <span className="font-semibold text-foreground">60 Regional + 1 Diaspora</span> dan <span className="font-semibold text-foreground">18 FIM Club</span>
+              </p>
+            </div>
           </div>
         </div>
       </section>
