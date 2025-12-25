@@ -4,12 +4,15 @@ import { Target, Compass, User, Users, Briefcase, Building2 } from "lucide-react
 
 const Tentang = () => {
   const sejarah = [
-    { year: "2003", event: "Forum Indonesia Muda didirikan oleh sekelompok pemuda idealis" },
-    { year: "2005", event: "Ekspansi ke 10 kota besar di Indonesia" },
-    { year: "2010", event: "Peluncuran program kaderisasi tahunan nasional" },
-    { year: "2015", event: "Pembentukan FIM Club untuk alumni" },
-    { year: "2020", event: "Transformasi digital dan perluasan ke 60+ regional" },
-    { year: "2024", event: "Memasuki angkatan ke-30+ dengan 4000+ alumni aktif" },
+    { year: "2003", event: "Forum Indonesia Muda didirikan oleh sepasang suami istri Elmir Amien dan Tatty Elmir, yang disupport pakar leadership Buchori Nasution, dan rekan-rekannya sesama jurnalis di Jakarta News FM. Pelatihan pertama di Graha Pemuda Cibodas Jakarta." },
+    { year: "2004", event: "FIM ke-2 kegiatan dipindahkan ke Wiladatika Jakarta, agar mudah diakses para mentor dan undangan." },
+    { year: "2005", event: "Pelatihan FIM dibarengi dengan pemberangkatan relawan FIM ke Nias saat bencana gempa besar bekerjasama dengan TNI AL." },
+    { year: "2007", event: "FIM telah ekspansi di 10 kota besar di Indonesia dan dibentuknya Koordinator Nasional." },
+    { year: "2010", event: "Transformasi kurikulum program kaderisasi kepemimpinan FIM (FIM 9) dan peluncuran FIM tematik Rescue bekerjasama dengan MER-C." },
+    { year: "2015", event: "Dibentuknya FIM Club untuk basis keminatan alumni FIM di bidang-bidang tertentu." },
+    { year: "2018", event: "Dilaksanakan pelatihan FIM di 5 wilayah sekaligus (FIM 20) untuk melakukan ekspansi kaderisasi kepemimpinan di setiap wilayah di Indonesia." },
+    { year: "2023", event: "Momentum 2 dekade FIM, telah menghasilkan 30 lebih angkatan pelatihan FIM, lebih dari 60 regional, dan hampir 4000 alumni." },
+    { year: "2025", event: "Perdana pelatihan FIM tematik Kebijakan Publik bekerjasama dengan Nalar Institute untuk menghasilkan ahli kebijakan publik di level intermediate & advance." },
   ];
 
   const strukturYayasan = [
@@ -30,10 +33,10 @@ const Tentang = () => {
   ];
 
   const biroInternal = [
-    { name: "Chairul Sinaga", position: "Anggota Biro Internal" },
-    { name: "Aisyah Hasim", position: "Anggota Biro Internal" },
-    { name: "Arian Handika", position: "Anggota Biro Internal" },
-    { name: "Dita Amallya", position: "Anggota Biro Internal" },
+    { name: "Chairul Sinaga" },
+    { name: "Aisyah Hasim" },
+    { name: "Arian Handika" },
+    { name: "Dita Amallya" },
   ];
 
   const divisi = [
@@ -136,7 +139,7 @@ const Tentang = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg flex-shrink-0">
                     {item.year}
                   </div>
                   {index < sejarah.length - 1 && (
@@ -144,7 +147,7 @@ const Tentang = () => {
                   )}
                 </div>
                 <div className="flex-1 bg-card rounded-xl p-6 shadow-md">
-                  <p className="text-foreground">{item.event}</p>
+                  <p className="text-foreground text-sm leading-relaxed">{item.event}</p>
                 </div>
               </div>
             ))}
@@ -152,7 +155,7 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* Struktur Pengurus Section */}
+      {/* Struktur Pengurus Section - Organizational Chart */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
@@ -163,105 +166,162 @@ const Tentang = () => {
           </p>
 
           {/* Struktur Yayasan */}
-          <div className="max-w-5xl mx-auto mb-16">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="max-w-6xl mx-auto mb-16">
+            <div className="flex items-center justify-center gap-3 mb-8">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {strukturYayasan.map((person, index) => (
-                <div
-                  key={person.name}
-                  className="bg-card rounded-xl p-5 shadow-lg hover:shadow-xl transition-all animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User className="h-8 w-8 text-primary" />
+            
+            {/* Org Chart - Yayasan */}
+            <div className="flex flex-col items-center">
+              {/* Top Level - Founders */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {strukturYayasan.slice(0, 2).map((person) => (
+                  <div key={person.name} className="bg-primary text-primary-foreground rounded-xl p-4 text-center shadow-lg min-w-[200px]">
+                    <div className="w-16 h-16 bg-primary-foreground/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="h-8 w-8" />
+                    </div>
+                    <h4 className="font-semibold">{person.name}</h4>
+                    <p className="text-xs opacity-90">{person.position}</p>
                   </div>
-                  <h4 className="font-semibold text-foreground text-center mb-1">{person.name}</h4>
-                  <p className="text-sm text-muted-foreground text-center">{person.position}</p>
-                </div>
-              ))}
+                ))}
+              </div>
+              
+              {/* Connecting Line */}
+              <div className="w-0.5 h-8 bg-border" />
+              
+              {/* Dewan */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {strukturYayasan.slice(2, 4).map((person) => (
+                  <div key={person.name} className="bg-supporting text-supporting-foreground rounded-xl p-4 text-center shadow-lg min-w-[200px]">
+                    <div className="w-14 h-14 bg-supporting-foreground/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <User className="h-7 w-7" />
+                    </div>
+                    <h4 className="font-semibold text-sm">{person.name}</h4>
+                    <p className="text-xs opacity-90">{person.position}</p>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Connecting Line */}
+              <div className="w-0.5 h-8 bg-border" />
+              
+              {/* Pengurus Yayasan */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {strukturYayasan.slice(4).map((person) => (
+                  <div key={person.name} className="bg-card rounded-xl p-4 text-center shadow-lg border border-border min-w-[180px]">
+                    <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <User className="h-7 w-7 text-primary" />
+                    </div>
+                    <h4 className="font-semibold text-sm text-foreground">{person.name}</h4>
+                    <p className="text-xs text-muted-foreground">{person.position}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Struktur Pengurus FIM */}
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-8">
               <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center">
                 <Users className="h-6 w-6 text-supporting" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
             </div>
 
-            {/* BPH */}
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-primary" />
-                Badan Pengurus Harian (BPH)
-              </h4>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {bph.map((person, index) => (
-                  <div
-                    key={person.name}
-                    className="bg-card rounded-xl p-5 shadow-lg hover:shadow-xl transition-all animate-fade-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="w-14 h-14 bg-supporting/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <User className="h-7 w-7 text-supporting" />
+            {/* Org Chart - FIM */}
+            <div className="flex flex-col items-center">
+              {/* BPH Top - Direktur Eksekutif */}
+              <div className="bg-primary text-primary-foreground rounded-xl p-5 text-center shadow-lg mb-4">
+                <div className="w-20 h-20 bg-primary-foreground/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="h-10 w-10" />
+                </div>
+                <h4 className="font-bold text-lg">{bph[0].name}</h4>
+                <p className="text-sm opacity-90">{bph[0].position}</p>
+              </div>
+              
+              {/* Connecting Line */}
+              <div className="w-0.5 h-6 bg-border" />
+              
+              {/* BPH - Sekretaris Bendahara */}
+              <div className="bg-supporting text-supporting-foreground rounded-xl p-4 text-center shadow-lg mb-4 min-w-[200px]">
+                <div className="w-16 h-16 bg-supporting-foreground/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <User className="h-8 w-8" />
+                </div>
+                <h4 className="font-semibold">{bph[1].name}</h4>
+                <p className="text-xs opacity-90">{bph[1].position}</p>
+              </div>
+              
+              {/* Connecting Line */}
+              <div className="w-0.5 h-6 bg-border" />
+              
+              {/* Sekjend & Wasekjend */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {bph.slice(2).map((person) => (
+                  <div key={person.name} className="bg-accent/20 rounded-xl p-4 text-center shadow-lg min-w-[200px]">
+                    <div className="w-14 h-14 bg-accent/30 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <User className="h-7 w-7 text-accent-foreground" />
                     </div>
-                    <h5 className="font-semibold text-foreground text-center text-sm mb-1">{person.name}</h5>
-                    <p className="text-xs text-muted-foreground text-center">{person.position}</p>
+                    <h4 className="font-semibold text-sm text-foreground">{person.name}</h4>
+                    <p className="text-xs text-muted-foreground">{person.position}</p>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Biro Internal */}
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-foreground mb-4">Biro Internal</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {biroInternal.map((person, index) => (
-                  <div
-                    key={person.name}
-                    className="bg-muted rounded-xl p-4 text-center animate-fade-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <User className="h-6 w-6 text-primary" />
+              
+              {/* Connecting Line to Biro Internal */}
+              <div className="w-0.5 h-6 bg-border" />
+              
+              {/* Biro Internal */}
+              <div className="mb-6 w-full max-w-2xl">
+                <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  Biro Internal
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {biroInternal.map((person) => (
+                    <div key={person.name} className="bg-muted rounded-lg p-3 text-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <h5 className="font-medium text-xs text-foreground">{person.name}</h5>
                     </div>
-                    <h5 className="font-medium text-foreground text-sm">{person.name}</h5>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Kepala Divisi/Biro */}
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-foreground mb-4">Kepala Divisi & Biro</h4>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {divisi.map((person, index) => (
-                  <div
-                    key={person.name + person.position}
-                    className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all animate-fade-in flex items-center gap-4"
-                    style={{ animationDelay: `${index * 0.03}s` }}
-                  >
-                    <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="h-6 w-6 text-accent" />
+              
+              {/* Horizontal line connecting to divisi */}
+              <div className="w-full max-w-4xl h-0.5 bg-border mb-6" />
+              
+              {/* Kepala Divisi/Biro - under BPH */}
+              <div className="w-full">
+                <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-5xl mx-auto">
+                  {divisi.map((person, index) => (
+                    <div
+                      key={person.name + person.position}
+                      className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border animate-fade-in"
+                      style={{ animationDelay: `${index * 0.03}s` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="h-6 w-6 text-accent" />
+                        </div>
+                        <div>
+                          <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
+                          <p className="text-xs text-muted-foreground">{person.position}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
-                      <p className="text-xs text-muted-foreground">{person.position}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Note */}
-            <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-2xl p-6 text-center">
+            <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-2xl p-6 text-center mt-12">
               <p className="text-muted-foreground">
                 Di bawah struktur FIM Pusat terdapat <span className="font-semibold text-foreground">60 Regional + 1 Diaspora</span> dan <span className="font-semibold text-foreground">18 FIM Club</span>
               </p>

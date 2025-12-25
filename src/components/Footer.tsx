@@ -6,6 +6,7 @@ const Footer = () => {
   const quickLinks = [
     { name: "Tentang Kami", path: "/tentang" },
     { name: "Program Pelatihan", path: "/program/pelatihan" },
+    { name: "Program Unggulan", path: "/program/program-unggulan" },
     { name: "Regional FIM", path: "/program/regional" },
     { name: "FIM Club", path: "/program/fim-club" },
     { name: "Cerita Alumni", path: "/cerita-alumni" },
@@ -74,22 +75,22 @@ const Footer = () => {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="mailto:info@forumindonesiamuda.org"
+                  href="mailto:halo@forumindonesiamuda.org"
                   className="flex items-center gap-2 text-background/70 hover:text-accent transition-colors"
                 >
                   <Mail className="h-4 w-4" />
-                  info@forumindonesiamuda.org
+                  halo@forumindonesiamuda.org
                 </a>
               </li>
               <li>
                 <a
-                  href="https://wa.me/628123456789"
+                  href="https://wa.me/6285213580323"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-background/70 hover:text-accent transition-colors"
                 >
                   <Phone className="h-4 w-4" />
-                  +62 812 3456 789
+                  +62 852-1358-0323 (WA)
                 </a>
               </li>
             </ul>
