@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Heart, Building, Wallet, QrCode, AlertTriangle, CheckCircle, Copy } from "lucide-react";
+import { Heart, Building, AlertTriangle, CheckCircle, Copy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -13,16 +13,33 @@ const Donasi = () => {
     });
   };
 
-  const bankAccounts = [
-    { bank: "Bank BCA", number: "1234567890", name: "Yayasan Forum Indonesia Muda" },
-    { bank: "Bank Mandiri", number: "0987654321", name: "Yayasan Forum Indonesia Muda" },
-    { bank: "Bank BNI", number: "1122334455", name: "Yayasan Forum Indonesia Muda" },
-  ];
+  const bankAccount = {
+    bank: "Bank Mandiri",
+    number: "006 00 1059 3089",
+    name: "Forum Indonesia Muda",
+  };
 
-  const eWallets = [
-    { name: "GoPay", number: "081234567890" },
-    { name: "OVO", number: "081234567890" },
-    { name: "DANA", number: "081234567890" },
+  const donationSteps = [
+    {
+      step: 1,
+      title: "Transfer ke Rekening Mandiri",
+      description: "Transfer donasi ke rekening Bank Mandiri 006 00 1059 3089 a.n. Forum Indonesia Muda",
+    },
+    {
+      step: 2,
+      title: "Cantumkan Kode Unik",
+      description: "Tambahkan kode unik 99 di akhir nominal transfer (contoh: Rp 100.099)",
+    },
+    {
+      step: 3,
+      title: "Tambahkan Catatan",
+      description: "Sertakan catatan tujuan donasi pada keterangan transfer (opsional)",
+    },
+    {
+      step: 4,
+      title: "Konfirmasi Donasi",
+      description: "Kirimkan bukti transfer ke WhatsApp +62 852-1358-0323 untuk konfirmasi",
+    },
   ];
 
   const usages = [
@@ -55,7 +72,7 @@ const Donasi = () => {
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
-              { icon: Heart, title: "5000+ Alumni", desc: "Pemimpin muda yang telah dibentuk sejak 2003" },
+              { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda yang telah dibentuk sejak 2003" },
               { icon: Building, title: "60+ Regional", desc: "Jangkauan dari Sabang sampai Merauke" },
               { icon: CheckCircle, title: "100+ Proyek/Tahun", desc: "Proyek sosial yang berdampak langsung" },
             ].map((item, index) => (
@@ -73,80 +90,66 @@ const Donasi = () => {
         </div>
       </section>
 
-      {/* Donation Methods */}
+      {/* Donation Method */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12">
             Cara Berdonasi
           </h2>
 
-          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Bank Transfer */}
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
+          <div className="max-w-4xl mx-auto">
+            {/* Bank Account */}
+            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                   <Building className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Transfer Bank</h3>
+                <h3 className="text-xl font-bold text-foreground">Rekening Donasi</h3>
               </div>
 
-              <div className="space-y-4">
-                {bankAccounts.map((account) => (
-                  <div
-                    key={account.bank}
-                    className="bg-muted rounded-lg p-4 flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-foreground">{account.bank}</p>
-                      <p className="text-lg font-mono text-primary">{account.number}</p>
-                      <p className="text-xs text-muted-foreground">a.n. {account.name}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(account.number, `Nomor rekening ${account.bank}`)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+              <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-xl p-6 border-2 border-primary/20">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <p className="font-bold text-lg text-foreground">{bankAccount.bank}</p>
+                    <p className="text-2xl lg:text-3xl font-mono font-bold text-primary my-2">{bankAccount.number}</p>
+                    <p className="text-muted-foreground">a.n. {bankAccount.name}</p>
                   </div>
-                ))}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => copyToClipboard(bankAccount.number.replace(/\s/g, ''), `Nomor rekening ${bankAccount.bank}`)}
+                    className="gap-2"
+                  >
+                    <Copy className="h-5 w-5" />
+                    Salin No. Rekening
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* E-Wallet */}
+            {/* Donation Steps */}
             <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-supporting/10 rounded-xl flex items-center justify-center">
-                  <Wallet className="h-6 w-6 text-supporting" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">E-Wallet</h3>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                {eWallets.map((wallet) => (
-                  <div
-                    key={wallet.name}
-                    className="bg-muted rounded-lg p-4 flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-foreground">{wallet.name}</p>
-                      <p className="text-lg font-mono text-supporting">{wallet.number}</p>
+              <h3 className="text-xl font-bold text-foreground mb-6">Langkah-langkah Berdonasi</h3>
+              
+              <div className="space-y-6">
+                {donationSteps.map((item, index) => (
+                  <div key={item.step} className="flex gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                      {item.step}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(wallet.number, `Nomor ${wallet.name}`)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                    <div>
+                      <h4 className="font-semibold text-foreground">{item.title}</h4>
+                      <p className="text-muted-foreground text-sm">{item.description}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* QR Code placeholder */}
-              <div className="bg-muted rounded-lg p-6 text-center">
-                <QrCode className="h-24 w-24 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Scan QR Code untuk donasi via QRIS</p>
+              {/* Important Note */}
+              <div className="mt-8 bg-accent/10 rounded-xl p-4 border border-accent/20">
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">💡 Penting:</span> Kode unik (99) di akhir nominal transfer membantu kami mengidentifikasi donasi Anda dengan lebih mudah.
+                </p>
               </div>
             </div>
           </div>
@@ -227,11 +230,12 @@ const Donasi = () => {
             Kirimkan bukti transfer ke WhatsApp kami untuk konfirmasi dan mendapatkan laporan penggunaan dana.
           </p>
           <a
-            href="https://wa.me/628123456789?text=Halo,%20saya%20ingin%20konfirmasi%20donasi%20ke%20FIM"
+            href="https://wa.me/6285213580323?text=Halo,%20saya%20ingin%20konfirmasi%20donasi%20ke%20FIM"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-supporting text-supporting-foreground px-6 py-3 rounded-lg font-semibold hover:bg-supporting/90 transition-colors"
+            className="inline-flex items-center gap-2 bg-supporting text-supporting-foreground px-6 py-3 rounded-lg font-semibold hover:bg-supporting/90 transition-colors"
           >
+            <MessageCircle className="h-5 w-5" />
             Konfirmasi via WhatsApp
           </a>
         </div>

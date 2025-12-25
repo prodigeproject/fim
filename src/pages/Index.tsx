@@ -1,13 +1,47 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, MapPin, Award, Quote, Heart, Shield, MessageSquare, BookOpen, Brain, Clipboard, Network, Star, Handshake, Target, Scale, UserCheck } from "lucide-react";
+import { ArrowRight, Users, Calendar, MapPin, Award, Quote, Heart, Shield, MessageSquare, BookOpen, Brain, Clipboard, Network, Star, Handshake, Target, Scale, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
+import useEmblaCarousel from "embla-carousel-react";
+import { useCallback, useEffect, useState } from "react";
+import Autoplay from "embla-carousel-autoplay";
+
+// Import partner logos
+import logo1 from "@/assets/partners/logo-1.png";
+import logo2 from "@/assets/partners/logo-2.png";
+import logo3 from "@/assets/partners/logo-3.png";
+import logo4 from "@/assets/partners/logo-4.png";
+import logo5 from "@/assets/partners/logo-5.png";
+import logo6 from "@/assets/partners/logo-6.jpg";
+import logo7 from "@/assets/partners/logo-7.png";
+import logo8 from "@/assets/partners/logo-8.png";
+import logo9 from "@/assets/partners/logo-9.png";
+import logo10 from "@/assets/partners/logo-10.png";
+import logo11 from "@/assets/partners/logo-11.png";
+import logo12 from "@/assets/partners/logo-12.png";
+import logo13 from "@/assets/partners/logo-13.jpg";
+import logo14 from "@/assets/partners/logo-14.jpg";
+import logo15 from "@/assets/partners/logo-15.png";
+import logo16 from "@/assets/partners/logo-16.png";
+import logo17 from "@/assets/partners/logo-17.png";
+import logo18 from "@/assets/partners/logo-18.jpg";
+import logo19 from "@/assets/partners/logo-19.jpg";
+import logo20 from "@/assets/partners/logo-20.jpg";
+import logo21 from "@/assets/partners/logo-21.jpg";
+import logo22 from "@/assets/partners/logo-22.png";
+import logo23 from "@/assets/partners/logo-23.jpg";
+import logo24 from "@/assets/partners/logo-24.jpg";
+import logo25 from "@/assets/partners/logo-25.jpg";
+import logo26 from "@/assets/partners/logo-26.png";
+import logo27 from "@/assets/partners/logo-27.png";
+import logo28 from "@/assets/partners/logo-28.png";
+import logo29 from "@/assets/partners/logo-29.png";
 
 const Index = () => {
   const stats = [
     { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
-    { icon: Users, value: "30+", label: "Angkatan" },
+    { icon: Users, value: "> 34", label: "Angkatan" },
     { icon: MapPin, value: "61", label: "Regional" },
     { icon: Award, value: "4000+", label: "Alumni" },
   ];
@@ -32,30 +66,57 @@ const Index = () => {
     { icon: Network, name: "Pengorganisasian", desc: "Membangun tim dan sistem yang solid" },
   ];
 
-  const programs = [
+  // Placeholder news data - will be replaced with actual data from backend
+  const kabarTerkini = [
     {
-      title: "Pelatihan Kaderisasi",
-      desc: "Program tahunan untuk membentuk pemimpin muda berkarakter",
-      link: "/program/pelatihan",
+      id: 1,
+      title: "FIM Batch 34 Sukses Dilaksanakan",
+      excerpt: "Lebih dari 200 peserta dari seluruh Indonesia mengikuti program kaderisasi FIM angkatan ke-34.",
+      date: "20 Desember 2025",
+      image: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop",
     },
     {
-      title: "Regional FIM",
-      desc: "60 regional + 1 diaspora dari Sabang sampai Merauke",
-      link: "/program/regional",
+      id: 2,
+      title: "Kolaborasi FIM dengan Nalar Institute",
+      excerpt: "FIM menjalin kerjasama dengan Nalar Institute untuk pelatihan kebijakan publik.",
+      date: "15 Desember 2025",
+      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop",
     },
     {
-      title: "FIM Club",
-      desc: "18 komunitas alumni berdasarkan bidang minat",
-      link: "/program/fim-club",
+      id: 3,
+      title: "Alumni FIM Raih Penghargaan Nasional",
+      excerpt: "Beberapa alumni FIM mendapatkan penghargaan dari berbagai lembaga atas kontribusinya.",
+      date: "10 Desember 2025",
+      image: "https://images.unsplash.com/photo-1559223607-180d0c79a8db?w=400&h=250&fit=crop",
     },
   ];
 
-  const partners = [
-    { name: "Kemenpora", desc: "Kementerian Pemuda dan Olahraga" },
-    { name: "Paragon", desc: "Paragon Technology and Innovation" },
-    { name: "Flip", desc: "Flip Indonesia" },
-    { name: "Transjakarta", desc: "PT Transportasi Jakarta" },
+  const partnerLogos = [
+    logo1, logo2, logo3, logo4, logo5, logo6, logo7, logo8, logo9, logo10,
+    logo11, logo12, logo13, logo14, logo15, logo16, logo17, logo18, logo19, logo20,
+    logo21, logo22, logo23, logo24, logo25, logo26, logo27, logo28, logo29
   ];
+
+  // Banner carousel
+  const bannerImages = [
+    { src: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=1200&h=400&fit=crop", alt: "Kegiatan Pelatihan FIM" },
+    { src: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=1200&h=400&fit=crop", alt: "Kaderisasi Nasional" },
+    { src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=400&fit=crop", alt: "Alumni FIM" },
+    { src: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop", alt: "Workshop Kepemimpinan" },
+  ];
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000, stopOnInteraction: false })]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
+    emblaApi.on("select", onSelect);
+    onSelect();
+  }, [emblaApi]);
 
   return (
     <Layout>
@@ -82,7 +143,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Link to="/program/pelatihan">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-foreground">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
                   Bergabung Sekarang <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -91,6 +152,54 @@ const Index = () => {
                   Pelajari Lebih Lanjut
                 </Button>
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Banner Carousel */}
+      <section className="py-8 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="relative">
+            <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
+              <div className="flex">
+                {bannerImages.map((image, index) => (
+                  <div key={index} className="flex-[0_0_100%] min-w-0">
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-48 md:h-64 lg:h-80 object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Navigation buttons */}
+            <button
+              onClick={scrollPrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 rounded-full flex items-center justify-center hover:bg-background transition-colors shadow-lg"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={scrollNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 rounded-full flex items-center justify-center hover:bg-background transition-colors shadow-lg"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {bannerImages.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === selectedIndex ? "bg-primary" : "bg-muted"
+                  }`}
+                  onClick={() => emblaApi?.scrollTo(index)}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -124,76 +233,91 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 7 Pilar Karakter Section */}
+      {/* 7 Pilar Section - 2 Columns */}
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">7 Pilar Karakter FIM</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Fondasi karakter yang kami tanamkan kepada setiap kader FIM</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pilarKarakter.map((item, index) => (
-              <div key={item.name} className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <item.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{item.name}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* 7 Pilar Karakter */}
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Karakter FIM</h2>
+              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Fondasi karakter yang ditanamkan kepada setiap kader FIM</p>
+              <div className="space-y-3">
+                {pilarKarakter.map((item, index) => (
+                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* 7 Pilar Kepemimpinan */}
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Kepemimpinan FIM</h2>
+              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Prinsip kepemimpinan yang menjadi panduan alumni FIM</p>
+              <div className="space-y-3">
+                {pilarKepemimpinan.map((item, index) => (
+                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-5 w-5 text-supporting" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 7 Pilar Kepemimpinan Section */}
+      {/* Kabar Terkini (News) Section - Replaced Programs */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">7 Pilar Kepemimpinan FIM</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Prinsip kepemimpinan yang menjadi panduan bagi alumni FIM</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pilarKepemimpinan.map((item, index) => (
-              <div key={item.name} className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center mb-4">
-                  <item.icon className="h-6 w-6 text-supporting" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{item.name}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Programs Preview */}
-      <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Program Kami</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berbagai program untuk mengembangkan potensi pemuda Indonesia</p>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {programs.map((program, index) => (
-              <Link key={program.title} to={program.link} className="group">
-                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <h3 className="font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{program.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{program.desc}</p>
-                  <span className="text-primary text-sm font-semibold flex items-center">Selengkapnya <ArrowRight className="h-4 w-4 ml-1" /></span>
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar Terkini</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita dan informasi terbaru dari Forum Indonesia Muda</p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {kabarTerkini.map((news, index) => (
+              <Link key={news.id} to="/blog" className="group">
+                <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <img src={news.image} alt={news.title} className="w-full h-40 object-cover" />
+                  <div className="p-5">
+                    <span className="text-xs text-muted-foreground">{news.date}</span>
+                    <h3 className="font-bold text-foreground mb-2 mt-1 group-hover:text-primary transition-colors line-clamp-2">{news.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{news.excerpt}</p>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
+          <div className="text-center mt-8">
+            <Link to="/blog">
+              <Button variant="outline">Lihat Semua Berita <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Partners Section */}
-      <section className="py-16 bg-background">
+      {/* Partners Section - Logo Only */}
+      <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Mitra Kami</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Lembaga dan perusahaan yang telah bekerjasama dengan FIM</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {partners.map((partner, index) => (
-              <div key={partner.name} className="bg-card rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Handshake className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-bold text-foreground mb-1">{partner.name}</h3>
-                <p className="text-xs text-muted-foreground">{partner.desc}</p>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Kolaborator yang telah bekerjasama dengan FIM</p>
+          <div className="flex flex-wrap justify-center items-center gap-6 max-w-5xl mx-auto">
+            {partnerLogos.map((logo, index) => (
+              <div key={index} className="bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-center animate-fade-in" style={{ animationDelay: `${index * 0.02}s` }}>
+                <img 
+                  src={logo} 
+                  alt={`Partner ${index + 1}`} 
+                  className="h-12 w-auto max-w-[100px] object-contain"
+                />
               </div>
             ))}
           </div>
@@ -207,7 +331,7 @@ const Index = () => {
           <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">Bergabunglah dengan ribuan pemuda Indonesia dalam membangun masa depan yang lebih baik.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/program/pelatihan">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-foreground">
+              <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
                 Daftar Sekarang <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

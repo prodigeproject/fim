@@ -19,6 +19,7 @@ const Navbar = () => {
       path: "/program",
       children: [
         { name: "Pelatihan FIM", path: "/program/pelatihan" },
+        { name: "Program Unggulan", path: "/program/program-unggulan" },
         { name: "Regional FIM", path: "/program/regional" },
         { name: "FIM Club", path: "/program/fim-club" },
       ],

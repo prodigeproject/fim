@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Star, Zap, Heart, Globe, BookOpen } from "lucide-react";
+import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pelatihan = () => {
@@ -37,38 +37,29 @@ const Pelatihan = () => {
   ];
 
   const stats = [
-    { icon: Calendar, value: "30+", label: "Angkatan" },
+    { icon: Calendar, value: "> 34", label: "Angkatan" },
     { icon: Users, value: "4000+", label: "Alumni" },
     { icon: MapPin, value: "61", label: "Regional" },
     { icon: Award, value: "100+", label: "Proyek Sosial/Tahun" },
   ];
 
-  const programUnggulan = [
-    {
-      icon: Star,
-      title: "Leadership Camp",
-      description: "Program pelatihan kepemimpinan intensif selama satu minggu dengan berbagai aktivitas outdoor dan indoor",
-    },
-    {
-      icon: Zap,
-      title: "Social Project",
-      description: "Program aksi nyata di masyarakat yang dirancang dan dilaksanakan oleh kader FIM",
-    },
-    {
-      icon: Heart,
-      title: "Tanggap Bencana",
-      description: "Program respons cepat dan bantuan kemanusiaan untuk korban bencana alam",
-    },
-    {
-      icon: Globe,
-      title: "FIM Goes International",
-      description: "Program pertukaran dan kerjasama dengan organisasi pemuda internasional",
-    },
-    {
-      icon: BookOpen,
-      title: "FIM Mengajar",
-      description: "Program pengabdian di bidang pendidikan untuk anak-anak di daerah terpencil",
-    },
+  // Timeline kegiatan terkini
+  const recentTimeline = [
+    { date: "Desember 2025", event: "FIM Batch 34 - Pelatihan Intensif di Jakarta", status: "ongoing" },
+    { date: "November 2025", event: "Seleksi Regional FIM Batch 34", status: "completed" },
+    { date: "Oktober 2025", event: "Pendaftaran FIM Batch 34 Dibuka", status: "completed" },
+    { date: "September 2025", event: "FIM Tematik Kebijakan Publik dengan Nalar Institute", status: "completed" },
+    { date: "Agustus 2025", event: "Wisuda Alumni FIM Batch 33", status: "completed" },
+  ];
+
+  // Dokumentasi placeholder
+  const dokumentasi = [
+    { type: "image", title: "Leadership Camp 2025", thumbnail: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=300&fit=crop" },
+    { type: "image", title: "Outbound Training", thumbnail: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=300&fit=crop" },
+    { type: "image", title: "Workshop Kepemimpinan", thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop" },
+    { type: "video", title: "Dokumentasi FIM Batch 33", thumbnail: "https://images.unsplash.com/photo-1559223607-180d0c79a8db?w=400&h=300&fit=crop" },
+    { type: "image", title: "Proyek Sosial Alumni", thumbnail: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop" },
+    { type: "image", title: "Networking Session", thumbnail: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=300&fit=crop" },
   ];
 
   return (
@@ -138,36 +129,8 @@ const Pelatihan = () => {
         </div>
       </section>
 
-      {/* 5 Program Unggulan */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            5 Program Unggulan FIM
-          </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Program-program utama yang menjadi andalan Forum Indonesia Muda
-          </p>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {programUnggulan.map((program, index) => (
-              <div
-                key={program.title}
-                className="bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <program.icon className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-bold text-foreground text-lg mb-2">{program.title}</h3>
-                <p className="text-muted-foreground text-sm">{program.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Tahapan Program */}
-      <section className="py-16 lg:py-20 bg-background">
+      <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12">
             Tahapan Program Kaderisasi
@@ -217,8 +180,90 @@ const Pelatihan = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Timeline Kegiatan Terkini */}
+      <section className="py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
+            Timeline Kegiatan Terkini
+          </h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Jadwal dan update kegiatan pelatihan FIM terbaru
+          </p>
+
+          <div className="max-w-3xl mx-auto">
+            {recentTimeline.map((item, index) => (
+              <div
+                key={item.event}
+                className="flex gap-4 mb-6 last:mb-0 animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex flex-col items-center">
+                  <div className={`w-4 h-4 rounded-full flex-shrink-0 ${
+                    item.status === "ongoing" ? "bg-supporting animate-pulse" : "bg-primary"
+                  }`} />
+                  {index < recentTimeline.length - 1 && (
+                    <div className="w-0.5 flex-1 bg-border mt-2" />
+                  )}
+                </div>
+                <div className="flex-1 pb-4">
+                  <span className={`text-sm font-medium ${
+                    item.status === "ongoing" ? "text-supporting" : "text-muted-foreground"
+                  }`}>
+                    {item.date}
+                    {item.status === "ongoing" && (
+                      <span className="ml-2 px-2 py-0.5 bg-supporting/20 text-supporting text-xs rounded-full">
+                        Sedang Berlangsung
+                      </span>
+                    )}
+                  </span>
+                  <p className="text-foreground mt-1">{item.event}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Dokumentasi */}
       <section className="py-16 lg:py-20 bg-secondary">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
+            Dokumentasi Kegiatan
+          </h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Momen-momen berharga dari program pelatihan FIM
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {dokumentasi.map((item, index) => (
+              <div
+                key={item.title}
+                className="relative group rounded-xl overflow-hidden shadow-lg animate-fade-in cursor-pointer"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <img
+                  src={item.thumbnail}
+                  alt={item.title}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent flex items-end p-4">
+                  <div className="flex items-center gap-2">
+                    {item.type === "video" ? (
+                      <Play className="h-5 w-5 text-background" />
+                    ) : (
+                      <Image className="h-5 w-5 text-background" />
+                    )}
+                    <span className="text-background font-medium text-sm">{item.title}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Siap Menjadi Bagian dari FIM?
@@ -232,6 +277,11 @@ const Pelatihan = () => {
               Daftar Sekarang
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
+            <Link to="/program/program-unggulan">
+              <Button size="lg" variant="outline">
+                Lihat Program Unggulan
+              </Button>
+            </Link>
             <Link to="/faq">
               <Button size="lg" variant="outline">
                 Lihat FAQ
