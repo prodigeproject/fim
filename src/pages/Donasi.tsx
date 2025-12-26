@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Heart, Building, AlertTriangle, CheckCircle, Copy, MessageCircle } from "lucide-react";
+import { Heart, Building, AlertTriangle, CheckCircle, Copy, MessageCircle, Instagram, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -56,188 +56,228 @@ const Donasi = () => {
         subtitle="Kontribusi Anda membantu kami mencetak lebih banyak pemimpin muda untuk Indonesia"
       />
 
-      {/* Why Donate */}
-      <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-              Mengapa Mendukung FIM?
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang 
-              kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami 
-              menjangkau lebih banyak pemuda dari berbagai latar belakang.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda yang telah dibentuk sejak 2003" },
-              { icon: Building, title: "60+ Regional", desc: "Jangkauan dari Sabang sampai Merauke" },
-              { icon: CheckCircle, title: "100+ Proyek/Tahun", desc: "Proyek sosial yang berdampak langsung" },
-            ].map((item, index) => (
-              <div
-                key={item.title}
-                className="bg-card rounded-xl p-6 text-center shadow-lg animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <item.icon className="h-10 w-10 text-primary mx-auto mb-4" />
-                <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Donation Method */}
+      {/* Two Column Layout - Main Donations vs Disaster */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12">
-            Cara Berdonasi
-          </h2>
-
-          <div className="max-w-4xl mx-auto">
-            {/* Bank Account */}
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <Building className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Rekening Donasi</h3>
-              </div>
-
-              <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-xl p-6 border-2 border-primary/20">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <p className="font-bold text-lg text-foreground">{bankAccount.bank}</p>
-                    <p className="text-2xl lg:text-3xl font-mono font-bold text-primary my-2">{bankAccount.number}</p>
-                    <p className="text-muted-foreground">a.n. {bankAccount.name}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => copyToClipboard(bankAccount.number.replace(/\s/g, ''), `Nomor rekening ${bankAccount.bank}`)}
-                    className="gap-2"
-                  >
-                    <Copy className="h-5 w-5" />
-                    Salin No. Rekening
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Donation Steps */}
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
-              <h3 className="text-xl font-bold text-foreground mb-6">Langkah-langkah Berdonasi</h3>
-              
-              <div className="space-y-6">
-                {donationSteps.map((item, index) => (
-                  <div key={item.step} className="flex gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
-                      {item.step}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground">{item.title}</h4>
-                      <p className="text-muted-foreground text-sm">{item.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Important Note */}
-              <div className="mt-8 bg-accent/10 rounded-xl p-4 border border-accent/20">
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">💡 Penting:</span> Kode unik (99) di akhir nominal transfer membantu kami mengidentifikasi donasi Anda dengan lebih mudah.
+          <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
+            {/* LEFT: Main FIM Donations - 3 columns */}
+            <div className="lg:col-span-3 space-y-12">
+              {/* Why Donate */}
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+                  Mengapa Mendukung FIM?
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+                  Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang 
+                  kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami 
+                  menjangkau lebih banyak pemuda dari berbagai latar belakang.
                 </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Disaster Relief */}
-      <section className="py-16 bg-destructive/10">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg border-l-4 border-destructive">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-destructive/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {[
+                    { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda sejak 2003" },
+                    { icon: Building, title: "60+ Regional", desc: "Dari Sabang sampai Merauke" },
+                    { icon: CheckCircle, title: "100+ Proyek/Tahun", desc: "Proyek sosial berdampak" },
+                  ].map((item, index) => (
+                    <div
+                      key={item.title}
+                      className="bg-secondary rounded-xl p-4 text-center animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <item.icon className="h-8 w-8 text-primary mx-auto mb-2" />
+                      <h3 className="font-bold text-foreground text-sm">{item.title}</h3>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    🆘 Donasi Khusus Bencana
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    FIM aktif dalam tanggap darurat bencana. Jika ada bencana yang sedang terjadi, 
-                    donasi khusus bencana akan diinformasikan di sini dan melalui media sosial resmi FIM.
-                  </p>
-                  <div className="bg-muted rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground italic">
-                      Saat ini tidak ada program donasi bencana yang sedang berlangsung. 
-                      Pantau media sosial kami untuk update terbaru.
+              </div>
+
+              {/* Donation Method */}
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6">
+                  Cara Berdonasi
+                </h2>
+
+                {/* Bank Account */}
+                <div className="bg-card rounded-2xl p-6 shadow-lg mb-6 border border-border">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Building className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground">Rekening Donasi</h3>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-xl p-5 border border-primary/20">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div>
+                        <p className="font-bold text-foreground">{bankAccount.bank}</p>
+                        <p className="text-xl lg:text-2xl font-mono font-bold text-primary my-1">{bankAccount.number}</p>
+                        <p className="text-sm text-muted-foreground">a.n. {bankAccount.name}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(bankAccount.number.replace(/\s/g, ''), `Nomor rekening ${bankAccount.bank}`)}
+                        className="gap-2"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Salin
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Donation Steps */}
+                <div className="bg-card rounded-2xl p-6 shadow-lg border border-border">
+                  <h3 className="text-lg font-bold text-foreground mb-4">Langkah-langkah</h3>
+                  
+                  <div className="space-y-4">
+                    {donationSteps.map((item, index) => (
+                      <div key={item.step} className="flex gap-3 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0 text-sm">
+                          {item.step}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground text-sm">{item.title}</h4>
+                          <p className="text-muted-foreground text-xs">{item.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 bg-accent/10 rounded-xl p-3 border border-accent/20">
+                    <p className="text-xs text-foreground">
+                      <span className="font-semibold">💡 Penting:</span> Kode unik (99) membantu kami mengidentifikasi donasi Anda.
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Transparency */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            Transparansi Penggunaan Dana
-          </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Kami berkomitmen untuk menggunakan setiap donasi secara bertanggung jawab dan transparan.
-          </p>
+              {/* Transparency */}
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
+                  Transparansi Penggunaan Dana
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Kami berkomitmen menggunakan setiap donasi secara bertanggung jawab dan transparan.
+                </p>
 
-          <div className="max-w-3xl mx-auto space-y-6">
-            {usages.map((usage, index) => (
-              <div
-                key={usage.title}
-                className="bg-card rounded-xl p-6 shadow-lg animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-foreground">{usage.title}</h3>
-                  <span className="text-2xl font-bold text-primary">{usage.percentage}%</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{usage.description}</p>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary rounded-full h-2 transition-all duration-1000"
-                    style={{ width: `${usage.percentage}%` }}
-                  />
+                <div className="space-y-4">
+                  {usages.map((usage, index) => (
+                    <div
+                      key={usage.title}
+                      className="bg-card rounded-xl p-4 shadow-lg border border-border animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-foreground text-sm">{usage.title}</h3>
+                        <span className="text-xl font-bold text-primary">{usage.percentage}%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{usage.description}</p>
+                      <div className="w-full bg-muted rounded-full h-1.5">
+                        <div
+                          className="bg-primary rounded-full h-1.5 transition-all duration-1000"
+                          style={{ width: `${usage.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Confirmation CTA */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 text-center">
-          <h3 className="text-2xl font-bold text-foreground mb-4">
-            Sudah Berdonasi?
-          </h3>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            Kirimkan bukti transfer ke WhatsApp kami untuk konfirmasi dan mendapatkan laporan penggunaan dana.
-          </p>
-          <a
-            href="https://wa.me/6285213580323?text=Halo,%20saya%20ingin%20konfirmasi%20donasi%20ke%20FIM"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-supporting text-supporting-foreground px-6 py-3 rounded-lg font-semibold hover:bg-supporting/90 transition-colors"
-          >
-            <MessageCircle className="h-5 w-5" />
-            Konfirmasi via WhatsApp
-          </a>
+              {/* Confirmation CTA */}
+              <div className="bg-secondary rounded-2xl p-6 text-center">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Sudah Berdonasi?
+                </h3>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto mb-4">
+                  Kirimkan bukti transfer ke WhatsApp kami untuk konfirmasi.
+                </p>
+                <a
+                  href="https://wa.me/6285213580323?text=Halo,%20saya%20ingin%20konfirmasi%20donasi%20ke%20FIM"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-supporting text-supporting-foreground px-5 py-2.5 rounded-lg font-semibold hover:bg-supporting/90 transition-colors text-sm"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Konfirmasi via WhatsApp
+                </a>
+              </div>
+            </div>
+
+            {/* Vertical Divider */}
+            <div className="hidden lg:flex justify-center">
+              <div className="w-px bg-border h-full" />
+            </div>
+
+            {/* Horizontal Divider for Mobile */}
+            <div className="lg:hidden">
+              <div className="h-px bg-border w-full my-8" />
+            </div>
+
+            {/* RIGHT: Disaster Relief - 1 column */}
+            <div className="lg:col-span-1">
+              <div className="bg-destructive/5 rounded-2xl p-6 border-2 border-destructive/20 sticky top-24">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-destructive/20 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    🆘 Donasi Bencana
+                  </h2>
+                </div>
+                
+                <p className="text-muted-foreground text-sm mb-6">
+                  FIM aktif dalam tanggap darurat bencana melalui program FIM Tanggap Bencana.
+                </p>
+
+                <div className="bg-card rounded-xl p-4 mb-6 border border-border">
+                  <p className="text-sm text-muted-foreground italic mb-4">
+                    Update penggalangan donasi untuk bencana kemanusiaan dapat diikuti melalui:
+                  </p>
+                  
+                  <a
+                    href="https://instagram.com/fimtanggapbencana"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg hover:from-pink-500/20 hover:to-purple-500/20 transition-colors mb-3"
+                  >
+                    <Instagram className="h-5 w-5 text-pink-500" />
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">@fimtanggapbencana</p>
+                      <p className="text-xs text-muted-foreground">Instagram Resmi</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
+                  </a>
+
+                  <a
+                    href="https://instagram.com/fimnews"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg hover:from-pink-500/20 hover:to-purple-500/20 transition-colors"
+                  >
+                    <Instagram className="h-5 w-5 text-pink-500" />
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">@fimnews</p>
+                      <p className="text-xs text-muted-foreground">Media Resmi FIM</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
+                  </a>
+                </div>
+
+                <div className="bg-muted rounded-xl p-4">
+                  <h4 className="font-semibold text-foreground text-sm mb-2">📋 Transparansi</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Laporan penggunaan dana donasi bencana diinformasikan secara spesifik di akun Instagram @fimtanggapbencana dan @fimnews.
+                  </p>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-4 italic text-center">
+                  Cara berdonasi untuk bencana akan diinformasikan saat ada penggalangan aktif.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </Layout>

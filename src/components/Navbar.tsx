@@ -1,29 +1,38 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoFim from "@/assets/logo-fim.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [tentangOpen, setTentangOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+  const isActiveParent = (paths: string[]) => paths.some(p => location.pathname.startsWith(p));
 
   const navLinks = [
     { name: "Beranda", path: "/" },
-    { name: "Tentang", path: "/tentang" },
+    {
+      name: "Tentang",
+      path: "/tentang",
+      children: [
+        { name: "Tentang FIM", path: "/tentang" },
+        { name: "Regional FIM", path: "/tentang/regional" },
+        { name: "FIM Club", path: "/tentang/fim-club" },
+      ],
+    },
     {
       name: "Program",
       path: "/program",
       children: [
         { name: "Pelatihan FIM", path: "/program/pelatihan" },
         { name: "Program Unggulan", path: "/program/program-unggulan" },
-        { name: "Regional FIM", path: "/program/regional" },
-        { name: "FIM Club", path: "/program/fim-club" },
       ],
     },
+    { name: "Gabung Relawan", path: "/gabung-relawan" },
     { name: "Cerita Alumni", path: "/cerita-alumni" },
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
@@ -52,7 +61,7 @@ const Navbar = () => {
                 {link.children ? (
                   <button
                     className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      link.children.some((c) => isActive(c.path))
+                      link.children.some((c) => isActive(c.path)) || (link.path === "/tentang" && isActiveParent(["/tentang"]))
                         ? "text-primary bg-primary/10"
                         : "text-foreground hover:text-primary hover:bg-primary/5"
                     }`}
@@ -97,8 +106,17 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:block">
+          {/* CTA Buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            <a
+              href="https://blog.forumindonesiamuda.org/wp-admin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              <LogIn className="h-4 w-4" />
+              Login
+            </a>
             <Link to="/donasi">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
                 Donasi
@@ -123,17 +141,20 @@ const Navbar = () => {
                 {link.children ? (
                   <>
                     <button
-                      onClick={() => setProgramOpen(!programOpen)}
+                      onClick={() => {
+                        if (link.name === "Tentang") setTentangOpen(!tentangOpen);
+                        if (link.name === "Program") setProgramOpen(!programOpen);
+                      }}
                       className="flex items-center justify-between w-full px-4 py-3 text-foreground font-medium"
                     >
                       {link.name}
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          programOpen ? "rotate-180" : ""
+                          (link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen) ? "rotate-180" : ""
                         }`}
                       />
                     </button>
-                    {programOpen && (
+                    {((link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen)) && (
                       <div className="pl-4 bg-muted/50">
                         {link.children.map((child) => (
                           <Link
@@ -165,7 +186,16 @@ const Navbar = () => {
                 )}
               </div>
             ))}
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-4 space-y-2">
+              <a
+                href="https://blog.forumindonesiamuda.org/wp-admin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm text-muted-foreground border border-border rounded-lg"
+              >
+                <LogIn className="h-4 w-4" />
+                Login Admin
+              </a>
               <Link to="/donasi" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-primary text-primary-foreground">
                   Donasi

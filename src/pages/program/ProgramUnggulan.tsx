@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Star, Zap, Heart, Globe, BookOpen, ArrowRight, Play, Image } from "lucide-react";
+import { Star, Zap, Heart, Globe, BookOpen, ArrowRight, Image, MessageSquare, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -89,6 +89,24 @@ const ProgramUnggulan = () => {
         title="5 Program Unggulan FIM"
         subtitle="Program-program utama yang menjadi andalan Forum Indonesia Muda dalam membentuk pemimpin muda Indonesia"
       />
+
+      {/* WA Channel Banner */}
+      <section className="bg-gradient-to-r from-supporting/10 to-primary/10 border-y border-supporting/20">
+        <div className="container mx-auto px-4 py-4">
+          <a
+            href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-3 text-foreground hover:text-primary transition-colors"
+          >
+            <MessageSquare className="h-5 w-5 text-supporting" />
+            <span className="text-sm font-medium">
+              📢 Ikuti Channel WA <strong>FIMers Update</strong> untuk info terbaru!
+            </span>
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
 
       {/* Intro */}
       <section className="py-16 bg-secondary">
