@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Linkedin, Mail, Phone } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Youtube, Mail, Phone } from "lucide-react";
 import logoFim from "@/assets/logo-fim.png";
 
 const Footer = () => {
   const quickLinks = [
     { name: "Tentang Kami", path: "/tentang" },
+    { name: "Regional FIM", path: "/tentang/regional" },
+    { name: "FIM Club", path: "/tentang/fim-club" },
     { name: "Program Pelatihan", path: "/program/pelatihan" },
-    { name: "Program Unggulan", path: "/program/program-unggulan" },
-    { name: "Regional FIM", path: "/program/regional" },
-    { name: "FIM Club", path: "/program/fim-club" },
+    { name: "Gabung Relawan", path: "/gabung-relawan" },
     { name: "Cerita Alumni", path: "/cerita-alumni" },
     { name: "FAQ", path: "/faq" },
   ];
@@ -17,6 +17,7 @@ const Footer = () => {
     { icon: Instagram, href: "https://instagram.com/fimnews", label: "Instagram" },
     { icon: Facebook, href: "https://facebook.com/forumindonesiamuda", label: "Facebook" },
     { icon: Linkedin, href: "https://linkedin.com/company/forum-indonesia-muda", label: "LinkedIn" },
+    { icon: Youtube, href: "https://www.youtube.com/ForumIndonesiaMuda", label: "YouTube" },
   ];
 
   return (

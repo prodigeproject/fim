@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code } from "lucide-react";
+import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User } from "lucide-react";
 
 const CeritaAlumni = () => {
   const [selectedSector, setSelectedSector] = useState("Semua");
@@ -87,6 +87,26 @@ const CeritaAlumni = () => {
       quote: "Saya percaya setiap anak Indonesia berhak membaca. FIM memberi saya keberanian untuk memulai.",
       impact: "1.000+ perpustakaan desa",
     },
+  ];
+
+  // Alumni lainnya - hanya foto, nama, angkatan, dan track record
+  const otherAlumni = [
+    { name: "Raden Mas Haryanto", angkatan: "FIM 3", trackRecord: "Direktur Utama BUMN Strategis" },
+    { name: "Kartini Sari Dewi", angkatan: "FIM 4", trackRecord: "Anggota DPR RI Komisi X" },
+    { name: "Dr. Bambang Sutrisno", angkatan: "FIM 6", trackRecord: "Rektor Universitas Negeri" },
+    { name: "Ratna Megawati", angkatan: "FIM 7", trackRecord: "CEO Perusahaan Teknologi" },
+    { name: "Agus Prasetyo", angkatan: "FIM 9", trackRecord: "Direktur LSM Internasional" },
+    { name: "Indah Permatasari", angkatan: "FIM 11", trackRecord: "Kepala Dinas Pendidikan Provinsi" },
+    { name: "Hendra Wijaya", angkatan: "FIM 13", trackRecord: "Founder Unicorn Startup" },
+    { name: "Siska Rahmawati", angkatan: "FIM 14", trackRecord: "Peneliti Senior Lembaga Think Tank" },
+    { name: "Muhammad Rizal", angkatan: "FIM 16", trackRecord: "Kepala Kantor Perwakilan RI" },
+    { name: "Dian Kusuma", angkatan: "FIM 17", trackRecord: "Pendiri Yayasan Pendidikan Nasional" },
+    { name: "Eko Prasetio", angkatan: "FIM 19", trackRecord: "Dokter Spesialis di RS Rujukan" },
+    { name: "Lina Marlina", angkatan: "FIM 21", trackRecord: "Aktivis Lingkungan Internasional" },
+    { name: "Fajar Nugroho", angkatan: "FIM 22", trackRecord: "Produser Film Dokumenter Nasional" },
+    { name: "Anita Susanti", angkatan: "FIM 23", trackRecord: "Konsultan Kebijakan Publik" },
+    { name: "Bayu Adi Putra", angkatan: "FIM 24", trackRecord: "Kepala Divisi CSR Perusahaan Multinasional" },
+    { name: "Citra Dewi", angkatan: "FIM 25", trackRecord: "Founder Platform Edtech" },
   ];
 
   const sectors = ["Semua", "Pendidikan", "Sosial", "Teknologi", "Kesehatan", "Lingkungan", "Bisnis", "Internasional"];
@@ -206,8 +226,39 @@ const CeritaAlumni = () => {
         </div>
       </section>
 
+      {/* Alumni FIM Lainnya Section */}
+      <section className="py-16 lg:py-20 bg-secondary">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
+            Alumni FIM Lainnya
+          </h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Ribuan alumni FIM telah berkontribusi di berbagai sektor dan jabatan strategis.
+          </p>
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {otherAlumni.map((alumni, index) => (
+              <div
+                key={alumni.name}
+                className="bg-card rounded-xl p-4 shadow-lg hover:shadow-xl transition-all animate-fade-in text-center"
+                style={{ animationDelay: `${index * 0.03}s` }}
+              >
+                {/* Avatar Placeholder */}
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="h-8 w-8 text-primary/50" />
+                </div>
+                
+                <h3 className="font-bold text-foreground text-sm mb-1">{alumni.name}</h3>
+                <p className="text-xs text-primary font-medium mb-2">{alumni.angkatan}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{alumni.trackRecord}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="py-16 bg-secondary">
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4 text-center">
           <h3 className="text-2xl font-bold text-foreground mb-4">
             Punya Cerita untuk Dibagikan?

@@ -1,11 +1,14 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import { Briefcase, BookOpen, Plane, GraduationCap, Pen, Award, Gamepad2, Languages, Code, Palette, Dumbbell, Users, Heart, Coffee, Flag, DollarSign, Waves, Brain, Instagram, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Briefcase, BookOpen, Plane, GraduationCap, Pen, Award, Gamepad2, Languages, Code, Palette, Dumbbell, Users, Heart, Coffee, Flag, DollarSign, Waves, Brain, Instagram, Mail, Newspaper, Music, Camera } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FimClub = () => {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
 
+  // Data dari xlsx - 21 FIM Club
   const clubs = [
     {
       name: "FC Policy",
@@ -13,7 +16,7 @@ const FimClub = () => {
       icon: Briefcase,
       description: "Komunitas alumni yang fokus pada kajian kebijakan publik dan advokasi",
       activities: ["Policy research", "Public forum", "Advocacy"],
-      instagram: "@fcpolicy.fim",
+      instagram: "@fcpolicy",
       email: "fcpolicy@forumindonesiamuda.org",
     },
     {
@@ -22,7 +25,7 @@ const FimClub = () => {
       icon: BookOpen,
       description: "Komunitas pendongeng untuk membangun literasi dan imajinasi anak-anak Indonesia",
       activities: ["Storytelling", "Book reading", "Children education"],
-      instagram: "@fcdongeng.fim",
+      instagram: "@fcdongeng",
       email: "fcdongeng@forumindonesiamuda.org",
     },
     {
@@ -31,7 +34,7 @@ const FimClub = () => {
       icon: Plane,
       description: "Komunitas pecinta traveling dan petualangan yang menjelajahi Indonesia",
       activities: ["Travel exploration", "Adventure trips", "Cultural visits"],
-      instagram: "@fctraventure.fim",
+      instagram: "@fctraventure",
       email: "fctraventure@forumindonesiamuda.org",
     },
     {
@@ -40,7 +43,7 @@ const FimClub = () => {
       icon: GraduationCap,
       description: "Komunitas alumni yang bergerak di bidang pendidikan dan pengajaran",
       activities: ["Teaching", "Education advocacy", "Mentoring"],
-      instagram: "@fcpendidikan.fim",
+      instagram: "@fcpendidikan",
       email: "fcpendidikan@forumindonesiamuda.org",
     },
     {
@@ -49,7 +52,7 @@ const FimClub = () => {
       icon: Pen,
       description: "Komunitas penulis dan pecinta sastra Indonesia",
       activities: ["Writing workshop", "Book club", "Literary events"],
-      instagram: "@fcliteratur.fim",
+      instagram: "@fcliteratur",
       email: "fcliteratur@forumindonesiamuda.org",
     },
     {
@@ -58,7 +61,7 @@ const FimClub = () => {
       icon: Award,
       description: "Komunitas yang membantu persiapan dan informasi beasiswa",
       activities: ["Scholarship info", "Application mentoring", "Study abroad prep"],
-      instagram: "@fcscholarship.fim",
+      instagram: "@fcscholarship",
       email: "fcscholarship@forumindonesiamuda.org",
     },
     {
@@ -67,7 +70,7 @@ const FimClub = () => {
       icon: Gamepad2,
       description: "Komunitas gamers dan esports enthusiast FIM",
       activities: ["Gaming tournament", "Esports", "Game development"],
-      instagram: "@fcgames.fim",
+      instagram: "@fcgames",
       email: "fcgames@forumindonesiamuda.org",
     },
     {
@@ -76,7 +79,7 @@ const FimClub = () => {
       icon: Languages,
       description: "Komunitas pecinta bahasa dan pembelajar multibahasa",
       activities: ["Language exchange", "Translation", "Cultural learning"],
-      instagram: "@fcpolyglot.fim",
+      instagram: "@fcpolyglot",
       email: "fcpolyglot@forumindonesiamuda.org",
     },
     {
@@ -85,7 +88,7 @@ const FimClub = () => {
       icon: Code,
       description: "Komunitas tech enthusiast, designer, dan startup founder",
       activities: ["Tech talks", "Design workshop", "Startup mentoring"],
-      instagram: "@fcitdesain.fim",
+      instagram: "@fcitdesain",
       email: "fcitdesain@forumindonesiamuda.org",
     },
     {
@@ -94,7 +97,7 @@ const FimClub = () => {
       icon: Palette,
       description: "Komunitas pecinta seni, humaniora, dan budaya",
       activities: ["Art exhibition", "Cultural discussion", "Creative projects"],
-      instagram: "@fcliberalarts.fim",
+      instagram: "@fcliberalarts",
       email: "fcliberalarts@forumindonesiamuda.org",
     },
     {
@@ -103,7 +106,7 @@ const FimClub = () => {
       icon: Dumbbell,
       description: "Komunitas pecinta olahraga tenis",
       activities: ["Tennis practice", "Friendly matches", "Tennis tournament"],
-      instagram: "@fctennis.fim",
+      instagram: "@fctennis",
       email: "fctennis@forumindonesiamuda.org",
     },
     {
@@ -112,7 +115,7 @@ const FimClub = () => {
       icon: Users,
       description: "Komunitas praktisi pengembangan SDM dan organisasi",
       activities: ["HR training", "Organization development", "Leadership coaching"],
-      instagram: "@fcpod.fim",
+      instagram: "@fcpod",
       email: "fcpod@forumindonesiamuda.org",
     },
     {
@@ -121,7 +124,7 @@ const FimClub = () => {
       icon: Dumbbell,
       description: "Komunitas pelari dan pecinta olahraga lari",
       activities: ["Running events", "Marathon prep", "Fun run"],
-      instagram: "@fcrun.fim",
+      instagram: "@fcrun",
       email: "fcrun@forumindonesiamuda.org",
     },
     {
@@ -130,7 +133,7 @@ const FimClub = () => {
       icon: Waves,
       description: "Komunitas pecinta renang dan diving",
       activities: ["Swimming practice", "Diving trips", "Water sports"],
-      instagram: "@fcswimdive.fim",
+      instagram: "@fcswimdive",
       email: "fcswimdive@forumindonesiamuda.org",
     },
     {
@@ -139,7 +142,7 @@ const FimClub = () => {
       icon: Brain,
       description: "Komunitas peduli kesehatan mental dan well-being",
       activities: ["Mental health awareness", "Support group", "Wellness workshop"],
-      instagram: "@fcmentalhealth.fim",
+      instagram: "@fcmentalhealth",
       email: "fcmentalhealth@forumindonesiamuda.org",
     },
     {
@@ -148,7 +151,7 @@ const FimClub = () => {
       icon: Coffee,
       description: "Komunitas pecinta kopi dan kuliner nusantara",
       activities: ["Coffee tasting", "Culinary exploration", "Barista workshop"],
-      instagram: "@fccoffeinary.fim",
+      instagram: "@fccoffeinary",
       email: "fccoffeinary@forumindonesiamuda.org",
     },
     {
@@ -157,7 +160,7 @@ const FimClub = () => {
       icon: Flag,
       description: "Komunitas yang tertarik dengan politik dan pemerintahan",
       activities: ["Political discussion", "Civic education", "Election watch"],
-      instagram: "@fcpolitics.fim",
+      instagram: "@fcpolitics",
       email: "fcpolitics@forumindonesiamuda.org",
     },
     {
@@ -166,8 +169,35 @@ const FimClub = () => {
       icon: DollarSign,
       description: "Komunitas literasi keuangan dan investasi",
       activities: ["Financial literacy", "Investment club", "Stock analysis"],
-      instagram: "@fcfinance.fim",
+      instagram: "@fcfinance",
       email: "fcfinance@forumindonesiamuda.org",
+    },
+    {
+      name: "FC Music",
+      category: "Seni & Budaya",
+      icon: Music,
+      description: "Komunitas pecinta musik dan musisi FIM",
+      activities: ["Jam session", "Music performance", "Music production"],
+      instagram: "@fcmusic",
+      email: "fcmusic@forumindonesiamuda.org",
+    },
+    {
+      name: "FC Photography",
+      category: "Seni & Budaya",
+      icon: Camera,
+      description: "Komunitas pecinta fotografi dan videografi",
+      activities: ["Photo walk", "Photography workshop", "Exhibition"],
+      instagram: "@fcphotography",
+      email: "fcphotography@forumindonesiamuda.org",
+    },
+    {
+      name: "FC Social Enterprise",
+      category: "Bisnis",
+      icon: Heart,
+      description: "Komunitas praktisi social enterprise dan bisnis berdampak",
+      activities: ["Social business", "Impact investing", "Startup mentoring"],
+      instagram: "@fcsocialenterprise",
+      email: "fcsocialenterprise@forumindonesiamuda.org",
     },
   ];
 
@@ -181,7 +211,7 @@ const FimClub = () => {
     <Layout>
       <PageHero
         title="FIM Club"
-        subtitle="18 komunitas alumni FIM berdasarkan bidang minat dan keahlian"
+        subtitle="21 komunitas alumni FIM berdasarkan bidang minat dan keahlian"
       />
 
       {/* Stats */}
@@ -189,7 +219,7 @@ const FimClub = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div className="bg-card rounded-xl p-6 text-center shadow-lg">
-              <div className="text-3xl lg:text-4xl font-bold text-primary mb-1">18</div>
+              <div className="text-3xl lg:text-4xl font-bold text-primary mb-1">21</div>
               <div className="text-sm text-muted-foreground">FIM Club</div>
             </div>
             <div className="bg-card rounded-xl p-6 text-center shadow-lg">
@@ -221,7 +251,7 @@ const FimClub = () => {
       <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-8">
-            Daftar 18 FIM Club
+            Daftar 21 FIM Club
           </h2>
 
           {/* Category Filter */}
@@ -292,6 +322,16 @@ const FimClub = () => {
                     <Mail className="h-4 w-4" />
                     <span className="truncate">{club.email}</span>
                   </a>
+                </div>
+
+                {/* Info Kegiatan Button */}
+                <div className="mt-4 pt-3 border-t border-border">
+                  <Link to={`/blog?category=fimclub-${club.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Button variant="outline" size="sm" className="w-full gap-2">
+                      <Newspaper className="h-4 w-4" />
+                      Info Kegiatan
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ))}

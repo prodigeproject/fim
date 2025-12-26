@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image } from "lucide-react";
+import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image, MessageSquare, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pelatihan = () => {
@@ -43,7 +43,6 @@ const Pelatihan = () => {
     { icon: Award, value: "100+", label: "Proyek Sosial/Tahun" },
   ];
 
-  // Timeline kegiatan terkini
   const recentTimeline = [
     { date: "Desember 2025", event: "FIM Batch 34 - Pelatihan Intensif di Jakarta", status: "ongoing" },
     { date: "November 2025", event: "Seleksi Regional FIM Batch 34", status: "completed" },
@@ -52,7 +51,6 @@ const Pelatihan = () => {
     { date: "Agustus 2025", event: "Wisuda Alumni FIM Batch 33", status: "completed" },
   ];
 
-  // Dokumentasi placeholder
   const dokumentasi = [
     { type: "image", title: "Leadership Camp 2025", thumbnail: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=300&fit=crop" },
     { type: "image", title: "Outbound Training", thumbnail: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=300&fit=crop" },
@@ -68,6 +66,24 @@ const Pelatihan = () => {
         title="Program Pelatihan FIM"
         subtitle="Program kaderisasi tahunan untuk membentuk pemimpin muda Indonesia yang berkarakter dan berdampak"
       />
+
+      {/* WA Channel Banner */}
+      <section className="bg-gradient-to-r from-supporting/10 to-primary/10 border-y border-supporting/20">
+        <div className="container mx-auto px-4 py-4">
+          <a
+            href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-3 text-foreground hover:text-primary transition-colors"
+          >
+            <MessageSquare className="h-5 w-5 text-supporting" />
+            <span className="text-sm font-medium">
+              📢 Ikuti Channel WA <strong>FIMers Update</strong> untuk info terbaru!
+            </span>
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
 
       {/* Stats Section */}
       <section className="py-12 bg-secondary">
@@ -144,7 +160,6 @@ const Pelatihan = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                  {/* Phase Badge */}
                   <div className="flex-shrink-0">
                     <div className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex flex-col items-center justify-center">
                       <span className="text-xs uppercase tracking-wide">Tahap</span>
@@ -152,7 +167,6 @@ const Pelatihan = () => {
                     </div>
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
                       <h3 className="text-xl font-bold text-foreground">{tahap.title}</h3>
