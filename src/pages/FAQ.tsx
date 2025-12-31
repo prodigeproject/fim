@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import {
   Accordion,
   AccordionContent,
@@ -118,6 +119,10 @@ const FAQ = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="FAQ" 
+        description="Pertanyaan yang sering diajukan tentang Forum Indonesia Muda. Temukan jawaban seputar pendaftaran, program, regional, alumni, donasi, dan kerjasama dengan FIM."
+      />
       <PageHero
         title="Pertanyaan yang Sering Diajukan"
         subtitle="Temukan jawaban untuk pertanyaan umum tentang Forum Indonesia Muda"

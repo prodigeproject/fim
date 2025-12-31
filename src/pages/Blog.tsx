@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -102,6 +103,10 @@ const Blog = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Blog & Berita" 
+        description="Informasi terbaru seputar kegiatan, prestasi, dan inspirasi dari Forum Indonesia Muda. Berita, artikel, dan update dari komunitas FIM."
+      />
       <PageHero
         title="Blog & Berita FIM"
         subtitle="Informasi terbaru seputar kegiatan, prestasi, dan inspirasi dari Forum Indonesia Muda"

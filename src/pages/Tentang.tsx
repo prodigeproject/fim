@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Target, Compass, User, Users, Briefcase, Building2 } from "lucide-react";
 
 const Tentang = () => {
@@ -54,6 +55,10 @@ const Tentang = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Tentang FIM" 
+        description="Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda. Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin sejak 2003."
+      />
       <PageHero
         title="Tentang Forum Indonesia Muda"
         subtitle="Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin"

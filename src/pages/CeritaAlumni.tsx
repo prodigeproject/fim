@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -57,6 +58,10 @@ const CeritaAlumni = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Cerita Alumni" 
+        description="Kisah inspiratif dari ribuan alumni Forum Indonesia Muda yang telah berkontribusi di berbagai sektor: pendidikan, sosial, teknologi, kesehatan, lingkungan, bisnis, dan internasional."
+      />
       <PageHero title="Cerita Alumni" subtitle="Kisah inspiratif dari ribuan alumni FIM yang telah berkontribusi di berbagai sektor untuk kemajuan Indonesia" />
 
       {/* Quote Section */}

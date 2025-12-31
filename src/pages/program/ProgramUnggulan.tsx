@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Star, Zap, Heart, Globe, BookOpen, ArrowRight, Image, MessageSquare, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -85,6 +86,10 @@ const ProgramUnggulan = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Program Unggulan" 
+        description="5 Program Unggulan Forum Indonesia Muda: Leadership Camp, Social Project, Tanggap Bencana, FIM Goes International, dan FIM Mengajar. Program andalan untuk membentuk pemimpin muda Indonesia."
+      />
       <PageHero
         title="5 Program Unggulan FIM"
         subtitle="Program-program utama yang menjadi andalan Forum Indonesia Muda dalam membentuk pemimpin muda Indonesia"

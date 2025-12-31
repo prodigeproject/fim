@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Heart, Building, AlertTriangle, CheckCircle, Copy, MessageCircle, Instagram, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -51,6 +52,10 @@ const Donasi = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Donasi" 
+        description="Dukung Forum Indonesia Muda untuk mencetak lebih banyak pemimpin muda Indonesia. Donasi Anda membantu program beasiswa, pelatihan, dan proyek sosial alumni FIM."
+      />
       <PageHero
         title="Dukung Forum Indonesia Muda"
         subtitle="Kontribusi Anda membantu kami mencetak lebih banyak pemimpin muda untuk Indonesia"

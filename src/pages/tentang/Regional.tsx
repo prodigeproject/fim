@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
@@ -82,6 +83,10 @@ const Regional = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Regional FIM" 
+        description="60 regional Forum Indonesia Muda tersebar di seluruh Indonesia: Sumatra, Jawa, Kalimantan, Sulawesi, Bali & Nusa Tenggara, dan Papua. Temukan regional terdekat Anda."
+      />
       <PageHero title="Regional FIM" subtitle="Jaringan alumni FIM yang tersebar di seluruh Indonesia" />
       <section className="py-8 bg-secondary">
         <div className="container mx-auto px-4">

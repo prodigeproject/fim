@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Users, CheckCircle, Calendar, Award, Shield, BookOpen, ArrowRight, MessageCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -66,6 +67,10 @@ const GabungRelawan = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Gabung Relawan" 
+        description="Jadilah relawan Forum Indonesia Muda dan berkontribusi untuk kemajuan bangsa. Dapatkan pengalaman organisasi, jaringan nasional, dan dampak nyata bagi masyarakat."
+      />
       <PageHero
         title="Gabung Relawan FIM"
         subtitle="Jadilah bagian dari gerakan pemuda Indonesia yang berkontribusi untuk kemajuan bangsa"
