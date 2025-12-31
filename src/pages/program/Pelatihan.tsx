@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image, MessageSquare, ExternalLink } from "lucide-react";
+import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image, MessageSquare, ExternalLink, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Pelatihan = () => {
@@ -11,28 +11,28 @@ const Pelatihan = () => {
       title: "Seleksi Nasional",
       duration: "2 bulan",
       description: "Proses seleksi ketat untuk menemukan calon kader terbaik dari seluruh Indonesia",
-      activities: ["Pendaftaran online", "Seleksi administrasi", "Tes tertulis", "Wawancara regional"],
+      activities: ["Pendaftaran online", "Seleksi administrasi", "Wawancara", "Pengumuman"],
     },
     {
       phase: "Tahap 2",
-      title: "Pelatihan Dasar",
-      duration: "1 bulan",
-      description: "Pembentukan fondasi karakter dan nilai-nilai kepemimpinan",
-      activities: ["Outbound training", "Workshop kepemimpinan", "Diskusi kelompok", "Mentoring"],
+      title: "Pelatihan FIM 27: Kebijakan Publik",
+      duration: "3 hari",
+      description: "Pelatihan intensif untuk membangun keterampilan dan jaringan",
+      activities: ["Seminar", "Workshop", "FGD", "Networking"],
     },
     {
       phase: "Tahap 3",
-      title: "Pelatihan Intensif",
-      duration: "2 minggu",
-      description: "Pelatihan intensif untuk membangun keterampilan dan jaringan",
-      activities: ["Leadership camp", "Project-based learning", "Guest speakers", "Networking session"],
+      title: "Mentorship",
+      duration: null,
+      description: "Program mentoring berkelanjutan untuk pengembangan diri",
+      activities: ["Networking dengan tokoh", "Workshop lanjutan", "Training", "Coaching", "Mentoring"],
     },
     {
       phase: "Tahap 4",
       title: "Aksi Nyata",
-      duration: "6 bulan",
-      description: "Implementasi proyek sosial di komunitas masing-masing",
-      activities: ["Perencanaan proyek", "Eksekusi program", "Monitoring & evaluasi", "Presentasi hasil"],
+      duration: null,
+      description: "Implementasi dan kontribusi masing-masing alumni melalui instansi tempat bekerja dan/atau ekosistem FIM",
+      activities: ["Kontribusi di instansi", "Proyek ekosistem FIM", "Kolaborasi alumni", "Dampak sosial"],
     },
   ];
 
@@ -44,11 +44,10 @@ const Pelatihan = () => {
   ];
 
   const recentTimeline = [
-    { date: "Desember 2025", event: "FIM Batch 34 - Pelatihan Intensif di Jakarta", status: "ongoing" },
-    { date: "November 2025", event: "Seleksi Regional FIM Batch 34", status: "completed" },
-    { date: "Oktober 2025", event: "Pendaftaran FIM Batch 34 Dibuka", status: "completed" },
-    { date: "September 2025", event: "FIM Tematik Kebijakan Publik dengan Nalar Institute", status: "completed" },
-    { date: "Agustus 2025", event: "Wisuda Alumni FIM Batch 33", status: "completed" },
+    { date: "Desember", event: "Pelaksanaan pelatihan intensif di Jakarta", status: "ongoing" },
+    { date: "November", event: "Seleksi dilakukan oleh pengurus FIM", status: "completed" },
+    { date: "Oktober", event: "Pendaftaran FIM 27: Kebijakan Publik dibuka", status: "completed" },
+    { date: "Juli-Agustus", event: "Persiapan", status: "completed" },
   ];
 
   const dokumentasi = [
@@ -123,9 +122,10 @@ const Pelatihan = () => {
           </div>
 
           {/* Key Benefits */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {[
               { title: "Pengembangan Karakter", desc: "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan" },
+              { title: "Pengembangan Kompetensi", desc: "Meningkatkan kompetensi kepemimpinan, kebijakan publik, manajerial, dan soft skills lainnya" },
               { title: "Jaringan Nasional", desc: "Terhubung dengan ribuan alumni dari 61 regional di Indonesia" },
               { title: "Dampak Nyata", desc: "Kesempatan untuk berkontribusi melalui proyek sosial" },
             ].map((benefit, index) => (
@@ -170,9 +170,11 @@ const Pelatihan = () => {
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
                       <h3 className="text-xl font-bold text-foreground">{tahap.title}</h3>
-                      <span className="px-3 py-1 bg-accent/20 text-accent-foreground text-sm rounded-full">
-                        {tahap.duration}
-                      </span>
+                      {tahap.duration && (
+                        <span className="px-3 py-1 bg-accent/20 text-accent-foreground text-sm rounded-full">
+                          {tahap.duration}
+                        </span>
+                      )}
                     </div>
                     <p className="text-muted-foreground mb-4">{tahap.description}</p>
                     
@@ -198,7 +200,7 @@ const Pelatihan = () => {
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            Timeline Kegiatan Terkini
+            Timeline FIM 27: Kebijakan Publik
           </h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
             Jadwal dan update kegiatan pelatihan FIM terbaru
