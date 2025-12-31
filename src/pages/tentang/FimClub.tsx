@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Users, Palette, BookOpen, Gamepad2, Code, Heart, Baby, GraduationCap, UserCog, Vote, Languages, ScrollText, PersonStanding, Award, Waves, Compass, DollarSign, Leaf, Coffee, Mail, Instagram } from "lucide-react";
@@ -37,6 +38,10 @@ const FimClub = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="FIM Club" 
+        description="21 komunitas minat dan bakat alumni Forum Indonesia Muda: Pendidikan, Teknologi, Olahraga, Politik, Lingkungan, dan lainnya. Bergabung dan berkontribusi sesuai passion Anda."
+      />
       <PageHero title="FIM Club" subtitle="Komunitas minat dan bakat alumni FIM yang tersebar di berbagai bidang" />
       <section className="py-8 bg-secondary">
         <div className="container mx-auto px-4">

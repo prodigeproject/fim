@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Calendar, Users, MapPin, Award, Play, Image, MessageSquare, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -53,6 +54,10 @@ const Pelatihan = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Program Pelatihan" 
+        description="Program kaderisasi tahunan Forum Indonesia Muda untuk membentuk pemimpin muda Indonesia. FIM 27: Kebijakan Publik - Seleksi, Pelatihan, Mentorship, dan Aksi Nyata."
+      />
       <PageHero title="Program Pelatihan FIM" subtitle="Program kaderisasi tahunan untuk membentuk pemimpin muda Indonesia yang berkarakter dan berdampak" />
 
       {/* WA Channel Banner */}

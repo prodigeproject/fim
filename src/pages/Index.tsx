@@ -3,10 +3,10 @@ import { ArrowRight, Users, Calendar, MapPin, Award, Quote, Heart, Shield, Messa
 import { Link } from "react-router-dom";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
-
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -120,6 +120,10 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEO 
+        title="Beranda" 
+        description="Forum Indonesia Muda - Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang. Organisasi kaderisasi pemuda sejak 2003 dengan 4000+ alumni dari 61 regional."
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-95" />
