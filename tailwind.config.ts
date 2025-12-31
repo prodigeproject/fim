@@ -92,6 +92,16 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "firefly-glow": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.3", transform: "scale(0.8)" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0) translateX(0)" },
+          "25%": { transform: "translateY(-10px) translateX(5px)" },
+          "50%": { transform: "translateY(-5px) translateX(-5px)" },
+          "75%": { transform: "translateY(-15px) translateX(3px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -99,6 +109,8 @@ export default {
         "fade-in": "fade-in 0.5s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "glow": "glow 2s ease-in-out infinite",
+        "firefly-glow": "firefly-glow 2s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
       },
     },
   },

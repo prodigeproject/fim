@@ -122,3 +122,77 @@
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(355 100% 35%) 100%);
   }
 }
+
+/* Print Styles */
+@media print {
+  /* Hide navigation and interactive elements */
+  nav,
+  footer,
+  .print\\:hidden,
+  button,
+  [role="dialog"],
+  .fixed {
+    display: none !important;
+  }
+
+  /* Reset background colors for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Optimize page layout */
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure text is black for readability */
+  h1, h2, h3, h4, h5, h6, p, span, li, a {
+    color: black !important;
+    text-shadow: none !important;
+  }
+
+  /* Remove background gradients and colors */
+  .bg-gradient-hero,
+  .bg-primary,
+  .bg-secondary,
+  .bg-accent,
+  .bg-card,
+  .bg-muted {
+    background: white !important;
+  }
+
+  /* Show URLs for links */
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+    color: #666 !important;
+  }
+
+  /* Prevent page breaks inside elements */
+  article,
+  .card,
+  blockquote {
+    page-break-inside: avoid;
+  }
+
+  /* Add page breaks before major sections */
+  section {
+    page-break-before: auto;
+  }
+
+  /* Optimize images */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Remove shadows and borders */
+  * {
+    box-shadow: none !important;
+  }
+}

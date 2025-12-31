@@ -2,6 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
+import SocialShare from "@/components/SocialShare";
 import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -197,7 +198,12 @@ const CeritaAlumni = () => {
         <div className="container mx-auto px-4 text-center">
           <h3 className="text-2xl font-bold text-foreground mb-4">Punya Cerita untuk Dibagikan?</h3>
           <p className="text-muted-foreground max-w-md mx-auto mb-6">Jika Anda alumni FIM dan ingin berbagi cerita perjalanan Anda, hubungi kami.</p>
-          <a href="mailto:alumni@forumindonesiamuda.org" className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">Kirim Cerita Anda</a>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+            <a href="mailto:alumni@forumindonesiamuda.org" className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">Kirim Cerita Anda</a>
+          </div>
+          <div className="flex justify-center">
+            <SocialShare title="Cerita Inspiratif Alumni Forum Indonesia Muda" />
+          </div>
         </div>
       </section>
     </Layout>

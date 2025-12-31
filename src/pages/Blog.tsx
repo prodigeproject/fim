@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
+import SocialShare from "@/components/SocialShare";
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -235,7 +236,7 @@ const Blog = () => {
           <p className="text-muted-foreground max-w-md mx-auto mb-6">
             Ikuti media sosial resmi FIM untuk informasi terbaru seputar kegiatan dan pendaftaran.
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <a
               href="https://instagram.com/forumindonesiamuda"
               target="_blank"
@@ -244,6 +245,7 @@ const Blog = () => {
             >
               Follow Instagram
             </a>
+            <SocialShare title="Blog & Berita Forum Indonesia Muda" />
           </div>
         </div>
       </section>
