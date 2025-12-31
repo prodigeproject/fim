@@ -1,19 +1,31 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Calendar, User, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const Blog = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+
+  // Read category from URL on mount
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category");
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, [searchParams]);
+
   // Placeholder blog posts - will be replaced with Supabase data
   const posts = [
     {
       id: 1,
-      slug: "pembukaan-pendaftaran-fim-25",
-      title: "Pembukaan Pendaftaran FIM Angkatan 25",
-      excerpt: "Pendaftaran FIM Angkatan 25 resmi dibuka! Ayo daftarkan dirimu dan jadilah bagian dari generasi pemimpin muda Indonesia.",
+      slug: "pembukaan-pendaftaran-fim-27",
+      title: "Pembukaan Pendaftaran FIM 27: Kebijakan Publik",
+      excerpt: "Pendaftaran FIM Angkatan 27 dengan tema Kebijakan Publik resmi dibuka! Ayo daftarkan dirimu dan jadilah bagian dari generasi pemimpin muda Indonesia.",
       category: "Pengumuman",
       author: "Tim FIM",
-      date: "2024-01-15",
+      date: "2024-10-01",
       image: null,
     },
     {
@@ -70,6 +82,24 @@ const Blog = () => {
 
   const categories = ["Semua", "Pengumuman", "Prestasi", "Kegiatan", "Sosial", "Opini", "Tips"];
 
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    if (category === "Semua") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category });
+    }
+  };
+
+  // Filter posts based on selected category
+  const filteredPosts = selectedCategory === "Semua" 
+    ? posts 
+    : posts.filter(post => 
+        post.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+        post.title.toLowerCase().includes(selectedCategory.toLowerCase())
+      );
+
   return (
     <Layout>
       <PageHero
@@ -81,77 +111,113 @@ const Blog = () => {
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map((category) => (
               <button
                 key={category}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-card text-foreground hover:bg-primary hover:text-primary-foreground transition-colors border border-border"
+                onClick={() => handleCategoryChange(category)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  selectedCategory === category
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-foreground hover:bg-primary hover:text-primary-foreground border-border"
+                }`}
               >
                 {category}
               </button>
             ))}
           </div>
 
+          {/* Active filter indicator */}
+          {selectedCategory !== "Semua" && (
+            <div className="text-center mb-8">
+              <p className="text-muted-foreground text-sm">
+                Menampilkan hasil untuk: <span className="font-semibold text-foreground">{selectedCategory}</span>
+                <button 
+                  onClick={() => handleCategoryChange("Semua")}
+                  className="ml-2 text-primary hover:underline"
+                >
+                  Hapus filter
+                </button>
+              </p>
+            </div>
+          )}
+
           {/* Posts Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {posts.map((post, index) => (
-              <article
-                key={post.id}
-                className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {/* Image placeholder */}
-                <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                  <span className="text-4xl">📰</span>
-                </div>
-
-                <div className="p-6">
-                  {/* Category */}
-                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-3">
-                    {post.category}
-                  </span>
-
-                  {/* Title */}
-                  <h2 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
-                    {post.title}
-                  </h2>
-
-                  {/* Excerpt */}
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {post.excerpt}
-                  </p>
-
-                  {/* Meta */}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      <span>{post.author}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(post.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
-                    </div>
+          {filteredPosts.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {filteredPosts.map((post, index) => (
+                <article
+                  key={post.id}
+                  className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {/* Image placeholder */}
+                  <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                    <span className="text-4xl">📰</span>
                   </div>
 
-                  {/* Read More */}
-                  <Link
-                    to={`/blog/${post.slug}`}
-                    className="inline-flex items-center text-primary text-sm font-semibold hover:underline"
-                  >
-                    Baca Selengkapnya
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
+                  <div className="p-6">
+                    {/* Category */}
+                    <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-3">
+                      {post.category}
+                    </span>
+
+                    {/* Title */}
+                    <h2 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
+                      {post.title}
+                    </h2>
+
+                    {/* Excerpt */}
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      {post.excerpt}
+                    </p>
+
+                    {/* Meta */}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        <span>{post.author}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(post.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </div>
+                    </div>
+
+                    {/* Read More */}
+                    <Link
+                      to={`/blog/${post.slug}`}
+                      className="inline-flex items-center text-primary text-sm font-semibold hover:underline"
+                    >
+                      Baca Selengkapnya
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Tidak ada artikel yang ditemukan untuk kategori "{selectedCategory}".
+              </p>
+              <button 
+                onClick={() => handleCategoryChange("Semua")}
+                className="mt-4 text-primary hover:underline"
+              >
+                Lihat semua artikel
+              </button>
+            </div>
+          )}
 
           {/* Placeholder for pagination */}
-          <div className="flex justify-center mt-12">
-            <p className="text-muted-foreground text-sm">
-              Menampilkan {posts.length} artikel terbaru
-            </p>
-          </div>
+          {filteredPosts.length > 0 && (
+            <div className="flex justify-center mt-12">
+              <p className="text-muted-foreground text-sm">
+                Menampilkan {filteredPosts.length} artikel
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

@@ -267,7 +267,7 @@ const CeritaAlumni = () => {
             Jika Anda alumni FIM dan ingin berbagi cerita perjalanan Anda, hubungi kami.
           </p>
           <a
-            href="mailto:cerita@forumindonesiamuda.org"
+            href="mailto:alumni@forumindonesiamuda.org"
             className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             Kirim Cerita Anda
