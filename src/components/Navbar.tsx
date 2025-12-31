@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, LogIn } from "lucide-react";
+import { Menu, X, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { SearchDialog } from "@/components/SearchDialog";
 import logoFim from "@/assets/logo-fim.png";
 
 const Navbar = () => {
@@ -32,10 +35,10 @@ const Navbar = () => {
         { name: "Program Unggulan", path: "/program/program-unggulan" },
       ],
     },
-    { name: "Gabung Relawan", path: "/gabung-relawan" },
     { name: "Cerita Alumni", path: "/cerita-alumni" },
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
+    { name: "Gabung Relawan", path: "/gabung-relawan" },
   ];
 
   return (
@@ -108,15 +111,9 @@ const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-2">
-            <a
-              href="https://blog.forumindonesiamuda.org/wp-admin"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-            >
-              <LogIn className="h-4 w-4" />
-              Login
-            </a>
+            <SearchDialog />
+            <ThemeToggle />
+            <LanguageSwitcher />
             <Link to="/donasi">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
                 Donasi
@@ -125,12 +122,16 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="lg:hidden flex items-center gap-2">
+            <SearchDialog />
+            <ThemeToggle />
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -187,15 +188,10 @@ const Navbar = () => {
               </div>
             ))}
             <div className="px-4 pt-4 space-y-2">
-              <a
-                href="https://blog.forumindonesiamuda.org/wp-admin"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm text-muted-foreground border border-border rounded-lg"
-              >
-                <LogIn className="h-4 w-4" />
-                Login Admin
-              </a>
+              <div className="flex items-center gap-2 mb-2">
+                <LanguageSwitcher />
+                <span className="text-sm text-muted-foreground">Pilih Bahasa</span>
+              </div>
               <Link to="/donasi" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-primary text-primary-foreground">
                   Donasi

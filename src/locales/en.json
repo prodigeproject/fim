@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "aboutFim": "About FIM",
+    "regional": "Regional FIM",
+    "fimClub": "FIM Club",
+    "program": "Program",
+    "training": "FIM Training",
+    "featured": "Featured Programs",
+    "alumni": "Alumni Stories",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "volunteer": "Join Volunteers",
+    "donate": "Donate"
+  },
+  "hero": {
+    "title": "Forum Indonesia Muda",
+    "subtitle": "A platform for Indonesian youth to grow, collaborate, and become fireflies that illuminate the nation's future",
+    "cta": "Register Now",
+    "learnMore": "Learn More"
+  },
+  "stats": {
+    "since": "Since",
+    "batches": "Batches",
+    "regions": "Regions",
+    "alumni": "Alumni"
+  },
+  "about": {
+    "title": "About Us",
+    "description": "Forum Indonesia Muda is a youth leadership organization established since 2003"
+  },
+  "programs": {
+    "title": "Our Programs",
+    "training": "Training Program",
+    "trainingDesc": "Annual leadership program to shape young Indonesian leaders"
+  },
+  "footer": {
+    "newsletter": "Newsletter",
+    "newsletterDesc": "Get the latest updates from FIM",
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "subscribeSuccess": "Thank you for subscribing!",
+    "navigation": "Navigation",
+    "contact": "Contact Us",
+    "copyright": "All rights reserved",
+    "madeWith": "Made with ❤️ for Indonesia"
+  },
+  "search": {
+    "placeholder": "Search pages, programs, or information...",
+    "noResults": "No results found"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}

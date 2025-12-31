@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "about": "Tentang",
+    "aboutFim": "Tentang FIM",
+    "regional": "Regional FIM",
+    "fimClub": "FIM Club",
+    "program": "Program",
+    "training": "Pelatihan FIM",
+    "featured": "Program Unggulan",
+    "alumni": "Cerita Alumni",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "volunteer": "Gabung Relawan",
+    "donate": "Donasi"
+  },
+  "hero": {
+    "title": "Forum Indonesia Muda",
+    "subtitle": "Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang yang menerangi masa depan bangsa",
+    "cta": "Daftar Sekarang",
+    "learnMore": "Pelajari Lebih Lanjut"
+  },
+  "stats": {
+    "since": "Sejak",
+    "batches": "Angkatan",
+    "regions": "Regional",
+    "alumni": "Alumni"
+  },
+  "about": {
+    "title": "Tentang Kami",
+    "description": "Forum Indonesia Muda adalah organisasi kaderisasi pemuda yang telah berdiri sejak 2003"
+  },
+  "programs": {
+    "title": "Program Kami",
+    "training": "Program Pelatihan",
+    "trainingDesc": "Program kaderisasi tahunan untuk membentuk pemimpin muda Indonesia"
+  },
+  "footer": {
+    "newsletter": "Newsletter",
+    "newsletterDesc": "Dapatkan update terbaru dari FIM",
+    "emailPlaceholder": "Masukkan email Anda",
+    "subscribe": "Berlangganan",
+    "subscribeSuccess": "Terima kasih telah berlangganan!",
+    "navigation": "Navigasi",
+    "contact": "Hubungi Kami",
+    "copyright": "Hak cipta dilindungi",
+    "madeWith": "Dibuat dengan ❤️ untuk Indonesia"
+  },
+  "search": {
+    "placeholder": "Cari halaman, program, atau informasi...",
+    "noResults": "Tidak ditemukan hasil"
+  },
+  "theme": {
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Sistem"
+  }
+}
