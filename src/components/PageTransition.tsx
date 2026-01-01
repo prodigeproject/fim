@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -27,6 +28,13 @@ const pageTransition = {
 };
 
 const PageTransition = ({ children }: PageTransitionProps) => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // Scroll to top instantly when page changes
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
   return (
     <motion.div
       initial="initial"
