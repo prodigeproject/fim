@@ -1,52 +1,79 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import SocialShare from "@/components/SocialShare";
 import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useAlumniStories } from "@/hooks/useWordPress";
+import { isWordPressConfigured } from "@/services/wordpress";
+import { AlumniCardSkeleton, AlumniGridSkeleton, VideoTestimonialSkeleton } from "@/components/skeletons";
+
+// Fallback data when WordPress is not configured
+const fallbackStories = [
+  { id: 1, name: "Andi Pratama", batch: "FIM 5", sector: "Pendidikan", position: "Founder Sekolah Inspirasi", company: "Yogyakarta", photo: null, quote: "FIM mengajarkan saya bahwa perubahan dimulai dari pendidikan. Kini saya mendirikan sekolah gratis untuk anak-anak kurang mampu.", story: "500+ siswa terbantu" },
+  { id: 2, name: "Siti Rahayu", batch: "FIM 8", sector: "Sosial", position: "CEO Yayasan Peduli Desa", company: "Makassar", photo: null, quote: "Jaringan FIM membantu saya membangun program pemberdayaan di 50 desa tertinggal.", story: "50 desa terdampak" },
+  { id: 3, name: "Budi Santoso", batch: "FIM 12", sector: "Teknologi", position: "CTO Startup Edutech", company: "Jakarta", photo: null, quote: "Dari workshop leadership FIM, saya belajar membangun tim. Sekarang startup kami sudah Series A.", story: "1M+ pengguna aplikasi" },
+  { id: 4, name: "Maria Theresia", batch: "FIM 15", sector: "Kesehatan", position: "Dokter & Aktivis Kesehatan", company: "Flores", photo: null, quote: "FIM membuka mata saya tentang kesenjangan akses kesehatan. Saya memilih bertugas di daerah terpencil.", story: "10.000+ pasien dilayani" },
+  { id: 5, name: "Ahmad Fauzi", batch: "FIM 10", sector: "Lingkungan", position: "Founder Green Movement ID", company: "Bandung", photo: null, quote: "Semangat kunang-kunang FIM yang menerangi kegelapan menginspirasi gerakan lingkungan kami.", story: "100.000 pohon ditanam" },
+  { id: 6, name: "Dewi Lestari", batch: "FIM 18", sector: "Bisnis", position: "Founder Social Enterprise", company: "Surabaya", photo: null, quote: "FIM mengajarkan bahwa bisnis bisa berdampak sosial. Social enterprise kami memberdayakan 200 pengrajin lokal.", story: "200 UMKM diberdayakan" },
+  { id: 7, name: "Rizky Ramadhan", batch: "FIM 20", sector: "Internasional", position: "Diplomat Muda RI", company: "Jenewa", photo: null, quote: "Public speaking dan diplomacy skills dari FIM sangat membantu karir saya di kancah internasional.", story: "Perwakilan Indonesia di PBB" },
+  { id: 8, name: "Putri Handayani", batch: "FIM 7", sector: "Pendidikan", position: "Founder Gerakan Literasi", company: "Semarang", photo: null, quote: "Saya percaya setiap anak Indonesia berhak membaca. FIM memberi saya keberanian untuk memulai.", story: "1.000+ perpustakaan desa" },
+];
+
+const fallbackOtherAlumni = [
+  { name: "Raden Mas Haryanto", angkatan: "FIM 3", trackRecord: "Direktur Utama BUMN Strategis" },
+  { name: "Kartini Sari Dewi", angkatan: "FIM 4", trackRecord: "Anggota DPR RI Komisi X" },
+  { name: "Dr. Bambang Sutrisno", angkatan: "FIM 6", trackRecord: "Rektor Universitas Negeri" },
+  { name: "Ratna Megawati", angkatan: "FIM 7", trackRecord: "CEO Perusahaan Teknologi" },
+  { name: "Agus Prasetyo", angkatan: "FIM 9", trackRecord: "Direktur LSM Internasional" },
+  { name: "Indah Permatasari", angkatan: "FIM 11", trackRecord: "Kepala Dinas Pendidikan Provinsi" },
+  { name: "Hendra Wijaya", angkatan: "FIM 13", trackRecord: "Founder Unicorn Startup" },
+  { name: "Siska Rahmawati", angkatan: "FIM 14", trackRecord: "Peneliti Senior Lembaga Think Tank" },
+  { name: "Muhammad Rizal", angkatan: "FIM 16", trackRecord: "Kepala Kantor Perwakilan RI" },
+  { name: "Dian Kusuma", angkatan: "FIM 17", trackRecord: "Pendiri Yayasan Pendidikan Nasional" },
+  { name: "Eko Prasetio", angkatan: "FIM 19", trackRecord: "Dokter Spesialis di RS Rujukan" },
+  { name: "Lina Marlina", angkatan: "FIM 21", trackRecord: "Aktivis Lingkungan Internasional" },
+  { name: "Fajar Nugroho", angkatan: "FIM 22", trackRecord: "Produser Film Dokumenter Nasional" },
+  { name: "Anita Susanti", angkatan: "FIM 23", trackRecord: "Konsultan Kebijakan Publik" },
+  { name: "Bayu Adi Putra", angkatan: "FIM 24", trackRecord: "Kepala Divisi CSR Perusahaan Multinasional" },
+  { name: "Citra Dewi", angkatan: "FIM 25", trackRecord: "Founder Platform Edtech" },
+];
+
+const fallbackVideoTestimonials = [
+  { id: "dQw4w9WgXcQ", title: "Perjalanan Alumni FIM di Bidang Pendidikan", thumbnail: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=225&fit=crop", speaker: "Alumni FIM 10" },
+  { id: "dQw4w9WgXcQ", title: "Dampak FIM dalam Karir Profesional", thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=225&fit=crop", speaker: "Alumni FIM 15" },
+  { id: "dQw4w9WgXcQ", title: "Membangun Jaringan Nasional Melalui FIM", thumbnail: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=225&fit=crop", speaker: "Alumni FIM 18" },
+  { id: "dQw4w9WgXcQ", title: "Kisah Sukses Alumni FIM di Startup", thumbnail: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=225&fit=crop", speaker: "Alumni FIM 20" },
+];
 
 const CeritaAlumni = () => {
   const [selectedSector, setSelectedSector] = useState("Semua");
   const [selectedVideo, setSelectedVideo] = useState<{ id: string; title: string } | null>(null);
+  
+  // Fetch alumni stories from WordPress
+  const { data: wpStories, isLoading, error } = useAlumniStories({ per_page: 50 });
+  
+  // Use WordPress data if available, otherwise fallback
+  const stories = useMemo(() => {
+    if (!isWordPressConfigured() || !wpStories?.length) {
+      return fallbackStories;
+    }
+    return wpStories.map(story => ({
+      id: story.id,
+      name: story.name,
+      batch: story.batch,
+      sector: story.sector,
+      position: story.position || '',
+      company: story.company || '',
+      photo: story.photo,
+      quote: story.quote,
+      story: story.story,
+    }));
+  }, [wpStories]);
 
-  const stories = [
-    { name: "Andi Pratama", angkatan: "FIM 5", sector: "Pendidikan", role: "Founder Sekolah Inspirasi", location: "Yogyakarta", photo: null, quote: "FIM mengajarkan saya bahwa perubahan dimulai dari pendidikan. Kini saya mendirikan sekolah gratis untuk anak-anak kurang mampu.", impact: "500+ siswa terbantu" },
-    { name: "Siti Rahayu", angkatan: "FIM 8", sector: "Sosial", role: "CEO Yayasan Peduli Desa", location: "Makassar", photo: null, quote: "Jaringan FIM membantu saya membangun program pemberdayaan di 50 desa tertinggal.", impact: "50 desa terdampak" },
-    { name: "Budi Santoso", angkatan: "FIM 12", sector: "Teknologi", role: "CTO Startup Edutech", location: "Jakarta", photo: null, quote: "Dari workshop leadership FIM, saya belajar membangun tim. Sekarang startup kami sudah Series A.", impact: "1M+ pengguna aplikasi" },
-    { name: "Maria Theresia", angkatan: "FIM 15", sector: "Kesehatan", role: "Dokter & Aktivis Kesehatan", location: "Flores", photo: null, quote: "FIM membuka mata saya tentang kesenjangan akses kesehatan. Saya memilih bertugas di daerah terpencil.", impact: "10.000+ pasien dilayani" },
-    { name: "Ahmad Fauzi", angkatan: "FIM 10", sector: "Lingkungan", role: "Founder Green Movement ID", location: "Bandung", photo: null, quote: "Semangat kunang-kunang FIM yang menerangi kegelapan menginspirasi gerakan lingkungan kami.", impact: "100.000 pohon ditanam" },
-    { name: "Dewi Lestari", angkatan: "FIM 18", sector: "Bisnis", role: "Founder Social Enterprise", location: "Surabaya", photo: null, quote: "FIM mengajarkan bahwa bisnis bisa berdampak sosial. Social enterprise kami memberdayakan 200 pengrajin lokal.", impact: "200 UMKM diberdayakan" },
-    { name: "Rizky Ramadhan", angkatan: "FIM 20", sector: "Internasional", role: "Diplomat Muda RI", location: "Jenewa", photo: null, quote: "Public speaking dan diplomacy skills dari FIM sangat membantu karir saya di kancah internasional.", impact: "Perwakilan Indonesia di PBB" },
-    { name: "Putri Handayani", angkatan: "FIM 7", sector: "Pendidikan", role: "Founder Gerakan Literasi", location: "Semarang", photo: null, quote: "Saya percaya setiap anak Indonesia berhak membaca. FIM memberi saya keberanian untuk memulai.", impact: "1.000+ perpustakaan desa" },
-  ];
-
-  const otherAlumni = [
-    { name: "Raden Mas Haryanto", angkatan: "FIM 3", trackRecord: "Direktur Utama BUMN Strategis" },
-    { name: "Kartini Sari Dewi", angkatan: "FIM 4", trackRecord: "Anggota DPR RI Komisi X" },
-    { name: "Dr. Bambang Sutrisno", angkatan: "FIM 6", trackRecord: "Rektor Universitas Negeri" },
-    { name: "Ratna Megawati", angkatan: "FIM 7", trackRecord: "CEO Perusahaan Teknologi" },
-    { name: "Agus Prasetyo", angkatan: "FIM 9", trackRecord: "Direktur LSM Internasional" },
-    { name: "Indah Permatasari", angkatan: "FIM 11", trackRecord: "Kepala Dinas Pendidikan Provinsi" },
-    { name: "Hendra Wijaya", angkatan: "FIM 13", trackRecord: "Founder Unicorn Startup" },
-    { name: "Siska Rahmawati", angkatan: "FIM 14", trackRecord: "Peneliti Senior Lembaga Think Tank" },
-    { name: "Muhammad Rizal", angkatan: "FIM 16", trackRecord: "Kepala Kantor Perwakilan RI" },
-    { name: "Dian Kusuma", angkatan: "FIM 17", trackRecord: "Pendiri Yayasan Pendidikan Nasional" },
-    { name: "Eko Prasetio", angkatan: "FIM 19", trackRecord: "Dokter Spesialis di RS Rujukan" },
-    { name: "Lina Marlina", angkatan: "FIM 21", trackRecord: "Aktivis Lingkungan Internasional" },
-    { name: "Fajar Nugroho", angkatan: "FIM 22", trackRecord: "Produser Film Dokumenter Nasional" },
-    { name: "Anita Susanti", angkatan: "FIM 23", trackRecord: "Konsultan Kebijakan Publik" },
-    { name: "Bayu Adi Putra", angkatan: "FIM 24", trackRecord: "Kepala Divisi CSR Perusahaan Multinasional" },
-    { name: "Citra Dewi", angkatan: "FIM 25", trackRecord: "Founder Platform Edtech" },
-  ];
-
-  // Video testimonial data (placeholder YouTube IDs - replace with actual FIM videos)
-  const videoTestimonials = [
-    { id: "dQw4w9WgXcQ", title: "Perjalanan Alumni FIM di Bidang Pendidikan", thumbnail: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=225&fit=crop", speaker: "Alumni FIM 10" },
-    { id: "dQw4w9WgXcQ", title: "Dampak FIM dalam Karir Profesional", thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=225&fit=crop", speaker: "Alumni FIM 15" },
-    { id: "dQw4w9WgXcQ", title: "Membangun Jaringan Nasional Melalui FIM", thumbnail: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=225&fit=crop", speaker: "Alumni FIM 18" },
-    { id: "dQw4w9WgXcQ", title: "Kisah Sukses Alumni FIM di Startup", thumbnail: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=225&fit=crop", speaker: "Alumni FIM 20" },
-  ];
+  const otherAlumni = fallbackOtherAlumni;
+  const videoTestimonials = fallbackVideoTestimonials;
 
   const sectors = ["Semua", "Pendidikan", "Sosial", "Teknologi", "Kesehatan", "Lingkungan", "Bisnis", "Internasional"];
 
@@ -82,29 +109,33 @@ const CeritaAlumni = () => {
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Video Testimoni Alumni</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Dengarkan langsung cerita inspiratif dari alumni FIM</p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {videoTestimonials.map((video, index) => (
-              <div
-                key={index}
-                onClick={() => setSelectedVideo(video)}
-                className="group cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in bg-card"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="relative aspect-video">
-                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                    <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Play className="h-6 w-6 text-primary-foreground ml-1" fill="currentColor" />
+          {isLoading ? (
+            <VideoTestimonialSkeleton />
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {videoTestimonials.map((video, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedVideo(video)}
+                  className="group cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in bg-card"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="relative aspect-video">
+                    <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                      <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Play className="h-6 w-6 text-primary-foreground ml-1" fill="currentColor" />
+                      </div>
                     </div>
                   </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-foreground text-sm line-clamp-2 mb-1">{video.title}</h3>
+                    <p className="text-xs text-muted-foreground">{video.speaker}</p>
+                  </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground text-sm line-clamp-2 mb-1">{video.title}</h3>
-                  <p className="text-xs text-muted-foreground">{video.speaker}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -140,35 +171,47 @@ const CeritaAlumni = () => {
             ))}
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {filteredStories.map((story, index) => {
-              const Icon = getSectorIcon(story.sector);
-              return (
-                <div key={story.name} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl font-bold text-primary">{story.name.split(" ").map(n => n[0]).join("")}</span>
+          {isLoading ? (
+            <AlumniGridSkeleton />
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Gagal memuat cerita alumni. Silakan coba lagi nanti.</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {filteredStories.map((story, index) => {
+                const Icon = getSectorIcon(story.sector);
+                return (
+                  <div key={story.id} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {story.photo ? (
+                          <img src={story.photo} alt={story.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl font-bold text-primary">{story.name.split(" ").map(n => n[0]).join("")}</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-foreground">{story.name}</h3>
+                        <p className="text-sm text-primary">{story.batch}</p>
+                        <p className="text-sm text-muted-foreground">{story.position}</p>
+                        <p className="text-xs text-muted-foreground">{story.company}</p>
+                      </div>
+                      <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-supporting" />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-foreground">{story.name}</h3>
-                      <p className="text-sm text-primary">{story.angkatan}</p>
-                      <p className="text-sm text-muted-foreground">{story.role}</p>
-                      <p className="text-xs text-muted-foreground">{story.location}</p>
-                    </div>
-                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-supporting" />
+                    <blockquote className="text-muted-foreground italic mb-6 relative pl-4 border-l-2 border-accent">"{story.quote}"</blockquote>
+                    <div className="flex items-center gap-2 pt-4 border-t border-border">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Dampak:</span>
+                      <span className="text-sm font-semibold text-supporting">{story.story}</span>
                     </div>
                   </div>
-                  <blockquote className="text-muted-foreground italic mb-6 relative pl-4 border-l-2 border-accent">"{story.quote}"</blockquote>
-                  <div className="flex items-center gap-2 pt-4 border-t border-border">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Dampak:</span>
-                    <span className="text-sm font-semibold text-supporting">{story.impact}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {filteredStories.length === 0 && <div className="text-center py-12"><p className="text-muted-foreground">Tidak ada cerita di sektor ini.</p></div>}
+                );
+              })}
+            </div>
+          )}
+          {!isLoading && filteredStories.length === 0 && <div className="text-center py-12"><p className="text-muted-foreground">Tidak ada cerita di sektor ini.</p></div>}
         </div>
       </section>
 

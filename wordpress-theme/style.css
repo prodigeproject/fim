@@ -1,0 +1,114 @@
+/*
+Theme Name: FIM Theme
+Theme URI: https://forumindonesiamuda.org
+Author: Forum Indonesia Muda
+Author URI: https://forumindonesiamuda.org
+Description: Theme WordPress untuk Forum Indonesia Muda dengan dukungan Headless CMS dan REST API untuk integrasi React Frontend.
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: fim-theme
+Tags: headless, rest-api, custom-post-types
+
+Forum Indonesia Muda - Menciptakan Pemimpin Muda Indonesia
+*/
+
+/* ==========================================================================
+   Base Styles (untuk tampilan admin & fallback)
+   ========================================================================== */
+
+:root {
+    --fim-primary: #E94E1B;
+    --fim-primary-dark: #D14517;
+    --fim-secondary: #1E3A5F;
+    --fim-accent: #F7B32B;
+    --fim-supporting: #2E8B57;
+    --fim-background: #FFFFFF;
+    --fim-foreground: #1A1A1A;
+    --fim-muted: #6B7280;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--fim-foreground);
+    background-color: var(--fim-background);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+
+a {
+    color: var(--fim-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--fim-primary-dark);
+}
+
+/* Buttons */
+.button,
+.wp-block-button__link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--fim-primary);
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.button:hover,
+.wp-block-button__link:hover {
+    background-color: var(--fim-primary-dark);
+    color: white;
+}
+
+/* Cards */
+.fim-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fim-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Admin Styles */
+.wp-admin .fim-status-dibuka {
+    color: #059669;
+    background-color: #D1FAE5;
+}
+
+.wp-admin .fim-status-ditutup {
+    color: #DC2626;
+    background-color: #FEE2E2;
+}
+
+.wp-admin .fim-status-segera {
+    color: #D97706;
+    background-color: #FEF3C7;
+}
