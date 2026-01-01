@@ -2559,3 +2559,201 @@ a:focus:not(:focus-visible) {
         transition: none;
     }
 }
+
+/* ==========================================================================
+   Newsletter Section
+   ========================================================================== */
+.fim-newsletter-section {
+    background: linear-gradient(135deg, var(--fim-red) 0%, var(--fim-red-dark) 100%);
+    color: white;
+    padding: 3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fim-newsletter-content {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.fim-newsletter-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.fim-newsletter-content p {
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.fim-newsletter-form {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.fim-newsletter-form input[type="email"] {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--fim-radius);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.9375rem;
+}
+
+.fim-newsletter-form input[type="email"]::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.fim-newsletter-form input[type="email"]:focus {
+    outline: none;
+    border-color: var(--fim-gold);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 480px) {
+    .fim-newsletter-form {
+        flex-direction: column;
+    }
+}
+
+/* ==========================================================================
+   Footer Enhanced Styles
+   ========================================================================== */
+.fim-footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: white;
+}
+
+.fim-footer-logo img {
+    height: 3rem;
+    width: auto;
+}
+
+.fim-footer-logo span {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.fim-footer-links-col,
+.fim-footer-contact-col {
+    min-width: 0;
+}
+
+.fim-contact-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fim-contact-link svg {
+    flex-shrink: 0;
+}
+
+.fim-footer-cta {
+    margin-top: 1.5rem;
+}
+
+.fim-footer-bottom-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fim-made-with {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.fim-heart {
+    color: var(--fim-red);
+    animation: heartbeat 1.5s infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .fim-footer-bottom-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Navbar Enhanced Styles
+   ========================================================================== */
+.fim-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fim-nav-cta {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .fim-nav-cta {
+        display: inline-flex;
+    }
+    
+    .fim-nav-toggle {
+        display: none;
+    }
+}
+
+.fim-nav-mobile-cta {
+    padding: 1.5rem;
+    border-top: 1px solid var(--fim-border);
+    margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Page-specific Adjustments
+   ========================================================================== */
+
+/* Homepage Stats with Counter Animation */
+.fim-stat-number[data-count] {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Card hover states for touch devices */
+@media (hover: none) {
+    .fim-card:hover {
+        transform: none;
+    }
+    
+    .fim-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --fim-border: #000000;
+        --fim-muted: #333333;
+    }
+    
+    .fim-btn {
+        border: 2px solid currentColor;
+    }
+}
