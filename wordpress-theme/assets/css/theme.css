@@ -2387,3 +2387,175 @@ p {
     z-index: calc(var(--fim-z-sticky) + 1);
     transition: width 0.1s linear;
 }
+
+/* ==========================================================================
+   Mobile Menu Overlay
+   ========================================================================== */
+.fim-nav-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--fim-z-fixed) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--fim-transition), visibility var(--fim-transition);
+}
+
+.fim-nav-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Hamburger Animation */
+.fim-nav-toggle {
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: calc(var(--fim-z-fixed) + 1);
+}
+
+.fim-nav-toggle span {
+    position: relative;
+    width: 1.25rem;
+    height: 2px;
+    background-color: var(--fim-foreground);
+    transition: background-color var(--fim-transition);
+}
+
+.fim-nav-toggle span::before,
+.fim-nav-toggle span::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--fim-foreground);
+    transition: transform var(--fim-transition);
+}
+
+.fim-nav-toggle span::before {
+    top: -6px;
+}
+
+.fim-nav-toggle span::after {
+    top: 6px;
+}
+
+.fim-nav-toggle.active span {
+    background-color: transparent;
+}
+
+.fim-nav-toggle.active span::before {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.fim-nav-toggle.active span::after {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Mobile Dropdown */
+.fim-nav-mobile .fim-dropdown-menu {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background-color: var(--fim-secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--fim-radius);
+    transition: max-height var(--fim-transition-slow);
+}
+
+.fim-nav-mobile .fim-dropdown.open .fim-dropdown-menu {
+    max-height: 500px;
+    padding: 0.5rem;
+}
+
+/* Search Form */
+.fim-search-form {
+    position: relative;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--fim-transition);
+}
+
+.fim-search-form.open {
+    max-height: 60px;
+}
+
+.fim-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid var(--fim-border);
+    border-radius: var(--fim-radius);
+    font-size: 0.9375rem;
+    background-color: var(--fim-background);
+    transition: border-color var(--fim-transition);
+}
+
+.fim-search-input:focus {
+    outline: none;
+    border-color: var(--fim-red);
+}
+
+.fim-search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--fim-muted);
+    pointer-events: none;
+}
+
+/* Copy Button States */
+.fim-copy-btn.copied {
+    background-color: var(--fim-green);
+}
+
+/* Image Lazy Loading */
+img[data-src] {
+    opacity: 0;
+    transition: opacity var(--fim-transition);
+}
+
+img.loaded {
+    opacity: 1;
+}
+
+/* Focus Visible Styles (Accessibility) */
+:focus-visible {
+    outline: 2px solid var(--fim-red);
+    outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .fim-scroll-progress {
+        transition: none;
+    }
+}
