@@ -295,3 +295,48 @@ function fim_disable_gutenberg($use_block_editor, $post_type) {
     return $use_block_editor;
 }
 add_filter('use_block_editor_for_post_type', 'fim_disable_gutenberg', 10, 2);
+
+/**
+ * ACF Options Page for Site Settings
+ */
+function fim_acf_options_page() {
+    if (function_exists('acf_add_options_page')) {
+        acf_add_options_page(array(
+            'page_title'    => 'Pengaturan FIM',
+            'menu_title'    => 'Pengaturan FIM',
+            'menu_slug'     => 'fim-settings',
+            'capability'    => 'manage_options',
+            'redirect'      => false,
+            'icon_url'      => 'dashicons-admin-settings',
+            'position'      => 59,
+        ));
+    }
+}
+add_action('acf/init', 'fim_acf_options_page');
+
+/**
+ * Newsletter subscription handler
+ */
+function fim_handle_newsletter_subscription() {
+    if (!wp_verify_nonce($_POST['fim_newsletter_nonce'], 'fim_newsletter')) {
+        wp_die('Security check failed');
+    }
+    
+    $email = sanitize_email($_POST['email']);
+    if (!is_email($email)) {
+        wp_redirect(add_query_arg('newsletter', 'invalid', wp_get_referer()));
+        exit;
+    }
+    
+    // Store in options (in production, use a proper newsletter service)
+    $subscribers = get_option('fim_newsletter_subscribers', array());
+    if (!in_array($email, $subscribers)) {
+        $subscribers[] = $email;
+        update_option('fim_newsletter_subscribers', $subscribers);
+    }
+    
+    wp_redirect(add_query_arg('newsletter', 'success', wp_get_referer()));
+    exit;
+}
+add_action('admin_post_fim_newsletter_subscribe', 'fim_handle_newsletter_subscription');
+add_action('admin_post_nopriv_fim_newsletter_subscribe', 'fim_handle_newsletter_subscription');

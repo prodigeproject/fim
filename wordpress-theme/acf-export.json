@@ -1,0 +1,1178 @@
+[
+    {
+        "key": "group_program_fields",
+        "title": "Program Fields",
+        "fields": [
+            {
+                "key": "field_program_tanggal_mulai",
+                "label": "Tanggal Mulai",
+                "name": "tanggal_mulai",
+                "aria-label": "",
+                "type": "date_picker",
+                "instructions": "Pilih tanggal mulai program",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "display_format": "d/m/Y",
+                "return_format": "Y-m-d",
+                "first_day": 1
+            },
+            {
+                "key": "field_program_tanggal_selesai",
+                "label": "Tanggal Selesai",
+                "name": "tanggal_selesai",
+                "aria-label": "",
+                "type": "date_picker",
+                "instructions": "Pilih tanggal selesai program",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "display_format": "d/m/Y",
+                "return_format": "Y-m-d",
+                "first_day": 1
+            },
+            {
+                "key": "field_program_lokasi",
+                "label": "Lokasi",
+                "name": "lokasi",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Lokasi pelaksanaan program",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Contoh: Jakarta, Online, Hybrid"
+            },
+            {
+                "key": "field_program_kuota",
+                "label": "Kuota Peserta",
+                "name": "kuota",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Jumlah maksimal peserta",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 100,
+                "min": 1,
+                "max": 10000,
+                "step": 1,
+                "placeholder": ""
+            },
+            {
+                "key": "field_program_pendaftaran_url",
+                "label": "URL Pendaftaran",
+                "name": "pendaftaran_url",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "Link formulir pendaftaran",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "https://forms.google.com/..."
+            },
+            {
+                "key": "field_program_status",
+                "label": "Status Pendaftaran",
+                "name": "status",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Status pendaftaran saat ini",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Dibuka": "Dibuka",
+                    "Ditutup": "Ditutup",
+                    "Segera": "Segera Dibuka",
+                    "Penuh": "Kuota Penuh"
+                },
+                "default_value": "Segera",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_program_deskripsi_singkat",
+                "label": "Deskripsi Singkat",
+                "name": "deskripsi_singkat",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Deskripsi singkat program (maks 200 karakter)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 200,
+                "rows": 3,
+                "placeholder": ""
+            },
+            {
+                "key": "field_program_benefit",
+                "label": "Manfaat Program",
+                "name": "benefit",
+                "aria-label": "",
+                "type": "repeater",
+                "instructions": "Daftar manfaat yang didapat peserta",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "min": 0,
+                "max": 10,
+                "layout": "table",
+                "button_label": "Tambah Manfaat",
+                "sub_fields": [
+                    {
+                        "key": "field_program_benefit_item",
+                        "label": "Manfaat",
+                        "name": "item",
+                        "aria-label": "",
+                        "type": "text",
+                        "instructions": "",
+                        "required": 1,
+                        "conditional_logic": 0,
+                        "wrapper": {
+                            "width": "",
+                            "class": "",
+                            "id": ""
+                        }
+                    }
+                ]
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "program"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk program pelatihan FIM",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_alumni_story_fields",
+        "title": "Alumni Story Fields",
+        "fields": [
+            {
+                "key": "field_alumni_name",
+                "label": "Nama Alumni",
+                "name": "alumni_name",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nama lengkap alumni",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Nama lengkap"
+            },
+            {
+                "key": "field_alumni_batch",
+                "label": "Batch/Angkatan",
+                "name": "batch",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Angkatan FIM (contoh: FIM 15)",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 20,
+                "placeholder": "FIM 15"
+            },
+            {
+                "key": "field_alumni_sector",
+                "label": "Sektor",
+                "name": "sector",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Sektor karir/kontribusi alumni",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Pendidikan": "Pendidikan",
+                    "Sosial": "Sosial",
+                    "Teknologi": "Teknologi",
+                    "Kesehatan": "Kesehatan",
+                    "Lingkungan": "Lingkungan",
+                    "Bisnis": "Bisnis",
+                    "Pemerintahan": "Pemerintahan",
+                    "Internasional": "Internasional"
+                },
+                "default_value": "Sosial",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_alumni_position",
+                "label": "Jabatan",
+                "name": "position",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Jabatan atau posisi saat ini",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Founder, CEO, Manager, dll"
+            },
+            {
+                "key": "field_alumni_company",
+                "label": "Perusahaan/Organisasi",
+                "name": "company",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nama perusahaan atau organisasi",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Nama perusahaan/organisasi"
+            },
+            {
+                "key": "field_alumni_location",
+                "label": "Lokasi",
+                "name": "location",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Kota atau negara saat ini",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Jakarta, Indonesia"
+            },
+            {
+                "key": "field_alumni_quote",
+                "label": "Quote",
+                "name": "quote",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Kutipan inspiratif dari alumni",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 500,
+                "rows": 4,
+                "placeholder": "Ceritakan pengalaman dan dampak FIM..."
+            },
+            {
+                "key": "field_alumni_impact",
+                "label": "Dampak/Pencapaian",
+                "name": "impact",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Dampak atau pencapaian utama",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 100,
+                "placeholder": "Contoh: Membina 500+ mahasiswa"
+            },
+            {
+                "key": "field_alumni_video_url",
+                "label": "URL Video",
+                "name": "video_url",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "Link video testimonial YouTube (opsional)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "https://youtube.com/watch?v=..."
+            },
+            {
+                "key": "field_alumni_photo",
+                "label": "Foto Alumni",
+                "name": "photo",
+                "aria-label": "",
+                "type": "image",
+                "instructions": "Foto profil alumni (rasio 1:1 disarankan)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "array",
+                "library": "all",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": 1000,
+                "max_height": 1000,
+                "max_size": 2,
+                "mime_types": "jpg, jpeg, png, webp"
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "alumni_story"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk cerita alumni FIM",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_regional_fields",
+        "title": "Regional Fields",
+        "fields": [
+            {
+                "key": "field_regional_provinsi",
+                "label": "Provinsi",
+                "name": "provinsi",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nama provinsi",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "DKI Jakarta"
+            },
+            {
+                "key": "field_regional_pulau",
+                "label": "Pulau",
+                "name": "pulau",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Wilayah pulau",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Sumatera": "Sumatera",
+                    "Jawa": "Jawa",
+                    "Kalimantan": "Kalimantan",
+                    "Sulawesi": "Sulawesi",
+                    "Bali & Nusa Tenggara": "Bali & Nusa Tenggara",
+                    "Maluku & Papua": "Maluku & Papua"
+                },
+                "default_value": "Jawa",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_regional_koordinator",
+                "label": "Koordinator",
+                "name": "koordinator",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nama koordinator regional",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Nama lengkap koordinator"
+            },
+            {
+                "key": "field_regional_email",
+                "label": "Email",
+                "name": "email",
+                "aria-label": "",
+                "type": "email",
+                "instructions": "Email resmi regional",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "regional@forumindonesiamuda.org"
+            },
+            {
+                "key": "field_regional_instagram",
+                "label": "Instagram",
+                "name": "instagram",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Handle Instagram (tanpa @)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 50,
+                "placeholder": "fim.jakarta"
+            },
+            {
+                "key": "field_regional_whatsapp",
+                "label": "WhatsApp",
+                "name": "whatsapp",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nomor WhatsApp (format: 62xxx)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 20,
+                "placeholder": "6281234567890"
+            },
+            {
+                "key": "field_regional_jumlah_anggota",
+                "label": "Jumlah Anggota",
+                "name": "jumlah_anggota",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Jumlah anggota aktif",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 0,
+                "min": 0,
+                "max": "",
+                "step": 1,
+                "placeholder": ""
+            },
+            {
+                "key": "field_regional_tahun_berdiri",
+                "label": "Tahun Berdiri",
+                "name": "tahun_berdiri",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Tahun regional didirikan",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 2020,
+                "min": 2003,
+                "max": 2030,
+                "step": 1,
+                "placeholder": ""
+            },
+            {
+                "key": "field_regional_alamat",
+                "label": "Alamat Sekretariat",
+                "name": "alamat",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Alamat sekretariat regional (opsional)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 300,
+                "rows": 3,
+                "placeholder": "Alamat lengkap sekretariat..."
+            },
+            {
+                "key": "field_regional_deskripsi",
+                "label": "Deskripsi",
+                "name": "deskripsi",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Deskripsi singkat regional",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 500,
+                "rows": 4,
+                "placeholder": "Tentang regional ini..."
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "regional"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk regional FIM",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_faq_fields",
+        "title": "FAQ Fields",
+        "fields": [
+            {
+                "key": "field_faq_kategori",
+                "label": "Kategori",
+                "name": "kategori",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Kategori FAQ",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Umum": "Umum",
+                    "Pendaftaran": "Pendaftaran",
+                    "Program": "Program",
+                    "Donasi": "Donasi",
+                    "Relawan": "Relawan",
+                    "Regional": "Regional",
+                    "Alumni": "Alumni"
+                },
+                "default_value": "Umum",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_faq_urutan",
+                "label": "Urutan",
+                "name": "urutan",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Urutan tampil (angka kecil tampil duluan)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 10,
+                "min": 1,
+                "max": 99,
+                "step": 1,
+                "placeholder": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "faq"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "side",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk FAQ",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_partner_fields",
+        "title": "Partner Fields",
+        "fields": [
+            {
+                "key": "field_partner_website_url",
+                "label": "Website URL",
+                "name": "website_url",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "Website resmi partner",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "https://partner.com"
+            },
+            {
+                "key": "field_partner_kategori",
+                "label": "Kategori Partner",
+                "name": "kategori",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Jenis partnership",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Sponsor Utama": "Sponsor Utama",
+                    "Sponsor Pendukung": "Sponsor Pendukung",
+                    "Partner Media": "Partner Media",
+                    "Partner Komunitas": "Partner Komunitas",
+                    "Partner Institusi": "Partner Institusi"
+                },
+                "default_value": "Partner Komunitas",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_partner_deskripsi",
+                "label": "Deskripsi",
+                "name": "deskripsi",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Deskripsi singkat partner",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 200,
+                "rows": 3,
+                "placeholder": "Tentang partner ini..."
+            },
+            {
+                "key": "field_partner_urutan",
+                "label": "Urutan Tampil",
+                "name": "urutan",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Urutan tampil (angka kecil tampil duluan)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 10,
+                "min": 1,
+                "max": 99,
+                "step": 1,
+                "placeholder": ""
+            },
+            {
+                "key": "field_partner_aktif",
+                "label": "Status Aktif",
+                "name": "aktif",
+                "aria-label": "",
+                "type": "true_false",
+                "instructions": "Apakah partnership masih aktif?",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 1,
+                "ui": 1,
+                "ui_on_text": "Aktif",
+                "ui_off_text": "Tidak Aktif"
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "partner"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk partner FIM",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_fim_club_fields",
+        "title": "FIM Club Fields",
+        "fields": [
+            {
+                "key": "field_fim_club_kategori",
+                "label": "Kategori Club",
+                "name": "kategori_club",
+                "aria-label": "",
+                "type": "select",
+                "instructions": "Jenis FIM Club",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "Olahraga": "Olahraga",
+                    "Seni & Budaya": "Seni & Budaya",
+                    "Teknologi": "Teknologi",
+                    "Bisnis": "Bisnis",
+                    "Sosial": "Sosial",
+                    "Lingkungan": "Lingkungan",
+                    "Hobi": "Hobi"
+                },
+                "default_value": "Hobi",
+                "return_format": "value",
+                "multiple": 0,
+                "allow_null": 0,
+                "ui": 1,
+                "ajax": 0,
+                "placeholder": ""
+            },
+            {
+                "key": "field_fim_club_koordinator",
+                "label": "Koordinator",
+                "name": "koordinator_club",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nama koordinator club",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Nama koordinator"
+            },
+            {
+                "key": "field_fim_club_jumlah_anggota",
+                "label": "Jumlah Anggota",
+                "name": "jumlah_anggota_club",
+                "aria-label": "",
+                "type": "number",
+                "instructions": "Jumlah anggota aktif",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 0,
+                "min": 0,
+                "max": "",
+                "step": 1,
+                "placeholder": ""
+            },
+            {
+                "key": "field_fim_club_instagram",
+                "label": "Instagram",
+                "name": "instagram_club",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Handle Instagram (tanpa @)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 50,
+                "placeholder": "fim.runners"
+            },
+            {
+                "key": "field_fim_club_whatsapp",
+                "label": "Link WhatsApp Group",
+                "name": "whatsapp_club",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "Link grup WhatsApp (opsional)",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "https://chat.whatsapp.com/..."
+            },
+            {
+                "key": "field_fim_club_jadwal",
+                "label": "Jadwal Kegiatan",
+                "name": "jadwal_club",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Jadwal kegiatan rutin",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": "",
+                "placeholder": "Setiap Sabtu, 07:00 WIB"
+            },
+            {
+                "key": "field_fim_club_deskripsi",
+                "label": "Deskripsi",
+                "name": "deskripsi_club",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Deskripsi tentang club",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "maxlength": 500,
+                "rows": 4,
+                "placeholder": "Tentang club ini..."
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "fim_club"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Custom fields untuk FIM Club",
+        "show_in_rest": 1
+    },
+    {
+        "key": "group_site_settings",
+        "title": "Pengaturan Situs FIM",
+        "fields": [
+            {
+                "key": "field_site_phone",
+                "label": "Nomor Telepon/WhatsApp",
+                "name": "site_phone",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Nomor kontak utama FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "+62 852-1358-0323",
+                "maxlength": "",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_email",
+                "label": "Email",
+                "name": "site_email",
+                "aria-label": "",
+                "type": "email",
+                "instructions": "Email resmi FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "halo@forumindonesiamuda.org",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_instagram",
+                "label": "Instagram",
+                "name": "site_instagram",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "URL Instagram FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "https://instagram.com/fimnews",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_facebook",
+                "label": "Facebook",
+                "name": "site_facebook",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "URL Facebook FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "https://facebook.com/forumindonesiamuda",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_linkedin",
+                "label": "LinkedIn",
+                "name": "site_linkedin",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "URL LinkedIn FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "https://linkedin.com/company/forum-indonesia-muda",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_youtube",
+                "label": "YouTube",
+                "name": "site_youtube",
+                "aria-label": "",
+                "type": "url",
+                "instructions": "URL YouTube FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "50",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "https://www.youtube.com/ForumIndonesiaMuda",
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_tagline",
+                "label": "Tagline",
+                "name": "site_tagline",
+                "aria-label": "",
+                "type": "text",
+                "instructions": "Tagline/slogan FIM",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "Bersama Mewujudkan Masa Depan Gemilang Indonesia",
+                "maxlength": 100,
+                "placeholder": ""
+            },
+            {
+                "key": "field_site_description",
+                "label": "Deskripsi Singkat",
+                "name": "site_description",
+                "aria-label": "",
+                "type": "textarea",
+                "instructions": "Deskripsi singkat untuk footer",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang yang menerangi masa depan bangsa. Berdiri sejak 2003.",
+                "maxlength": 300,
+                "rows": 3,
+                "placeholder": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "options_page",
+                    "operator": "==",
+                    "value": "fim-settings"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": "Pengaturan umum situs FIM",
+        "show_in_rest": 1
+    }
+]
