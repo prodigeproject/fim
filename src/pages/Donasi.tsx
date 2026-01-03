@@ -64,9 +64,9 @@ const Donasi = () => {
       {/* Two Column Layout - Main Donations vs Disaster */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
-            {/* LEFT: Main FIM Donations - 3 columns */}
-            <div className="lg:col-span-3 space-y-12">
+          <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
+            {/* LEFT: Main FIM Donations - 2 columns */}
+            <div className="lg:col-span-2 space-y-12">
               {/* Why Donate */}
               <div>
                 <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
@@ -210,76 +210,89 @@ const Donasi = () => {
               </div>
             </div>
 
-            {/* Vertical Divider */}
-            <div className="hidden lg:flex justify-center">
-              <div className="w-px bg-border h-full" />
-            </div>
-
-            {/* Horizontal Divider for Mobile */}
-            <div className="lg:hidden">
-              <div className="h-px bg-border w-full my-8" />
-            </div>
-
-            {/* RIGHT: Disaster Relief - 1 column */}
+            {/* RIGHT: Disaster Relief - 1 column but wider */}
             <div className="lg:col-span-1">
-              <div className="bg-destructive/5 rounded-2xl p-6 border-2 border-destructive/20 sticky top-24">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-destructive/20 rounded-xl flex items-center justify-center">
-                    <AlertTriangle className="h-6 w-6 text-destructive" />
+              <div className="bg-destructive/5 rounded-2xl p-6 lg:p-8 border-2 border-destructive/20 sticky top-24">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-destructive/20 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="h-7 w-7 text-destructive" />
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">
-                    🆘 Donasi Bencana
-                  </h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">
+                      Donasi Bencana
+                    </h2>
+                    <p className="text-sm text-destructive font-medium">🆘 FIM Tanggap Bencana</p>
+                  </div>
                 </div>
                 
-                <p className="text-muted-foreground text-sm mb-6">
-                  FIM aktif dalam tanggap darurat bencana melalui program FIM Tanggap Bencana.
+                <p className="text-muted-foreground mb-6 leading-relaxed">
+                  FIM aktif dalam tanggap darurat bencana melalui program <strong>FIM Tanggap Bencana</strong>. 
+                  Kami berkolaborasi dengan relawan dan regional di seluruh Indonesia.
                 </p>
 
-                <div className="bg-card rounded-xl p-4 mb-6 border border-border">
-                  <p className="text-sm text-muted-foreground italic mb-4">
+                <div className="bg-card rounded-xl p-5 mb-6 border border-border">
+                  <p className="text-sm text-muted-foreground italic mb-5">
                     Update penggalangan donasi untuk bencana kemanusiaan dapat diikuti melalui:
                   </p>
                   
-                  <a
-                    href="https://instagram.com/fimtanggapbencana"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg hover:from-pink-500/20 hover:to-purple-500/20 transition-colors mb-3"
-                  >
-                    <Instagram className="h-5 w-5 text-pink-500" />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">@fimtanggapbencana</p>
-                      <p className="text-xs text-muted-foreground">Instagram Resmi</p>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
-                  </a>
+                  <div className="space-y-3">
+                    <a
+                      href="https://instagram.com/fimtanggapbencana"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-4 p-4 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl hover:from-pink-500/20 hover:to-purple-500/20 transition-colors group"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Instagram className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-foreground">@fimtanggapbencana</p>
+                        <p className="text-sm text-muted-foreground">Instagram Resmi Tanggap Bencana</p>
+                      </div>
+                      <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </a>
 
-                  <a
-                    href="https://instagram.com/fimnews"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg hover:from-pink-500/20 hover:to-purple-500/20 transition-colors"
-                  >
-                    <Instagram className="h-5 w-5 text-pink-500" />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">@fimnews</p>
-                      <p className="text-xs text-muted-foreground">Media Resmi FIM</p>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
-                  </a>
+                    <a
+                      href="https://instagram.com/fimnews"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-4 p-4 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl hover:from-pink-500/20 hover:to-purple-500/20 transition-colors group"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Instagram className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-foreground">@fimnews</p>
+                        <p className="text-sm text-muted-foreground">Media Resmi FIM</p>
+                      </div>
+                      <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </a>
+                  </div>
                 </div>
 
-                <div className="bg-muted rounded-xl p-4">
-                  <h4 className="font-semibold text-foreground text-sm mb-2">📋 Transparansi</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Laporan penggunaan dana donasi bencana diinformasikan secara spesifik di akun Instagram @fimtanggapbencana dan @fimnews.
+                <div className="bg-muted rounded-xl p-5 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Transparansi Dana</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Laporan penggunaan dana donasi bencana diinformasikan secara spesifik dan rutin 
+                        di akun Instagram @fimtanggapbencana dan @fimnews.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center p-4 bg-destructive/10 rounded-xl border border-destructive/20">
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">📢 Info Penting</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cara berdonasi untuk bencana akan diinformasikan saat ada penggalangan aktif.
                   </p>
                 </div>
-
-                <p className="text-xs text-muted-foreground mt-4 italic text-center">
-                  Cara berdonasi untuk bencana akan diinformasikan saat ada penggalangan aktif.
-                </p>
               </div>
             </div>
           </div>
