@@ -1,0 +1,239 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+type AppRole = "super_admin" | "moderator";
+
+interface CreateAdminUserRequest {
+  email: string;
+  password: string;
+  full_name: string;
+  role: AppRole;
+}
+
+function isValidRole(role: unknown): role is AppRole {
+  return role === "super_admin" || role === "moderator";
+}
+
+function usernameFromEmail(email: string) {
+  const base = email.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_\-\.]/g, "") || "user";
+  return base.slice(0, 24) || "user";
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const authHeader = req.headers.get("Authorization") ?? "";
+
+    // Client bound to the caller JWT (RLS applies)
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseUser.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Server-side role check
+    const { data: isSuperAdmin, error: roleErr } = await supabaseAdmin.rpc(
+      "has_role",
+      {
+        _user_id: user.id,
+        _role: "super_admin",
+      }
+    );
+
+    if (roleErr) {
+      console.error("Role check error:", roleErr);
+      return new Response(JSON.stringify({ error: "Gagal memverifikasi role" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!isSuperAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const body = (await req.json()) as Partial<CreateAdminUserRequest>;
+
+    const email = body.email?.toLowerCase().trim() ?? "";
+    const password = body.password ?? "";
+    const fullName = body.full_name?.trim() ?? "";
+    const role = body.role;
+
+    if (!email || !email.includes("@")) {
+      return new Response(JSON.stringify({ error: "Email tidak valid" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!password || password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: "Password minimal 8 karakter" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (!fullName) {
+      return new Response(JSON.stringify({ error: "Nama lengkap wajib diisi" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!isValidRole(role)) {
+      return new Response(JSON.stringify({ error: "Role tidak valid" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const username = usernameFromEmail(email);
+
+    // Create auth user
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        username,
+      },
+    });
+
+    if (createErr || !created.user) {
+      console.error("Create user error:", createErr);
+      return new Response(
+        JSON.stringify({ error: createErr?.message || "Gagal membuat user" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const newUserId = created.user.id;
+
+    // Create profile row
+    const { error: profileErr } = await supabaseAdmin.from("profiles").insert({
+      id: newUserId,
+      username,
+      email,
+      full_name: fullName,
+      must_change_password: true,
+      is_active: true,
+    });
+
+    if (profileErr) {
+      console.error("Profile insert error:", profileErr);
+      // Attempt rollback auth user to avoid dangling accounts
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(newUserId);
+      } catch (rollbackErr) {
+        console.error("Rollback deleteUser failed:", rollbackErr);
+      }
+      return new Response(
+        JSON.stringify({ error: "Gagal membuat profil pengguna" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Assign role
+    const { error: roleAssignErr } = await supabaseAdmin.from("user_roles").insert({
+      user_id: newUserId,
+      role,
+      assigned_by: user.id,
+    });
+
+    if (roleAssignErr) {
+      console.error("Role insert error:", roleAssignErr);
+      // Best-effort rollback
+      try {
+        await supabaseAdmin.from("profiles").delete().eq("id", newUserId);
+        await supabaseAdmin.auth.admin.deleteUser(newUserId);
+      } catch (rollbackErr) {
+        console.error("Rollback failed:", rollbackErr);
+      }
+      return new Response(JSON.stringify({ error: "Gagal menetapkan role" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Audit log (best effort)
+    void supabaseAdmin
+      .rpc("log_audit_event", {
+        p_user_id: user.id,
+        p_action: "create_admin_user",
+        p_resource_type: "user",
+        p_resource_id: newUserId,
+        p_details: { email, role },
+      })
+      .then(({ error }) => {
+        if (error) console.error("Audit log failed:", error);
+      });
+
+    return new Response(
+      JSON.stringify({ success: true, user_id: newUserId }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  } catch (error: any) {
+    console.error("admin-create-user error:", error);
+    return new Response(
+      JSON.stringify({ error: error?.message || "Terjadi kesalahan" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);
