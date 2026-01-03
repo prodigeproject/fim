@@ -92,7 +92,8 @@ export default function ArticlesManagement() {
     queryFn: async () => {
       let query = supabase
         .from("articles")
-        .select(`
+        .select(
+          `
           id,
           slug,
           title,
@@ -103,20 +104,34 @@ export default function ArticlesManagement() {
           created_at,
           published_at,
           author_id
-        `)
+        `
+        )
         .order("created_at", { ascending: false });
-      
+
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter as "draft" | "scheduled" | "published" | "archived");
+        query = query.eq(
+          "status",
+          statusFilter as "draft" | "scheduled" | "published" | "archived"
+        );
       }
       if (categoryFilter !== "all") {
-        query = query.eq("category", categoryFilter as "pengumuman" | "prestasi" | "kegiatan" | "sosial" | "opini" | "tips");
+        query = query.eq(
+          "category",
+          categoryFilter as
+            | "pengumuman"
+            | "prestasi"
+            | "kegiatan"
+            | "sosial"
+            | "opini"
+            | "tips"
+        );
       }
 
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   // Fetch author profiles separately
@@ -417,14 +432,14 @@ export default function ArticlesManagement() {
             </div>
           )}
 
-          {/* Table */}
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16" />
-              ))}
-            </div>
-          ) : filteredArticles?.length ? (
+           {/* Table */}
+           {isLoading || !user ? (
+             <div className="space-y-3">
+               {[...Array(5)].map((_, i) => (
+                 <Skeleton key={i} className="h-16" />
+               ))}
+             </div>
+           ) : filteredArticles?.length ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -463,14 +478,19 @@ export default function ArticlesManagement() {
                           />
                         </TableCell>
                       )}
-                      <TableCell className="max-w-xs">
-                        <div className="flex items-center gap-2">
-                          {article.is_pinned && (
-                            <Pin className="h-4 w-4 text-accent flex-shrink-0" />
-                          )}
-                          <span className="font-medium truncate">{article.title}</span>
-                        </div>
-                      </TableCell>
+                       <TableCell className="max-w-xs">
+                         <div className="flex items-center gap-2">
+                           {article.is_pinned && (
+                             <Pin className="h-4 w-4 text-accent flex-shrink-0" />
+                           )}
+                           <span className="font-medium truncate">{article.title}</span>
+                           {!article.slug && (
+                             <Badge variant="secondary" className="ml-2">
+                               Tanpa slug
+                             </Badge>
+                           )}
+                         </div>
+                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
                           {categoryLabels[article.category] || article.category}
@@ -493,12 +513,23 @@ export default function ArticlesManagement() {
                         {new Date(article.created_at).toLocaleDateString("id-ID")}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Link to={`/blog/${article.slug}`} target="_blank">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                         <div className="flex items-center gap-1">
+                           {article.slug ? (
+                             <Link to={`/blog/${article.slug}`} target="_blank">
+                               <Button variant="ghost" size="icon">
+                                 <Eye className="h-4 w-4" />
+                               </Button>
+                             </Link>
+                           ) : (
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               disabled
+                               title="Artikel ini belum memiliki slug"
+                             >
+                               <Eye className="h-4 w-4" />
+                             </Button>
+                           )}
                           
                           {canEdit(article) && (
                             <Link to={`/fim-admin-portal-2024/articles/${article.id}/edit`}>

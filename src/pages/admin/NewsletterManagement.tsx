@@ -4,36 +4,51 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
+  AlertDialogContent as AlertDialogContentUI,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  Search, 
-  Download, 
-  Trash2, 
-  Mail, 
+import {
+  Search,
+  Download,
+  Trash2,
+  Mail,
   Users,
   UserCheck,
   UserX,
-  Loader2
+  Loader2,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +60,9 @@ export default function NewsletterManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastContent, setBroadcastContent] = useState("");
 
   // Fetch subscribers
   const { data: subscribers, isLoading } = useQuery({
@@ -109,29 +127,66 @@ export default function NewsletterManagement() {
     },
   });
 
+  // Broadcast email
+  const broadcastMutation = useMutation({
+    mutationFn: async (payload: { subject: string; content: string }) => {
+      const { data, error } = await supabase.functions.invoke(
+        "newsletter-broadcast",
+        {
+          body: payload,
+        }
+      );
+      if (error) throw error;
+      return data as { success: boolean; total: number; sent: number; failed: number };
+    },
+    onSuccess: (data) => {
+      setIsBroadcastOpen(false);
+      setBroadcastSubject("");
+      setBroadcastContent("");
+      toast({
+        title: "Broadcast terkirim",
+        description: `Target: ${data.total}, Terkirim: ${data.sent}, Gagal: ${data.failed}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal mengirim broadcast",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Export to CSV
   const exportToCSV = () => {
     if (!subscribers?.length) return;
 
-    const activeSubscribers = subscribers.filter(s => s.is_active);
+    const activeSubscribers = subscribers.filter((s) => s.is_active);
     const headers = ["Email", "Nama", "Tanggal Berlangganan", "Status"];
-    const rows = activeSubscribers.map(s => [
+    const rows = activeSubscribers.map((s) => [
       s.email,
       s.name || "",
-      s.subscribed_at ? format(new Date(s.subscribed_at), "dd MMM yyyy", { locale: id }) : "",
-      s.is_active ? "Aktif" : "Tidak Aktif"
+      s.subscribed_at
+        ? format(new Date(s.subscribed_at), "dd MMM yyyy", { locale: id })
+        : "",
+      s.is_active ? "Aktif" : "Tidak Aktif",
     ]);
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `newsletter-subscribers-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute(
+      "download",
+      `newsletter-subscribers-${format(new Date(), "yyyy-MM-dd")}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -156,18 +211,78 @@ export default function NewsletterManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Newsletter</h1>
-          <p className="text-muted-foreground">
-            Kelola subscriber newsletter FIM
-          </p>
-        </div>
-        <Button onClick={exportToCSV} disabled={!subscribers?.length}>
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
-        </Button>
-      </div>
+       <div className="flex items-center justify-between">
+         <div>
+           <h1 className="text-2xl font-bold">Newsletter</h1>
+           <p className="text-muted-foreground">
+             Kelola subscriber newsletter FIM
+           </p>
+         </div>
+         <div className="flex items-center gap-2">
+           {isSuperAdmin && (
+             <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
+               <DialogTrigger asChild>
+                 <Button variant="outline">
+                   <Send className="h-4 w-4 mr-2" />
+                   Kirim Broadcast
+                 </Button>
+               </DialogTrigger>
+               <DialogContent>
+                 <DialogHeader>
+                   <DialogTitle>Kirim Email Broadcast</DialogTitle>
+                 </DialogHeader>
+                 <div className="space-y-4 mt-4">
+                   <div className="space-y-2">
+                     <label className="text-sm font-medium">Subjek</label>
+                     <Input
+                       value={broadcastSubject}
+                       onChange={(e) => setBroadcastSubject(e.target.value)}
+                       placeholder="Contoh: Update Program FIM Januari"
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-sm font-medium">Konten (teks)</label>
+                     <Textarea
+                       value={broadcastContent}
+                       onChange={(e) => setBroadcastContent(e.target.value)}
+                       placeholder="Tulis isi email..."
+                       rows={8}
+                     />
+                     <p className="text-xs text-muted-foreground">
+                       Email akan dikirim ke subscriber aktif yang sudah terkonfirmasi.
+                     </p>
+                   </div>
+                   <Button
+                     className="w-full"
+                     onClick={() =>
+                       broadcastMutation.mutate({
+                         subject: broadcastSubject,
+                         content: broadcastContent,
+                       })
+                     }
+                     disabled={
+                       broadcastMutation.isPending ||
+                       !broadcastSubject.trim() ||
+                       !broadcastContent.trim()
+                     }
+                   >
+                     {broadcastMutation.isPending ? (
+                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                     ) : (
+                       <Send className="h-4 w-4 mr-2" />
+                     )}
+                     Kirim Sekarang
+                   </Button>
+                 </div>
+               </DialogContent>
+             </Dialog>
+           )}
+           <Button onClick={exportToCSV} disabled={!subscribers?.length}>
+             <Download className="h-4 w-4 mr-2" />
+             Export CSV
+           </Button>
+         </div>
+       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -289,37 +404,37 @@ export default function NewsletterManagement() {
                             )}
                           </Button>
                           
-                          {isSuperAdmin && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Hapus Subscriber?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Anda yakin ingin menghapus {subscriber.email}? 
-                                    Tindakan ini tidak dapat dibatalkan.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Batal</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteMutation.mutate(subscriber.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    {deleteMutation.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      "Hapus"
-                                    )}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                           {isSuperAdmin && (
+                             <AlertDialog>
+                               <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="sm">
+                                   <Trash2 className="h-4 w-4 text-destructive" />
+                                 </Button>
+                               </AlertDialogTrigger>
+                               <AlertDialogContentUI>
+                                 <AlertDialogHeader>
+                                   <AlertDialogTitle>Hapus Subscriber?</AlertDialogTitle>
+                                   <AlertDialogDescription>
+                                     Anda yakin ingin menghapus {subscriber.email}?
+                                     Tindakan ini tidak dapat dibatalkan.
+                                   </AlertDialogDescription>
+                                 </AlertDialogHeader>
+                                 <AlertDialogFooter>
+                                   <AlertDialogCancel>Batal</AlertDialogCancel>
+                                   <AlertDialogAction
+                                     onClick={() => deleteMutation.mutate(subscriber.id)}
+                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                   >
+                                     {deleteMutation.isPending ? (
+                                       <Loader2 className="h-4 w-4 animate-spin" />
+                                     ) : (
+                                       "Hapus"
+                                     )}
+                                   </AlertDialogAction>
+                                 </AlertDialogFooter>
+                               </AlertDialogContentUI>
+                             </AlertDialog>
+                           )}
                         </div>
                       </TableCell>
                     </TableRow>

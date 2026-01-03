@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -43,28 +43,93 @@ export default function UsersManagement() {
   const [newUserRole, setNewUserRole] = useState<"super_admin" | "moderator">("moderator");
   const [newUserPassword, setNewUserPassword] = useState("");
 
-  // Fetch users with roles
+  // Fetch users (profiles)
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select(`
+        .select(
+          `
           id,
           username,
           full_name,
           email,
           is_active,
           last_login_at,
-          created_at,
-          user_roles!user_roles_user_id_fkey(role)
-        `)
+          created_at
+        `
+        )
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
     enabled: isSuperAdmin,
+  });
+
+  // Fetch roles separately (avoid relying on FK joins)
+  const { data: rolesMap } = useQuery({
+    queryKey: ["admin-users-roles", users?.map((u) => u.id).join(",")],
+    queryFn: async () => {
+      if (!users?.length) return {} as Record<string, "super_admin" | "moderator">;
+
+      const ids = users.map((u) => u.id);
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", ids);
+
+      if (error) throw error;
+
+      const map: Record<string, "super_admin" | "moderator"> = {};
+      (data ?? []).forEach((r: any) => {
+        // If a user ever has multiple rows, prefer super_admin
+        if (map[r.user_id] === "super_admin") return;
+        map[r.user_id] = r.role;
+      });
+      return map;
+    },
+    enabled: isSuperAdmin && !!users?.length,
+  });
+
+  // Create admin/moderator user
+  const createUserMutation = useMutation({
+    mutationFn: async (payload: {
+      email: string;
+      password: string;
+      full_name: string;
+      role: "super_admin" | "moderator";
+    }) => {
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        body: {
+          email: payload.email.trim(),
+          password: payload.password,
+          full_name: payload.full_name.trim(),
+          role: payload.role,
+        },
+      });
+
+      if (error) throw error;
+      return data as { success: boolean; user_id: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
+      setIsAddOpen(false);
+      setNewUserEmail("");
+      setNewUserName("");
+      setNewUserPassword("");
+      setNewUserRole("moderator");
+      toast({ title: "Pengguna berhasil dibuat" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal membuat pengguna",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Toggle user active status
@@ -174,12 +239,32 @@ export default function UsersManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" disabled>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button
+                className="w-full"
+                onClick={() =>
+                  createUserMutation.mutate({
+                    email: newUserEmail,
+                    password: newUserPassword,
+                    full_name: newUserName,
+                    role: newUserRole,
+                  })
+                }
+                disabled={
+                  createUserMutation.isPending ||
+                  !newUserEmail.trim() ||
+                  !newUserName.trim() ||
+                  newUserPassword.length < 8
+                }
+              >
+                {createUserMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
                 Buat Pengguna
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Fitur ini memerlukan konfigurasi email untuk mengirim undangan
+                Akun akan aktif, dan diminta mengganti password saat login pertama.
               </p>
             </div>
           </DialogContent>
@@ -217,19 +302,19 @@ export default function UsersManagement() {
                       <div className="text-xs text-muted-foreground">@{userItem.username}</div>
                     </TableCell>
                     <TableCell>{userItem.email}</TableCell>
-                    <TableCell>
-                      {userItem.user_roles?.[0]?.role === "super_admin" ? (
-                        <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                          <ShieldCheck className="h-3 w-3 mr-1" />
-                          Super Admin
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Moderator
-                        </Badge>
-                      )}
-                    </TableCell>
+                     <TableCell>
+                       {rolesMap?.[userItem.id] === "super_admin" ? (
+                         <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                           <ShieldCheck className="h-3 w-3 mr-1" />
+                           Super Admin
+                         </Badge>
+                       ) : (
+                         <Badge variant="secondary">
+                           <Shield className="h-3 w-3 mr-1" />
+                           Moderator
+                         </Badge>
+                       )}
+                     </TableCell>
                     <TableCell>
                       {userItem.is_active ? (
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
