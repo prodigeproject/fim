@@ -176,6 +176,34 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           .from("profiles")
           .update({ last_login_at: new Date().toISOString() })
           .eq("id", data.user.id);
+
+        // Fetch profile and role for notification
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", data.user.id)
+          .single();
+
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
+        // Send login notification email (fire and forget)
+        supabase.functions.invoke("notify-login", {
+          body: {
+            userId: data.user.id,
+            email: data.user.email,
+            username: profileData?.username || email.split("@")[0],
+            role: roleData?.role || "unknown",
+            ipAddress: "client",
+            userAgent: navigator.userAgent,
+            loginTime: new Date().toISOString(),
+          },
+        }).catch((err) => {
+          console.error("Failed to send login notification:", err);
+        });
       }
 
       return { error: null };
