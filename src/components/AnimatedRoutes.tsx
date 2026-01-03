@@ -10,6 +10,7 @@ import FimClub from "@/pages/tentang/FimClub";
 import GabungRelawan from "@/pages/GabungRelawan";
 import CeritaAlumni from "@/pages/CeritaAlumni";
 import Blog from "@/pages/Blog";
+import BlogDetail from "@/pages/BlogDetail";
 import Donasi from "@/pages/Donasi";
 import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
@@ -41,6 +42,7 @@ const AnimatedRoutes = () => {
         <Route path="/gabung-relawan" element={<PageTransition><GabungRelawan /></PageTransition>} />
         <Route path="/cerita-alumni" element={<PageTransition><CeritaAlumni /></PageTransition>} />
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+        <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
         <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
         <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
         

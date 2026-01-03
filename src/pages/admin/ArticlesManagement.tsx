@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Table, 
   TableBody, 
@@ -21,6 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
   Search, 
@@ -30,7 +38,11 @@ import {
   Pin, 
   PinOff,
   Loader2,
-  FileText
+  FileText,
+  MoreHorizontal,
+  Archive,
+  Send,
+  CheckSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,6 +82,9 @@ export default function ArticlesManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<string>("");
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
 
   // Fetch articles
   const { data: articles, isLoading } = useQuery({
@@ -169,6 +184,63 @@ export default function ArticlesManagement() {
     },
   });
 
+  // Bulk action mutation
+  const bulkMutation = useMutation({
+    mutationFn: async ({ action, ids }: { action: string; ids: string[] }) => {
+      if (action === "delete") {
+        const { error } = await supabase
+          .from("articles")
+          .delete()
+          .in("id", ids);
+        if (error) throw error;
+      } else if (action === "archive") {
+        const { error } = await supabase
+          .from("articles")
+          .update({ status: "archived" })
+          .in("id", ids);
+        if (error) throw error;
+      } else if (action === "publish") {
+        const { error } = await supabase
+          .from("articles")
+          .update({ 
+            status: "published",
+            published_at: new Date().toISOString()
+          })
+          .in("id", ids);
+        if (error) throw error;
+      }
+
+      // Log audit for bulk action
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: `bulk_${action}_articles`,
+        p_details: { article_ids: ids, count: ids.length },
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
+      setSelectedIds([]);
+      setBulkAction("");
+      setIsBulkDialogOpen(false);
+      
+      const actionLabels: Record<string, string> = {
+        delete: "dihapus",
+        archive: "diarsipkan",
+        publish: "dipublikasikan",
+      };
+      toast({ 
+        title: `${variables.ids.length} artikel berhasil ${actionLabels[variables.action]}` 
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal melakukan aksi bulk",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Filter articles by search term
   const filteredArticles = articles?.filter((article: any) => {
     if (!searchTerm) return true;
@@ -179,6 +251,34 @@ export default function ArticlesManagement() {
   const canEdit = (article: any) => {
     return isSuperAdmin || article.author_id === user?.id;
   };
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && filteredArticles) {
+      setSelectedIds(filteredArticles.map((a: any) => a.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  // Handle individual select
+  const handleSelect = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    }
+  };
+
+  // Execute bulk action
+  const executeBulkAction = () => {
+    if (bulkAction && selectedIds.length > 0) {
+      bulkMutation.mutate({ action: bulkAction, ids: selectedIds });
+    }
+  };
+
+  const isAllSelected = filteredArticles?.length > 0 && selectedIds.length === filteredArticles?.length;
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < (filteredArticles?.length || 0);
 
   return (
     <div className="space-y-6">
@@ -238,6 +338,66 @@ export default function ArticlesManagement() {
             </Select>
           </div>
 
+          {/* Bulk Actions Bar */}
+          {isSuperAdmin && selectedIds.length > 0 && (
+            <div className="flex items-center gap-4 mb-4 p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">
+                  {selectedIds.length} artikel dipilih
+                </span>
+              </div>
+              <div className="flex items-center gap-2 ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Aksi Bulk
+                      <MoreHorizontal className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setBulkAction("publish");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Publikasikan Semua
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setBulkAction("archive");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Arsipkan Semua
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => {
+                        setBulkAction("delete");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Hapus Semua
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedIds([])}
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
           {isLoading ? (
             <div className="space-y-3">
@@ -250,6 +410,17 @@ export default function ArticlesManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {isSuperAdmin && (
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el) (el as any).indeterminate = isSomeSelected;
+                          }}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead>Judul</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Penulis</TableHead>
@@ -261,7 +432,18 @@ export default function ArticlesManagement() {
                 </TableHeader>
                 <TableBody>
                   {filteredArticles.map((article: any) => (
-                    <TableRow key={article.id}>
+                    <TableRow 
+                      key={article.id}
+                      className={selectedIds.includes(article.id) ? "bg-muted/50" : ""}
+                    >
+                      {isSuperAdmin && (
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(article.id)}
+                            onCheckedChange={(checked) => handleSelect(article.id, !!checked)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="max-w-xs">
                         <div className="flex items-center gap-2">
                           {article.is_pinned && (
@@ -376,6 +558,42 @@ export default function ArticlesManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bulk Action Confirmation Dialog */}
+      <AlertDialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkAction === "delete" && "Hapus Artikel Terpilih?"}
+              {bulkAction === "archive" && "Arsipkan Artikel Terpilih?"}
+              {bulkAction === "publish" && "Publikasikan Artikel Terpilih?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkAction === "delete" && 
+                `Tindakan ini tidak dapat dibatalkan. ${selectedIds.length} artikel akan dihapus permanen.`}
+              {bulkAction === "archive" && 
+                `${selectedIds.length} artikel akan diarsipkan dan tidak ditampilkan di publik.`}
+              {bulkAction === "publish" && 
+                `${selectedIds.length} artikel akan dipublikasikan dan dapat dilihat publik.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className={bulkAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              onClick={executeBulkAction}
+              disabled={bulkMutation.isPending}
+            >
+              {bulkMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {bulkAction === "delete" && "Hapus Semua"}
+              {bulkAction === "archive" && "Arsipkan Semua"}
+              {bulkAction === "publish" && "Publikasikan Semua"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
