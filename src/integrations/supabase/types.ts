@@ -128,6 +128,90 @@ export type Database = {
         }
         Relationships: []
       }
+      fim_clubs: {
+        Row: {
+          activities: string[] | null
+          category: string
+          created_at: string | null
+          description: string | null
+          email: string | null
+          icon: string
+          id: string
+          instagram: string | null
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          activities?: string[] | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          icon?: string
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          activities?: string[] | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          icon?: string
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      fim_regionals: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          instagram: string | null
+          is_active: boolean | null
+          island: string
+          name: string
+          province: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          island: string
+          name: string
+          province: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          island?: string
+          name?: string
+          province?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempted_at: string | null
@@ -224,6 +308,54 @@ export type Database = {
           must_change_password?: boolean | null
           updated_at?: string | null
           username?: string
+        }
+        Relationships: []
+      }
+      scheduled_broadcasts: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string
+          error_message: string | null
+          failed_count: number | null
+          id: string
+          scheduled_at: string
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by: string
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          scheduled_at: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          total_recipients?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }

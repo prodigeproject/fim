@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  ClipboardList, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  ClipboardList,
+  LogOut,
   Menu,
   ChevronRight,
   Loader2,
   KeyRound,
   BarChart3,
-  Mail
+  Mail,
+  MapPin,
+  UsersRound,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -23,6 +25,8 @@ const navItems = [
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
   { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
   { name: "Newsletter", href: "/fim-admin-portal-2024/newsletter", icon: Mail },
+  { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound },
+  { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
   { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
 ];
