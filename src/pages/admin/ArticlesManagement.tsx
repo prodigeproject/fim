@@ -102,8 +102,7 @@ export default function ArticlesManagement() {
           view_count,
           created_at,
           published_at,
-          author_id,
-          profiles!articles_author_id_fkey(username, full_name)
+          author_id
         `)
         .order("created_at", { ascending: false });
       
@@ -118,6 +117,26 @@ export default function ArticlesManagement() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch author profiles separately
+  const { data: authorProfiles } = useQuery({
+    queryKey: ["article-authors", articles?.map(a => a.author_id)],
+    queryFn: async () => {
+      if (!articles?.length) return {};
+      const authorIds = [...new Set(articles.map(a => a.author_id))];
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, full_name")
+        .in("id", authorIds);
+      
+      const profileMap: Record<string, { username: string; full_name: string | null }> = {};
+      data?.forEach(p => {
+        profileMap[p.id] = { username: p.username, full_name: p.full_name };
+      });
+      return profileMap;
+    },
+    enabled: !!articles?.length,
   });
 
   // Delete article mutation
@@ -458,7 +477,9 @@ export default function ArticlesManagement() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {article.profiles?.full_name || article.profiles?.username}
+                        {authorProfiles?.[article.author_id]?.full_name || 
+                         authorProfiles?.[article.author_id]?.username || 
+                         "—"}
                       </TableCell>
                       <TableCell>
                         <Badge className={statusColors[article.status]}>
