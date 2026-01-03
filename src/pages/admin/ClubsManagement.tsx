@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -42,15 +42,20 @@ import {
   Trash2,
   Loader2,
   Users,
+  Upload,
+  Image,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Club {
   id: string;
   name: string;
   category: string;
   icon: string;
+  logo_url: string | null;
   description: string | null;
   activities: string[];
   instagram: string | null;
@@ -60,18 +65,22 @@ interface Club {
 }
 
 export default function ClubsManagement() {
-  const { isSuperAdmin } = useAdminAuth();
+  const { isSuperAdmin, user } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     icon: "Users",
+    logo_url: "",
     description: "",
     activities: "",
     instagram: "",
@@ -84,6 +93,7 @@ export default function ClubsManagement() {
       name: "",
       category: "",
       icon: "Users",
+      logo_url: "",
       description: "",
       activities: "",
       instagram: "",
@@ -105,12 +115,50 @@ export default function ClubsManagement() {
     },
   });
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "File harus berupa gambar", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Ukuran file maksimal 2MB", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const fileName = `club-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("article-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("article-images")
+        .getPublicUrl(fileName);
+
+      setFormData((prev) => ({ ...prev, logo_url: urlData.publicUrl }));
+      toast({ title: "Logo berhasil diupload" });
+    } catch (error: any) {
+      toast({ title: "Gagal upload logo", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData & { id?: string }) => {
       const payload = {
         name: data.name.trim(),
         category: data.category.trim(),
         icon: data.icon,
+        logo_url: data.logo_url.trim() || null,
         description: data.description.trim() || null,
         activities: data.activities.split(",").map((a) => a.trim()).filter(Boolean),
         instagram: data.instagram.trim() || null,
@@ -128,6 +176,15 @@ export default function ClubsManagement() {
         const { error } = await supabase.from("fim_clubs").insert(payload);
         if (error) throw error;
       }
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: data.id ? "update_club" : "create_club",
+        p_resource_type: "fim_club",
+        p_resource_id: data.id || null,
+        p_details: { name: data.name },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-fim-clubs"] });
@@ -141,9 +198,18 @@ export default function ClubsManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("fim_clubs").delete().eq("id", id);
+    mutationFn: async (club: Club) => {
+      const { error } = await supabase.from("fim_clubs").delete().eq("id", club.id);
       if (error) throw error;
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "delete_club",
+        p_resource_type: "fim_club",
+        p_resource_id: club.id,
+        p_details: { name: club.name },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-fim-clubs"] });
@@ -154,12 +220,85 @@ export default function ClubsManagement() {
     },
   });
 
+  // CSV Import
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    const lines = text.split("\n").filter(line => line.trim());
+    
+    if (lines.length < 2) {
+      toast({ title: "File CSV kosong atau tidak valid", variant: "destructive" });
+      return;
+    }
+
+    // Parse header
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+    const requiredHeaders = ["name", "category"];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    
+    if (missingHeaders.length > 0) {
+      toast({ 
+        title: "Kolom wajib tidak ditemukan", 
+        description: `Kolom yang dibutuhkan: ${missingHeaders.join(", ")}`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    const dataRows = lines.slice(1);
+    const clubs = dataRows.map(line => {
+      const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+      const obj: Record<string, any> = {};
+      headers.forEach((h, i) => {
+        obj[h] = values[i] || "";
+      });
+      return {
+        name: obj.name || "",
+        category: obj.category || "",
+        description: obj.description || null,
+        activities: obj.activities ? obj.activities.split(";").map((a: string) => a.trim()) : [],
+        instagram: obj.instagram || null,
+        email: obj.email || null,
+        logo_url: obj.logo_url || null,
+        is_active: obj.is_active !== "false",
+        icon: "Users",
+      };
+    }).filter(c => c.name && c.category);
+
+    if (clubs.length === 0) {
+      toast({ title: "Tidak ada data valid untuk diimport", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("fim_clubs").insert(clubs);
+      if (error) throw error;
+
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "import_clubs_csv",
+        p_resource_type: "fim_club",
+        p_details: { count: clubs.length },
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["admin-fim-clubs"] });
+      toast({ title: `${clubs.length} club berhasil diimport` });
+    } catch (error: any) {
+      toast({ title: "Gagal import", description: error.message, variant: "destructive" });
+    }
+
+    if (csvInputRef.current) csvInputRef.current.value = "";
+  };
+
   const handleEdit = (club: Club) => {
     setEditingClub(club);
     setFormData({
       name: club.name,
       category: club.category,
       icon: club.icon,
+      logo_url: club.logo_url || "",
       description: club.description || "",
       activities: club.activities.join(", "),
       instagram: club.instagram || "",
@@ -177,107 +316,162 @@ export default function ClubsManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">FIM Club</h1>
           <p className="text-muted-foreground">Kelola data FIM Club</p>
         </div>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Club
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingClub ? "Edit Club" : "Tambah Club Baru"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Nama Club *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Creator Community"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Kategori *</Label>
-                  <Input
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="Kreativitas"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Deskripsi</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Deskripsi singkat tentang club..."
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Kegiatan (pisahkan dengan koma)</Label>
-                <Input
-                  value={formData.activities}
-                  onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
-                  placeholder="Workshop, Meetup, Sharing session"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Instagram (tanpa @)</Label>
-                  <Input
-                    value={formData.instagram}
-                    onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                    placeholder="fimclub_creator"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="club@forumindonesiamuda.org"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label>Aktif (tampil di website)</Label>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() =>
-                  saveMutation.mutate({
-                    ...formData,
-                    id: editingClub?.id,
-                  })
-                }
-                disabled={saveMutation.isPending || !formData.name.trim() || !formData.category.trim()}
-              >
-                {saveMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
-                {editingClub ? "Simpan Perubahan" : "Tambah Club"}
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            ref={csvInputRef}
+            onChange={handleCSVImport}
+            className="hidden"
+          />
+          <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Club
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingClub ? "Edit Club" : "Tambah Club Baru"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {/* Logo Upload */}
+                <div className="space-y-2">
+                  <Label>Logo Club</Label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      {formData.logo_url ? (
+                        <AvatarImage src={formData.logo_url} alt="Logo" />
+                      ) : (
+                        <AvatarFallback><Image className="h-6 w-6 text-muted-foreground" /></AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                        Upload Logo
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1">Max 2MB, format JPG/PNG</p>
+                    </div>
+                  </div>
+                  {formData.logo_url && (
+                    <Input
+                      value={formData.logo_url}
+                      onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                      placeholder="URL Logo"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nama Club *</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Creator Community"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Kategori *</Label>
+                    <Input
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      placeholder="Kreativitas"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Deskripsi</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Deskripsi singkat tentang club..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Kegiatan (pisahkan dengan koma)</Label>
+                  <Input
+                    value={formData.activities}
+                    onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
+                    placeholder="Workshop, Meetup, Sharing session"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Instagram (tanpa @)</Label>
+                    <Input
+                      value={formData.instagram}
+                      onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                      placeholder="fimclub_creator"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="club@forumindonesiamuda.org"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  />
+                  <Label>Aktif (tampil di website)</Label>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() =>
+                    saveMutation.mutate({
+                      ...formData,
+                      id: editingClub?.id,
+                    })
+                  }
+                  disabled={saveMutation.isPending || !formData.name.trim() || !formData.category.trim()}
+                >
+                  {saveMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
+                  {editingClub ? "Simpan Perubahan" : "Tambah Club"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -286,6 +480,9 @@ export default function ClubsManagement() {
             <Users className="h-5 w-5" />
             Daftar FIM Club ({clubs?.length || 0})
           </CardTitle>
+          <CardDescription>
+            Format CSV: name, category, description, activities (pisah dengan ;), instagram, email, logo_url, is_active
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-6">
@@ -311,6 +508,7 @@ export default function ClubsManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Logo</TableHead>
                     <TableHead>Nama</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Email</TableHead>
@@ -321,6 +519,15 @@ export default function ClubsManagement() {
                 <TableBody>
                   {filteredClubs.map((club) => (
                     <TableRow key={club.id}>
+                      <TableCell>
+                        <Avatar className="h-10 w-10">
+                          {club.logo_url ? (
+                            <AvatarImage src={club.logo_url} alt={club.name} />
+                          ) : (
+                            <AvatarFallback><Users className="h-4 w-4" /></AvatarFallback>
+                          )}
+                        </Avatar>
+                      </TableCell>
                       <TableCell className="font-medium">{club.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{club.category}</Badge>
@@ -356,7 +563,7 @@ export default function ClubsManagement() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Batal</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteMutation.mutate(club.id)}
+                                    onClick={() => deleteMutation.mutate(club)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     Hapus

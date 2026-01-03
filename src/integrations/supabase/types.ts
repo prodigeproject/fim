@@ -139,6 +139,7 @@ export type Database = {
           id: string
           instagram: string | null
           is_active: boolean | null
+          logo_url: string | null
           name: string
           sort_order: number | null
           updated_at: string | null
@@ -153,6 +154,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          logo_url?: string | null
           name: string
           sort_order?: number | null
           updated_at?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          logo_url?: string | null
           name?: string
           sort_order?: number | null
           updated_at?: string | null
@@ -181,6 +184,7 @@ export type Database = {
           instagram: string | null
           is_active: boolean | null
           island: string
+          logo_url: string | null
           name: string
           province: string
           sort_order: number | null
@@ -193,6 +197,7 @@ export type Database = {
           instagram?: string | null
           is_active?: boolean | null
           island: string
+          logo_url?: string | null
           name: string
           province: string
           sort_order?: number | null
@@ -205,6 +210,7 @@ export type Database = {
           instagram?: string | null
           is_active?: boolean | null
           island?: string
+          logo_url?: string | null
           name?: string
           province?: string
           sort_order?: number | null

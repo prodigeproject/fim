@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Eye, Clock, CheckCircle } from "lucide-react";
+import { FileText, Eye, Clock, CheckCircle, Users, MapPin, Mail } from "lucide-react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
@@ -29,6 +29,44 @@ export default function DashboardHome() {
     },
   });
 
+  // Fetch FIM Club count
+  const { data: clubCount } = useQuery({
+    queryKey: ["admin-club-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("fim_clubs")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch Regional count
+  const { data: regionalCount } = useQuery({
+    queryKey: ["admin-regional-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("fim_regionals")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch Newsletter subscriber count
+  const { data: subscriberStats } = useQuery({
+    queryKey: ["admin-subscriber-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("newsletter_subscribers")
+        .select("is_active");
+      if (error) throw error;
+      const total = data?.length || 0;
+      const active = data?.filter(s => s.is_active).length || 0;
+      return { total, active };
+    },
+  });
+
   // Fetch recent articles
   const { data: recentArticles, isLoading: articlesLoading } = useQuery({
     queryKey: ["admin-recent-articles"],
@@ -50,26 +88,44 @@ export default function DashboardHome() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_logs")
-        .select(`
-          id, 
-          action, 
-          created_at,
-          profiles!audit_logs_user_id_fkey(username, full_name)
-        `)
+        .select("id, action, created_at, user_id")
         .order("created_at", { ascending: false })
         .limit(5);
       
       if (error) throw error;
-      return data;
+      
+      // Fetch profiles separately for display
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(l => l.user_id).filter(Boolean))];
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username, full_name")
+            .in("id", userIds);
+          
+          const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+          return data.map(log => ({
+            ...log,
+            profile: log.user_id ? profileMap.get(log.user_id) : null
+          }));
+        }
+      }
+      return data?.map(log => ({ ...log, profile: null })) || [];
     },
     enabled: isSuperAdmin,
   });
 
-  const statCards = [
+  const articleStatCards = [
     { title: "Artikel Published", value: stats?.published || 0, icon: CheckCircle, color: "text-green-500" },
     { title: "Artikel Draft", value: stats?.draft || 0, icon: FileText, color: "text-yellow-500" },
     { title: "Artikel Scheduled", value: stats?.scheduled || 0, icon: Clock, color: "text-blue-500" },
     { title: "Total Views", value: stats?.totalViews || 0, icon: Eye, color: "text-purple-500" },
+  ];
+
+  const organizationStatCards = [
+    { title: "FIM Club", value: clubCount || 0, icon: Users, color: "text-primary", link: "/fim-admin-portal-2024/clubs" },
+    { title: "Regional FIM", value: regionalCount || 0, icon: MapPin, color: "text-orange-500", link: "/fim-admin-portal-2024/regionals" },
+    { title: "Newsletter Aktif", value: subscriberStats?.active || 0, icon: Mail, color: "text-emerald-500", link: "/fim-admin-portal-2024/newsletter" },
   ];
 
   const statusColors: Record<string, string> = {
@@ -77,6 +133,19 @@ export default function DashboardHome() {
     draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
     scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
     archived: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+  };
+
+  const actionLabels: Record<string, string> = {
+    login: "Login",
+    logout: "Logout",
+    create_article: "Buat Artikel",
+    update_article: "Update Artikel",
+    delete_article: "Hapus Artikel",
+    create_admin_user: "Buat Akun Admin",
+    activate_user: "Aktifkan User",
+    deactivate_user: "Nonaktifkan User",
+    broadcast_newsletter: "Kirim Broadcast",
+    schedule_broadcast: "Jadwalkan Broadcast",
   };
 
   return (
@@ -90,25 +159,50 @@ export default function DashboardHome() {
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{stat.value}</div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+      {/* Organization Stats Grid */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Data Organisasi</h2>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {organizationStatCards.map((stat) => (
+            <Link key={stat.title} to={stat.link}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Article Stats Grid */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Statistik Artikel</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {articleStatCards.map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -139,10 +233,10 @@ export default function DashboardHome() {
                         {article.title}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(article.created_at).toLocaleDateString("id-ID")}
+                        {new Date(article.created_at!).toLocaleDateString("id-ID")}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${statusColors[article.status]}`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${statusColors[article.status!]}`}>
                       {article.status}
                     </span>
                   </div>
@@ -181,10 +275,10 @@ export default function DashboardHome() {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">
-                          {log.profiles?.full_name || log.profiles?.username || "System"}
+                          {log.profile?.full_name || log.profile?.username || "System"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {log.action}
+                          {actionLabels[log.action] || log.action}
                         </p>
                       </div>
                       <span className="text-xs text-muted-foreground">

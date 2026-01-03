@@ -59,11 +59,22 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Plus,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+
+interface Subscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+  subscribed_at: string;
+  unsubscribed_at: string | null;
+}
 
 export default function NewsletterManagement() {
   const { isSuperAdmin, user, profile } = useAdminAuth();
@@ -71,11 +82,25 @@ export default function NewsletterManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [isSubscriberDialogOpen, setIsSubscriberDialogOpen] = useState(false);
+  const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
   const [broadcastSubject, setBroadcastSubject] = useState("");
   const [broadcastContent, setBroadcastContent] = useState("");
   const [testEmailSent, setTestEmailSent] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("09:00");
+
+  // Subscriber form state
+  const [subscriberForm, setSubscriberForm] = useState({
+    email: "",
+    name: "",
+    is_active: true,
+  });
+
+  const resetSubscriberForm = () => {
+    setSubscriberForm({ email: "", name: "", is_active: true });
+    setEditingSubscriber(null);
+  };
 
   const { data: subscribers, isLoading } = useQuery({
     queryKey: ["newsletter-subscribers"],
@@ -85,7 +110,7 @@ export default function NewsletterManagement() {
         .select("*")
         .order("subscribed_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Subscriber[];
     },
   });
 
@@ -101,6 +126,49 @@ export default function NewsletterManagement() {
     },
   });
 
+  // Add/Edit subscriber mutation
+  const saveSubscriberMutation = useMutation({
+    mutationFn: async (data: typeof subscriberForm & { id?: string }) => {
+      const payload = {
+        email: data.email.toLowerCase().trim(),
+        name: data.name.trim() || null,
+        is_active: data.is_active,
+      };
+
+      if (data.id) {
+        const { error } = await supabase
+          .from("newsletter_subscribers")
+          .update(payload)
+          .eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("newsletter_subscribers").insert({
+          ...payload,
+          subscribed_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+      }
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: data.id ? "update_subscriber" : "add_subscriber",
+        p_resource_type: "newsletter_subscriber",
+        p_resource_id: data.id || null,
+        p_details: { email: data.email },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["newsletter-subscribers"] });
+      setIsSubscriberDialogOpen(false);
+      resetSubscriberForm();
+      toast({ title: editingSubscriber ? "Subscriber berhasil diperbarui" : "Subscriber berhasil ditambahkan" });
+    },
+    onError: (error) => {
+      toast({ title: "Gagal menyimpan", description: error.message, variant: "destructive" });
+    },
+  });
+
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const { error } = await supabase
@@ -111,6 +179,14 @@ export default function NewsletterManagement() {
         })
         .eq("id", id);
       if (error) throw error;
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: isActive ? "deactivate_subscriber" : "activate_subscriber",
+        p_resource_type: "newsletter_subscriber",
+        p_resource_id: id,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["newsletter-subscribers"] });
@@ -122,9 +198,18 @@ export default function NewsletterManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
+    mutationFn: async (subscriber: Subscriber) => {
+      const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", subscriber.id);
       if (error) throw error;
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "delete_subscriber",
+        p_resource_type: "newsletter_subscriber",
+        p_resource_id: subscriber.id,
+        p_details: { email: subscriber.email },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["newsletter-subscribers"] });
@@ -182,6 +267,14 @@ export default function NewsletterManagement() {
         status: "pending",
       });
       if (error) throw error;
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "schedule_broadcast",
+        p_resource_type: "scheduled_broadcast",
+        p_details: { subject: payload.subject, scheduled_at: payload.scheduled_at },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
@@ -202,6 +295,14 @@ export default function NewsletterManagement() {
         .update({ status: "cancelled" })
         .eq("id", id);
       if (error) throw error;
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "cancel_broadcast",
+        p_resource_type: "scheduled_broadcast",
+        p_resource_id: id,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
@@ -218,6 +319,16 @@ export default function NewsletterManagement() {
     setTestEmailSent(false);
     setScheduledDate(undefined);
     setScheduledTime("09:00");
+  };
+
+  const handleEditSubscriber = (subscriber: Subscriber) => {
+    setEditingSubscriber(subscriber);
+    setSubscriberForm({
+      email: subscriber.email,
+      name: subscriber.name || "",
+      is_active: subscriber.is_active,
+    });
+    setIsSubscriberDialogOpen(true);
   };
 
   const exportToCSV = () => {
@@ -271,12 +382,69 @@ export default function NewsletterManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Newsletter</h1>
           <p className="text-muted-foreground">Kelola subscriber newsletter FIM</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Add Subscriber Dialog */}
+          <Dialog 
+            open={isSubscriberDialogOpen} 
+            onOpenChange={(open) => { 
+              setIsSubscriberDialogOpen(open); 
+              if (!open) resetSubscriberForm(); 
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Subscriber
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingSubscriber ? "Edit Subscriber" : "Tambah Subscriber Manual"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={subscriberForm.email}
+                    onChange={(e) => setSubscriberForm({ ...subscriberForm, email: e.target.value })}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nama</Label>
+                  <Input
+                    value={subscriberForm.name}
+                    onChange={(e) => setSubscriberForm({ ...subscriberForm, name: e.target.value })}
+                    placeholder="Nama subscriber"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={subscriberForm.is_active}
+                    onChange={(e) => setSubscriberForm({ ...subscriberForm, is_active: e.target.checked })}
+                    className="rounded"
+                  />
+                  <Label>Aktif</Label>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => saveSubscriberMutation.mutate({ ...subscriberForm, id: editingSubscriber?.id })}
+                  disabled={saveSubscriberMutation.isPending || !subscriberForm.email.includes("@")}
+                >
+                  {saveSubscriberMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {editingSubscriber ? "Simpan Perubahan" : "Tambah Subscriber"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {isSuperAdmin && (
             <Dialog open={isBroadcastOpen} onOpenChange={(open) => { setIsBroadcastOpen(open); if (!open) resetBroadcastForm(); }}>
               <DialogTrigger asChild>
@@ -476,6 +644,9 @@ export default function NewsletterManagement() {
                       <TableCell className="text-muted-foreground text-sm">{subscriber.subscribed_at ? format(new Date(subscriber.subscribed_at), "dd MMM yyyy", { locale: id }) : "—"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditSubscriber(subscriber)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: subscriber.id, isActive: subscriber.is_active })} disabled={toggleMutation.isPending}>
                             {subscriber.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                           </Button>
@@ -489,7 +660,7 @@ export default function NewsletterManagement() {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Batal</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteMutation.mutate(subscriber.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  <AlertDialogAction onClick={() => deleteMutation.mutate(subscriber)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                     {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Hapus"}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
