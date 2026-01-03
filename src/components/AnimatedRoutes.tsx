@@ -24,6 +24,7 @@ import ArticlesManagement from "@/pages/admin/ArticlesManagement";
 import ArticleEditor from "@/pages/admin/ArticleEditor";
 import AnalyticsDashboard from "@/pages/admin/AnalyticsDashboard";
 import UsersManagement from "@/pages/admin/UsersManagement";
+import NewsletterManagement from "@/pages/admin/NewsletterManagement";
 import AuditLogs from "@/pages/admin/AuditLogs";
 import ChangePassword from "@/pages/admin/ChangePassword";
 
@@ -62,6 +63,7 @@ const AnimatedRoutes = () => {
                 <Route path="articles/new" element={<ArticleEditor />} />
                 <Route path="articles/:id/edit" element={<ArticleEditor />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="newsletter" element={<NewsletterManagement />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="change-password" element={<ChangePassword />} />

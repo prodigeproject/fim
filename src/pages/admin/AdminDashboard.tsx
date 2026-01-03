@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Loader2,
   KeyRound,
-  BarChart3
+  BarChart3,
+  Mail
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -21,6 +22,7 @@ const navItems = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
   { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
+  { name: "Newsletter", href: "/fim-admin-portal-2024/newsletter", icon: Mail },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
   { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
 ];
