@@ -11,8 +11,11 @@ Theme WordPress lengkap untuk Forum Indonesia Muda (FIM) yang dapat digunakan da
 ```
 wordpress-theme/
 ├── assets/
-│   └── css/
-│       └── theme.css              # Complete CSS styling (~1800 lines)
+│   ├── css/
+│   │   └── theme.css              # Complete CSS styling (~3200 lines)
+│   ├── js/
+│   │   └── theme.js               # Interactive JavaScript (scroll, menu, etc)
+│   └── images/                    # Logo, favicon, etc
 ├── inc/
 │   ├── custom-post-types.php      # Register CPT: program, alumni_story, regional, faq, partner
 │   ├── acf-fields.php             # ACF field groups configuration
@@ -22,9 +25,12 @@ wordpress-theme/
 ├── index.php                      # Default template
 ├── header.php                     # Header template with navigation
 ├── footer.php                     # Footer template
+├── sidebar.php                    # Sidebar template
+├── comments.php                   # Comments template
 │
 ├── # Page Templates
 ├── front-page.php                 # Homepage dengan 7 Pilar, statistik, partners
+├── page.php                       # Default page template
 ├── page-tentang.php               # Tentang FIM: Visi, Misi, Timeline, Struktur
 ├── page-blog.php                  # Blog listing dengan filter kategori
 ├── page-alumni.php                # Cerita Alumni dengan filter sektor
@@ -35,8 +41,14 @@ wordpress-theme/
 ├── page-program-unggulan.php      # 5 Program unggulan FIM
 ├── page-regional.php              # Daftar regional dengan filter pulau
 ├── page-fim-club.php              # Daftar FIM Club dengan filter kategori
-├── single.php                     # Template single post/artikel
 │
+├── # Post Templates
+├── single.php                     # Template single post/artikel
+├── archive.php                    # Archive/category template
+├── search.php                     # Search results template
+├── 404.php                        # 404 error page
+│
+├── acf-export.json                # ACF fields untuk import otomatis
 ├── screenshot.png                 # Theme screenshot (1200x900)
 └── README.md                      # Dokumentasi ini
 ```
@@ -438,6 +450,16 @@ if (function_exists('acf_add_local_field_group')) {
 
 ## 📄 Changelog
 
+### v2.1.0 (2025)
+- Added 404.php error page
+- Added archive.php template
+- Added search.php template
+- Added page.php default template
+- Added sidebar.php template
+- Added comments.php template
+- Enhanced CSS with 400+ new lines for new templates
+- Complete ACF export JSON for auto-import
+
 ### v2.0.0 (2024)
 - Complete theme rewrite
 - Added 12 page templates
@@ -447,11 +469,59 @@ if (function_exists('acf_add_local_field_group')) {
 - Responsive design
 - Animation utilities
 - Loading skeletons
+- Interactive JavaScript (theme.js)
 
 ### v1.0.0 (Initial)
 - Basic headless theme
 - REST API support
 - Custom post types
+
+---
+
+## ✅ Testing Checklist
+
+Gunakan checklist ini untuk memverifikasi semua template berfungsi:
+
+### Page Templates
+- [ ] **Homepage** (`front-page.php`) - Hero, stats, 7 pilar, news, partners, CTA
+- [ ] **Tentang** (`page-tentang.php`) - Visi/misi, timeline, struktur organisasi
+- [ ] **Blog** (`page-blog.php`) - Posts grid, category filter, pagination
+- [ ] **Cerita Alumni** (`page-alumni.php`) - Alumni cards, sector filter
+- [ ] **FAQ** (`page-faq.php`) - Accordion berfungsi dengan klik
+- [ ] **Donasi** (`page-donasi.php`) - Copy rekening button berfungsi
+- [ ] **Gabung Relawan** (`page-gabung-relawan.php`) - Steps, benefits
+- [ ] **Pelatihan** (`page-pelatihan.php`) - Stats, tahapan, timeline
+- [ ] **Program Unggulan** (`page-program-unggulan.php`) - 5 programs detail
+- [ ] **Regional** (`page-regional.php`) - Search dan filter pulau berfungsi
+- [ ] **FIM Club** (`page-fim-club.php`) - Category filter berfungsi
+
+### Post Templates
+- [ ] **Single Post** (`single.php`) - Content, tags, share buttons, related posts
+- [ ] **Archive** (`archive.php`) - Category/tag archives dengan pagination
+- [ ] **Search** (`search.php`) - Search form, results dengan highlight
+- [ ] **404** (`404.php`) - Error page dengan search dan quick links
+
+### Global Elements
+- [ ] **Header** - Logo, navigation, dropdown menus, mobile menu
+- [ ] **Footer** - Links, newsletter form, social icons
+- [ ] **Scroll Progress** - Bar di atas page saat scroll
+- [ ] **Back to Top** - Button muncul setelah scroll
+- [ ] **Mobile Menu** - Toggle berfungsi dengan animasi
+
+### Interactive Features
+- [ ] FAQ accordion expand/collapse
+- [ ] Filter buttons (regional, alumni, club)
+- [ ] Search functionality
+- [ ] Copy to clipboard (donasi)
+- [ ] Video modal (alumni)
+- [ ] Counter animation (stats)
+- [ ] Lazy loading images
+- [ ] Smooth scroll untuk anchor links
+
+### Responsive Design
+- [ ] Desktop (1280px+)
+- [ ] Tablet (768px - 1279px)
+- [ ] Mobile (< 768px)
 
 ---
 
