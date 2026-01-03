@@ -3,85 +3,124 @@ import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import SocialShare from "@/components/SocialShare";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, User, ArrowRight, Pin } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import { usePosts, useCategories } from "@/hooks/useWordPress";
-import { isWordPressConfigured } from "@/services/wordpress";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { BlogGridSkeleton, BlogCategorySkeleton } from "@/components/skeletons";
 
-// Fallback placeholder posts when WordPress is not configured
+// Fallback placeholder posts when database has no articles
 const fallbackPosts = [
   {
-    id: 1,
+    id: "1",
     slug: "pembukaan-pendaftaran-fim-27",
     title: "Pembukaan Pendaftaran FIM 27: Kebijakan Publik",
     excerpt: "Pendaftaran FIM Angkatan 27 dengan tema Kebijakan Publik resmi dibuka! Ayo daftarkan dirimu dan jadilah bagian dari generasi pemimpin muda Indonesia.",
-    category: "Pengumuman",
-    author: { name: "Tim FIM" },
-    date: "2024-10-01",
-    image: null,
+    category: "pengumuman",
+    author_name: "Tim FIM",
+    published_at: "2024-10-01",
+    featured_image_url: null,
+    is_pinned: false,
   },
   {
-    id: 2,
+    id: "2",
     slug: "alumni-fim-raih-penghargaan",
     title: "Alumni FIM Raih Penghargaan Pemuda Inspiratif",
     excerpt: "Dua alumni FIM meraih penghargaan Pemuda Inspiratif dari Kementerian Pemuda dan Olahraga atas kontribusinya di bidang pendidikan.",
-    category: "Prestasi",
-    author: { name: "Tim FIM" },
-    date: "2024-01-10",
-    image: null,
+    category: "prestasi",
+    author_name: "Tim FIM",
+    published_at: "2024-01-10",
+    featured_image_url: null,
+    is_pinned: true,
   },
   {
-    id: 3,
+    id: "3",
     slug: "fim-club-teknologi-hackathon",
     title: "FIM Club Teknologi Gelar Hackathon Nasional",
     excerpt: "FIM Club Teknologi berhasil menyelenggarakan hackathon nasional dengan peserta dari 30 kota di Indonesia.",
-    category: "Kegiatan",
-    author: { name: "FIM Club Teknologi" },
-    date: "2024-01-05",
-    image: null,
+    category: "kegiatan",
+    author_name: "FIM Club Teknologi",
+    published_at: "2024-01-05",
+    featured_image_url: null,
+    is_pinned: false,
   },
   {
-    id: 4,
+    id: "4",
     slug: "refleksi-21-tahun-fim",
     title: "Refleksi 21 Tahun Perjalanan FIM",
     excerpt: "Melihat kembali perjalanan panjang FIM dari 2003 hingga sekarang, dan visi ke depan untuk Indonesia.",
-    category: "Opini",
-    author: { name: "Ketua Umum FIM" },
-    date: "2023-12-20",
-    image: null,
+    category: "opini",
+    author_name: "Ketua Umum FIM",
+    published_at: "2023-12-20",
+    featured_image_url: null,
+    is_pinned: false,
   },
   {
-    id: 5,
+    id: "5",
     slug: "tanggap-bencana-cianjur",
     title: "FIM Bergerak Cepat Bantu Korban Gempa Cianjur",
     excerpt: "Jaringan alumni FIM dari berbagai regional bergerak cepat menghimpun bantuan untuk korban gempa Cianjur.",
-    category: "Sosial",
-    author: { name: "Tim Tanggap Bencana" },
-    date: "2023-12-15",
-    image: null,
+    category: "sosial",
+    author_name: "Tim Tanggap Bencana",
+    published_at: "2023-12-15",
+    featured_image_url: null,
+    is_pinned: false,
   },
   {
-    id: 6,
+    id: "6",
     slug: "tips-leadership-dari-alumni",
     title: "5 Tips Leadership dari Alumni FIM Sukses",
     excerpt: "Pelajari rahasia kepemimpinan dari lima alumni FIM yang kini menjadi pemimpin di berbagai sektor.",
-    category: "Tips",
-    author: { name: "Redaksi FIM" },
-    date: "2023-12-10",
-    image: null,
+    category: "tips",
+    author_name: "Redaksi FIM",
+    published_at: "2023-12-10",
+    featured_image_url: null,
+    is_pinned: false,
   },
 ];
 
-const fallbackCategories = ["Semua", "Pengumuman", "Prestasi", "Kegiatan", "Sosial", "Opini", "Tips"];
+const categories = ["Semua", "Pengumuman", "Prestasi", "Kegiatan", "Sosial", "Opini", "Tips"];
+
+const categoryLabels: Record<string, string> = {
+  pengumuman: "Pengumuman",
+  prestasi: "Prestasi",
+  kegiatan: "Kegiatan",
+  sosial: "Sosial",
+  opini: "Opini",
+  tips: "Tips",
+};
 
 const Blog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
 
-  // Fetch from WordPress if configured
-  const { data: wpPosts, isLoading: postsLoading, error: postsError } = usePosts({ per_page: 20 });
-  const { data: wpCategories, isLoading: categoriesLoading } = useCategories();
+  // Fetch articles from database
+  const { data: dbArticles, isLoading, error } = useQuery({
+    queryKey: ['articles-public'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(`
+          id,
+          slug,
+          title,
+          excerpt,
+          category,
+          featured_image_url,
+          published_at,
+          is_pinned,
+          author_id,
+          profiles!articles_author_id_fkey(username, full_name)
+        `)
+        .eq('status', 'published')
+        .order('is_pinned', { ascending: false })
+        .order('published_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Read category from URL on mount
   useEffect(() => {
@@ -91,31 +130,23 @@ const Blog = () => {
     }
   }, [searchParams]);
 
-  // Use WordPress data if available, otherwise fallback
+  // Use database data if available, otherwise fallback
   const posts = useMemo(() => {
-    if (!isWordPressConfigured() || !wpPosts?.length) {
+    if (!dbArticles?.length) {
       return fallbackPosts;
     }
-    return wpPosts.map(post => ({
-      id: post.id,
-      slug: post.slug,
-      title: post.title,
-      excerpt: post.excerpt,
-      category: post.category,
-      author: post.author,
-      date: post.date,
-      image: post.image,
+    return dbArticles.map((article: any) => ({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      excerpt: article.excerpt || '',
+      category: article.category,
+      author_name: article.profiles?.full_name || article.profiles?.username || 'Tim FIM',
+      published_at: article.published_at,
+      featured_image_url: article.featured_image_url,
+      is_pinned: article.is_pinned,
     }));
-  }, [wpPosts]);
-
-  const categories = useMemo(() => {
-    if (!isWordPressConfigured() || !wpCategories?.length) {
-      return fallbackCategories;
-    }
-    return ["Semua", ...wpCategories.map(cat => cat.name)];
-  }, [wpCategories]);
-
-  const isLoading = postsLoading || categoriesLoading;
+  }, [dbArticles]);
 
   // Handle category change
   const handleCategoryChange = (category: string) => {
@@ -130,8 +161,9 @@ const Blog = () => {
   // Filter posts based on selected category
   const filteredPosts = useMemo(() => {
     if (selectedCategory === "Semua") return posts;
+    const categoryKey = selectedCategory.toLowerCase();
     return posts.filter(post =>
-      post.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+      post.category === categoryKey ||
       post.title.toLowerCase().includes(selectedCategory.toLowerCase())
     );
   }, [posts, selectedCategory]);
@@ -151,25 +183,21 @@ const Blog = () => {
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           {/* Category Filter */}
-          {categoriesLoading ? (
-            <BlogCategorySkeleton />
-          ) : (
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                    selectedCategory === category
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card text-foreground hover:bg-primary hover:text-primary-foreground border-border"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  selectedCategory === category
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-foreground hover:bg-primary hover:text-primary-foreground border-border"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
 
           {/* Active filter indicator */}
           {selectedCategory !== "Semua" && (
@@ -189,7 +217,7 @@ const Blog = () => {
           {/* Loading State */}
           {isLoading ? (
             <BlogGridSkeleton />
-          ) : postsError ? (
+          ) : error ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
                 Gagal memuat artikel. Silakan coba lagi nanti.
@@ -200,13 +228,21 @@ const Blog = () => {
               {filteredPosts.map((post, index) => (
                 <article
                   key={post.id}
-                  className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
+                  className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
+                  {/* Pinned indicator */}
+                  {post.is_pinned && (
+                    <div className="absolute top-3 right-3 z-10 bg-accent text-accent-foreground px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                      <Pin className="h-3 w-3" />
+                      Pinned
+                    </div>
+                  )}
+
                   {/* Image */}
                   <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden">
-                    {post.image && post.image !== '/placeholder.svg' ? (
-                      <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+                    {post.featured_image_url ? (
+                      <img src={post.featured_image_url} alt={post.title} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-4xl">📰</span>
                     )}
@@ -215,7 +251,7 @@ const Blog = () => {
                   <div className="p-6">
                     {/* Category */}
                     <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-3">
-                      {post.category}
+                      {categoryLabels[post.category] || post.category}
                     </span>
 
                     {/* Title */}
@@ -232,11 +268,11 @@ const Blog = () => {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                       <div className="flex items-center gap-1">
                         <User className="h-3 w-3" />
-                        <span>{post.author?.name || 'Tim FIM'}</span>
+                        <span>{post.author_name}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{new Date(post.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        <span>{post.published_at ? new Date(post.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : '-'}</span>
                       </div>
                     </div>
 

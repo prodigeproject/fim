@@ -14,12 +14,23 @@ import Donasi from "@/pages/Donasi";
 import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
 
+// Admin imports
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import DashboardHome from "@/pages/admin/DashboardHome";
+import ArticlesManagement from "@/pages/admin/ArticlesManagement";
+import UsersManagement from "@/pages/admin/UsersManagement";
+import AuditLogs from "@/pages/admin/AuditLogs";
+import ChangePassword from "@/pages/admin/ChangePassword";
+
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Public routes */}
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/tentang" element={<PageTransition><Tentang /></PageTransition>} />
         <Route path="/tentang/regional" element={<PageTransition><Regional /></PageTransition>} />
@@ -31,9 +42,27 @@ const AnimatedRoutes = () => {
         <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
         <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
         <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+        
         {/* Legacy routes redirect */}
         <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
+
+        {/* Admin routes - wrapped in AdminAuthProvider */}
+        <Route path="/fim-admin-portal-2024" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+        <Route path="/fim-admin-portal-2024/*" element={
+          <AdminAuthProvider>
+            <Routes>
+              <Route element={<AdminDashboard />}>
+                <Route path="dashboard" element={<DashboardHome />} />
+                <Route path="articles" element={<ArticlesManagement />} />
+                <Route path="users" element={<UsersManagement />} />
+                <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="change-password" element={<ChangePassword />} />
+              </Route>
+            </Routes>
+          </AdminAuthProvider>
+        } />
+
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

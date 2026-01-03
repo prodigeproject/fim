@@ -225,7 +225,7 @@ const GabungRelawan = () => {
               </Button>
             </a>
             <a href="mailto:relawan@forumindonesiamuda.org">
-              <Button size="lg" variant="outline" className="gap-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button size="lg" className="gap-2 bg-white text-primary hover:bg-white/90">
                 <Mail className="h-5 w-5" />
                 Email Kami
               </Button>
