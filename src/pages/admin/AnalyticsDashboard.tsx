@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   BarChart, 
@@ -26,10 +27,13 @@ import {
   Users,
   Calendar,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Download,
+  FileSpreadsheet
 } from "lucide-react";
 import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
 import { id } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -43,6 +47,9 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function AnalyticsDashboard() {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
   // Fetch all articles for analytics
   const { data: articles, isLoading } = useQuery({
     queryKey: ["analytics-articles"],
@@ -201,6 +208,122 @@ export default function AnalyticsDashboard() {
       .slice(0, 10);
   }, [articles]);
 
+  // Export to CSV function
+  const exportToCSV = () => {
+    if (!articles) return;
+    setIsExporting(true);
+
+    try {
+      const headers = [
+        "Judul",
+        "Slug",
+        "Kategori",
+        "Status",
+        "Views",
+        "Tanggal Dibuat",
+        "Tanggal Publikasi",
+        "Tags"
+      ];
+
+      const rows = articles.map(a => [
+        `"${a.title.replace(/"/g, '""')}"`,
+        a.slug,
+        categoryLabels[a.category] || a.category,
+        a.status,
+        a.view_count || 0,
+        a.created_at ? format(new Date(a.created_at), "yyyy-MM-dd HH:mm", { locale: id }) : "",
+        a.published_at ? format(new Date(a.published_at), "yyyy-MM-dd HH:mm", { locale: id }) : "",
+        a.tags?.join("; ") || ""
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.join(","))
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const filename = `analytics-report-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export berhasil", description: `File ${filename} berhasil diunduh` });
+    } catch (error) {
+      toast({ title: "Export gagal", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Export summary report
+  const exportSummaryReport = () => {
+    if (!stats || !articles) return;
+    setIsExporting(true);
+
+    try {
+      const now = new Date();
+      const monthYear = format(now, "MMMM yyyy", { locale: id });
+      
+      let report = `LAPORAN ANALYTICS BULANAN - ${monthYear.toUpperCase()}\n`;
+      report += `Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: id })}\n\n`;
+      
+      report += "=== RINGKASAN ===\n";
+      report += `Total Views: ${stats.totalViews.toLocaleString()}\n`;
+      report += `Total Artikel: ${stats.totalArticles}\n`;
+      report += `Artikel Published: ${stats.publishedArticles}\n`;
+      report += `Artikel Draft: ${stats.draftCount}\n`;
+      report += `Rata-rata Views per Artikel: ${stats.avgViewsPerArticle}\n`;
+      report += `Views 7 Hari Terakhir: ${stats.recentViews}\n\n`;
+
+      report += "=== TOP 10 ARTIKEL (Views) ===\n";
+      topArticles.forEach((a, i) => {
+        report += `${i + 1}. ${a.fullTitle} - ${a.views.toLocaleString()} views\n`;
+      });
+      report += "\n";
+
+      report += "=== VIEWS PER KATEGORI ===\n";
+      viewsByCategory.forEach(c => {
+        report += `${c.name}: ${c.views.toLocaleString()} views\n`;
+      });
+      report += "\n";
+
+      report += "=== TRENDING TOPICS ===\n";
+      trendingTopics.forEach((t, i) => {
+        report += `${i + 1}. #${t.tag} - ${t.views.toLocaleString()} views (${t.count} artikel)\n`;
+      });
+      report += "\n";
+
+      report += "=== ENGAGEMENT RATE (Views/Hari) ===\n";
+      engagementData.forEach((e, i) => {
+        report += `${i + 1}. ${e.title} - ${e.engagement} views/hari\n`;
+      });
+
+      const blob = new Blob([report], { type: "text/plain;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const filename = `laporan-analytics-${format(now, "yyyy-MM")}.txt`;
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Laporan berhasil diexport", description: `File ${filename} berhasil diunduh` });
+    } catch (error) {
+      toast({ title: "Export gagal", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -223,9 +346,29 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-        <p className="text-muted-foreground">Statistik artikel dan engagement</p>
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Statistik artikel dan engagement</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={exportToCSV} 
+            disabled={isExporting}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={exportSummaryReport}
+            disabled={isExporting}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Laporan Bulanan
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

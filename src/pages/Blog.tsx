@@ -47,6 +47,8 @@ const Blog = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ARTICLES_PER_PAGE = 9;
 
   // Debounce search input
   useEffect(() => {
@@ -77,8 +79,7 @@ const Blog = () => {
         `)
         .eq('status', 'published')
         .order('is_pinned', { ascending: false })
-        .order('published_at', { ascending: false })
-        .limit(50);
+        .order('published_at', { ascending: false });
       
       if (error) throw error;
       return data;
@@ -196,8 +197,14 @@ const Blog = () => {
     setDebouncedSearch("");
     setSelectedTags([]);
     setDateRange(undefined);
+    setCurrentPage(1);
     setSearchParams({});
   };
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, debouncedSearch, selectedTags, dateRange]);
 
   // Filter posts
   const filteredPosts = useMemo(() => {
@@ -239,6 +246,13 @@ const Blog = () => {
 
     return result;
   }, [posts, selectedCategory, debouncedSearch, selectedTags, dateRange]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPosts.length / ARTICLES_PER_PAGE);
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+    return filteredPosts.slice(startIndex, startIndex + ARTICLES_PER_PAGE);
+  }, [filteredPosts, currentPage]);
 
   const hasActiveFilters = selectedCategory !== "Semua" || debouncedSearch || selectedTags.length > 0 || dateRange?.from;
 
@@ -406,9 +420,10 @@ const Blog = () => {
                 Gagal memuat artikel. Silakan coba lagi nanti.
               </p>
             </div>
-          ) : filteredPosts.length > 0 ? (
+          ) : paginatedPosts.length > 0 ? (
+            <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {filteredPosts.map((post, index) => (
+              {paginatedPosts.map((post, index) => (
                 <article
                   key={post.id}
                   className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative"
@@ -487,6 +502,60 @@ const Blog = () => {
                 </article>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Sebelumnya
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Show first, last, current and adjacent pages
+                      if (page === 1 || page === totalPages) return true;
+                      if (Math.abs(page - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .map((page, index, arr) => (
+                      <span key={page} className="flex items-center">
+                        {index > 0 && arr[index - 1] !== page - 1 && (
+                          <span className="px-2 text-muted-foreground">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-10"
+                        >
+                          {page}
+                        </Button>
+                      </span>
+                    ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Selanjutnya
+                </Button>
+              </div>
+            )}
+
+            {/* Results count */}
+            <div className="flex justify-center mt-6">
+              <p className="text-muted-foreground text-sm">
+                Menampilkan {(currentPage - 1) * ARTICLES_PER_PAGE + 1} - {Math.min(currentPage * ARTICLES_PER_PAGE, filteredPosts.length)} dari {filteredPosts.length} artikel
+              </p>
+            </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
@@ -501,15 +570,6 @@ const Blog = () => {
                   Hapus filter dan lihat semua artikel
                 </Button>
               )}
-            </div>
-          )}
-
-          {/* Results count */}
-          {!isLoading && filteredPosts.length > 0 && !hasActiveFilters && (
-            <div className="flex justify-center mt-12">
-              <p className="text-muted-foreground text-sm">
-                Menampilkan {filteredPosts.length} artikel
-              </p>
             </div>
           )}
         </div>
