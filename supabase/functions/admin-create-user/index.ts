@@ -26,6 +26,8 @@ function usernameFromEmail(email: string) {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("admin-create-user: Request received");
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,11 +40,20 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      console.error("Missing environment variables");
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     const authHeader = req.headers.get("Authorization") ?? "";
+    console.log("admin-create-user: Auth header present:", !!authHeader);
 
     // Client bound to the caller JWT (RLS applies)
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
@@ -59,13 +70,21 @@ const handler = async (req: Request): Promise<Response> => {
     } = await supabaseUser.auth.getUser();
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      console.error("admin-create-user: Auth error:", userError?.message);
+      return new Response(JSON.stringify({ error: "Unauthorized - Please login again" }), {
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("admin-create-user: User authenticated:", user.id);
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
     // Server-side role check
     const { data: isSuperAdmin, error: roleErr } = await supabaseAdmin.rpc(
@@ -77,26 +96,39 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (roleErr) {
-      console.error("Role check error:", roleErr);
+      console.error("admin-create-user: Role check error:", roleErr.message);
       return new Response(JSON.stringify({ error: "Gagal memverifikasi role" }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
+    console.log("admin-create-user: Is super admin:", isSuperAdmin);
+
     if (!isSuperAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+      return new Response(JSON.stringify({ error: "Forbidden - Super Admin only" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const body = (await req.json()) as Partial<CreateAdminUserRequest>;
+    let body: Partial<CreateAdminUserRequest>;
+    try {
+      body = await req.json();
+    } catch (parseErr) {
+      console.error("admin-create-user: JSON parse error:", parseErr);
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     const email = body.email?.toLowerCase().trim() ?? "";
     const password = body.password ?? "";
     const fullName = body.full_name?.trim() ?? "";
     const role = body.role;
+
+    console.log("admin-create-user: Creating user with email:", email, "role:", role);
 
     if (!email || !email.includes("@")) {
       return new Response(JSON.stringify({ error: "Email tidak valid" }), {
@@ -132,6 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
     const username = usernameFromEmail(email);
 
     // Create auth user
+    console.log("admin-create-user: Creating auth user...");
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -143,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (createErr || !created.user) {
-      console.error("Create user error:", createErr);
+      console.error("admin-create-user: Create user error:", createErr?.message);
       return new Response(
         JSON.stringify({ error: createErr?.message || "Gagal membuat user" }),
         {
@@ -154,8 +187,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const newUserId = created.user.id;
+    console.log("admin-create-user: Auth user created:", newUserId);
 
     // Create profile row
+    console.log("admin-create-user: Creating profile...");
     const { error: profileErr } = await supabaseAdmin.from("profiles").insert({
       id: newUserId,
       username,
@@ -166,15 +201,16 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (profileErr) {
-      console.error("Profile insert error:", profileErr);
+      console.error("admin-create-user: Profile insert error:", profileErr.message);
       // Attempt rollback auth user to avoid dangling accounts
       try {
         await supabaseAdmin.auth.admin.deleteUser(newUserId);
+        console.log("admin-create-user: Rolled back auth user");
       } catch (rollbackErr) {
-        console.error("Rollback deleteUser failed:", rollbackErr);
+        console.error("admin-create-user: Rollback deleteUser failed:", rollbackErr);
       }
       return new Response(
-        JSON.stringify({ error: "Gagal membuat profil pengguna" }),
+        JSON.stringify({ error: "Gagal membuat profil pengguna: " + profileErr.message }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -182,7 +218,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    console.log("admin-create-user: Profile created");
+
     // Assign role
+    console.log("admin-create-user: Assigning role...");
     const { error: roleAssignErr } = await supabaseAdmin.from("user_roles").insert({
       user_id: newUserId,
       role,
@@ -190,22 +229,25 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (roleAssignErr) {
-      console.error("Role insert error:", roleAssignErr);
+      console.error("admin-create-user: Role insert error:", roleAssignErr.message);
       // Best-effort rollback
       try {
         await supabaseAdmin.from("profiles").delete().eq("id", newUserId);
         await supabaseAdmin.auth.admin.deleteUser(newUserId);
+        console.log("admin-create-user: Rolled back profile and auth user");
       } catch (rollbackErr) {
-        console.error("Rollback failed:", rollbackErr);
+        console.error("admin-create-user: Rollback failed:", rollbackErr);
       }
-      return new Response(JSON.stringify({ error: "Gagal menetapkan role" }), {
+      return new Response(JSON.stringify({ error: "Gagal menetapkan role: " + roleAssignErr.message }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
+    console.log("admin-create-user: Role assigned successfully");
+
     // Audit log (best effort)
-    void supabaseAdmin
+    supabaseAdmin
       .rpc("log_audit_event", {
         p_user_id: user.id,
         p_action: "create_admin_user",
@@ -214,9 +256,11 @@ const handler = async (req: Request): Promise<Response> => {
         p_details: { email, role },
       })
       .then(({ error }) => {
-        if (error) console.error("Audit log failed:", error);
+        if (error) console.error("admin-create-user: Audit log failed:", error.message);
+        else console.log("admin-create-user: Audit log created");
       });
 
+    console.log("admin-create-user: Success!");
     return new Response(
       JSON.stringify({ success: true, user_id: newUserId }),
       {
@@ -225,7 +269,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("admin-create-user error:", error);
+    console.error("admin-create-user error:", error?.message || error);
     return new Response(
       JSON.stringify({ error: error?.message || "Terjadi kesalahan" }),
       {
