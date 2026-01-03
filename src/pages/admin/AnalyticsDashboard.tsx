@@ -1,0 +1,483 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Legend
+} from "recharts";
+import { 
+  Eye, 
+  TrendingUp, 
+  FileText, 
+  Users,
+  Calendar,
+  ArrowUp,
+  ArrowDown
+} from "lucide-react";
+import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
+import { id } from "date-fns/locale";
+
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+const categoryLabels: Record<string, string> = {
+  pengumuman: "Pengumuman",
+  prestasi: "Prestasi",
+  kegiatan: "Kegiatan",
+  sosial: "Sosial",
+  opini: "Opini",
+  tips: "Tips",
+};
+
+export default function AnalyticsDashboard() {
+  // Fetch all articles for analytics
+  const { data: articles, isLoading } = useQuery({
+    queryKey: ["analytics-articles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("articles")
+        .select("id, title, slug, category, view_count, status, created_at, published_at, tags")
+        .order("view_count", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    if (!articles) return null;
+
+    const publishedArticles = articles.filter(a => a.status === "published");
+    const totalViews = articles.reduce((sum, a) => sum + (a.view_count || 0), 0);
+    const avgViewsPerArticle = publishedArticles.length > 0 
+      ? Math.round(totalViews / publishedArticles.length) 
+      : 0;
+
+    // Views in last 7 days (approximate based on recent articles)
+    const last7Days = subDays(new Date(), 7);
+    const recentArticles = articles.filter(a => 
+      a.published_at && new Date(a.published_at) >= last7Days
+    );
+    const recentViews = recentArticles.reduce((sum, a) => sum + (a.view_count || 0), 0);
+
+    return {
+      totalArticles: articles.length,
+      publishedArticles: publishedArticles.length,
+      totalViews,
+      avgViewsPerArticle,
+      recentViews,
+      draftCount: articles.filter(a => a.status === "draft").length,
+    };
+  }, [articles]);
+
+  // Top articles by views
+  const topArticles = useMemo(() => {
+    if (!articles) return [];
+    return articles
+      .filter(a => a.status === "published")
+      .slice(0, 10)
+      .map(a => ({
+        title: a.title.length > 40 ? a.title.substring(0, 40) + "..." : a.title,
+        fullTitle: a.title,
+        views: a.view_count || 0,
+        category: a.category,
+        slug: a.slug,
+      }));
+  }, [articles]);
+
+  // Category distribution
+  const categoryData = useMemo(() => {
+    if (!articles) return [];
+    const counts: Record<string, number> = {};
+    articles.forEach(a => {
+      counts[a.category] = (counts[a.category] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({
+      name: categoryLabels[name] || name,
+      value,
+    }));
+  }, [articles]);
+
+  // Views by category
+  const viewsByCategory = useMemo(() => {
+    if (!articles) return [];
+    const views: Record<string, number> = {};
+    articles.forEach(a => {
+      views[a.category] = (views[a.category] || 0) + (a.view_count || 0);
+    });
+    return Object.entries(views)
+      .map(([name, views]) => ({
+        name: categoryLabels[name] || name,
+        views,
+      }))
+      .sort((a, b) => b.views - a.views);
+  }, [articles]);
+
+  // Trending topics (tags)
+  const trendingTopics = useMemo(() => {
+    if (!articles) return [];
+    const tagCounts: Record<string, { count: number; views: number }> = {};
+    
+    articles.forEach(a => {
+      if (a.tags && Array.isArray(a.tags)) {
+        a.tags.forEach((tag: string) => {
+          if (!tagCounts[tag]) {
+            tagCounts[tag] = { count: 0, views: 0 };
+          }
+          tagCounts[tag].count++;
+          tagCounts[tag].views += a.view_count || 0;
+        });
+      }
+    });
+
+    return Object.entries(tagCounts)
+      .map(([tag, data]) => ({
+        tag,
+        count: data.count,
+        views: data.views,
+        avgViews: Math.round(data.views / data.count),
+      }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10);
+  }, [articles]);
+
+  // Articles by day (last 30 days)
+  const articlesByDay = useMemo(() => {
+    if (!articles) return [];
+    
+    const last30Days = eachDayOfInterval({
+      start: subDays(new Date(), 29),
+      end: new Date(),
+    });
+
+    return last30Days.map(date => {
+      const dayStart = startOfDay(date);
+      const count = articles.filter(a => {
+        if (!a.published_at) return false;
+        const pubDate = startOfDay(new Date(a.published_at));
+        return pubDate.getTime() === dayStart.getTime();
+      }).length;
+
+      return {
+        date: format(date, "dd MMM", { locale: id }),
+        articles: count,
+      };
+    });
+  }, [articles]);
+
+  // Engagement rate (views per article age)
+  const engagementData = useMemo(() => {
+    if (!articles) return [];
+    
+    return articles
+      .filter(a => a.status === "published" && a.published_at)
+      .map(a => {
+        const daysOld = Math.max(1, Math.ceil(
+          (Date.now() - new Date(a.published_at!).getTime()) / (1000 * 60 * 60 * 24)
+        ));
+        const viewsPerDay = (a.view_count || 0) / daysOld;
+        return {
+          title: a.title.length > 25 ? a.title.substring(0, 25) + "..." : a.title,
+          engagement: Math.round(viewsPerDay * 10) / 10,
+          views: a.view_count || 0,
+          daysOld,
+        };
+      })
+      .sort((a, b) => b.engagement - a.engagement)
+      .slice(0, 10);
+  }, [articles]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Statistik artikel dan engagement</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+        <p className="text-muted-foreground">Statistik artikel dan engagement</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Views</p>
+                <p className="text-3xl font-bold">{stats?.totalViews.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Eye className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
+              <ArrowUp className="h-4 w-4" />
+              <span>{stats?.recentViews} views (7 hari)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Artikel</p>
+                <p className="text-3xl font-bold">{stats?.totalArticles}</p>
+              </div>
+              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-accent" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {stats?.publishedArticles} published, {stats?.draftCount} draft
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Rata-rata Views</p>
+                <p className="text-3xl font-bold">{stats?.avgViewsPerArticle}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">per artikel published</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Kategori Aktif</p>
+                <p className="text-3xl font-bold">{categoryData.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">dengan artikel</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Articles */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Top 10 Artikel (Views)</CardTitle>
+            <CardDescription>Artikel dengan views terbanyak</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topArticles} layout="vertical" margin={{ left: 20, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis 
+                    dataKey="title" 
+                    type="category" 
+                    width={150}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [value.toLocaleString(), "Views"]}
+                    labelFormatter={(label) => topArticles.find(a => a.title === label)?.fullTitle || label}
+                  />
+                  <Bar dataKey="views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Distribusi Kategori</CardTitle>
+            <CardDescription>Jumlah artikel per kategori</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {categoryData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Views by Category */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Views per Kategori</CardTitle>
+            <CardDescription>Total views berdasarkan kategori artikel</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={viewsByCategory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis />
+                  <Tooltip formatter={(value: number) => [value.toLocaleString(), "Views"]} />
+                  <Bar dataKey="views" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Trending Topics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Trending Topics</CardTitle>
+            <CardDescription>Tag populer berdasarkan views</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {trendingTopics.length > 0 ? (
+                trendingTopics.map((topic, i) => (
+                  <div key={topic.tag} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">
+                        {i + 1}
+                      </span>
+                      <Badge variant="outline">#{topic.tag}</Badge>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{topic.views.toLocaleString()} views</p>
+                      <p className="text-xs text-muted-foreground">{topic.count} artikel</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Belum ada tag pada artikel
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Articles Published Timeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Publikasi 30 Hari Terakhir</CardTitle>
+            <CardDescription>Jumlah artikel dipublikasikan per hari</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={articlesByDay}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="articles" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Engagement Rate */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Engagement Rate</CardTitle>
+            <CardDescription>Views per hari sejak publikasi (top 10)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {engagementData.length > 0 ? (
+                engagementData.map((article, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{article.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {article.views} views dalam {article.daysOld} hari
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <span className="font-bold text-green-600">
+                        {article.engagement}/hari
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Belum ada artikel published
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

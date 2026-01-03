@@ -25,13 +25,19 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
+  const [redirecting, setRedirecting] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in with role
   useEffect(() => {
-    if (user && role) {
-      navigate("/fim-admin-portal-2024/dashboard");
+    if (!authLoading && user && role) {
+      setRedirecting(true);
+      // Small delay to prevent flash
+      const timer = setTimeout(() => {
+        navigate("/fim-admin-portal-2024/dashboard", { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [user, role, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,15 +68,30 @@ export default function AdminLogin() {
         } else {
           setError(signInError.message);
         }
+        setIsLoading(false);
       }
+      // Don't set isLoading to false on success - let redirect happen
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
       setIsLoading(false);
     }
   };
 
-  if (authLoading) {
+  if (authLoading || redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground mt-2">
+            {redirecting ? "Mengalihkan..." : "Memuat..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Already logged in, show loading while redirect happens
+  if (user && role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

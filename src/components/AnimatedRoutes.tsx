@@ -22,6 +22,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import DashboardHome from "@/pages/admin/DashboardHome";
 import ArticlesManagement from "@/pages/admin/ArticlesManagement";
 import ArticleEditor from "@/pages/admin/ArticleEditor";
+import AnalyticsDashboard from "@/pages/admin/AnalyticsDashboard";
 import UsersManagement from "@/pages/admin/UsersManagement";
 import AuditLogs from "@/pages/admin/AuditLogs";
 import ChangePassword from "@/pages/admin/ChangePassword";
@@ -60,6 +61,7 @@ const AnimatedRoutes = () => {
                 <Route path="articles" element={<ArticlesManagement />} />
                 <Route path="articles/new" element={<ArticleEditor />} />
                 <Route path="articles/:id/edit" element={<ArticleEditor />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="change-password" element={<ChangePassword />} />

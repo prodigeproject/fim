@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,16 @@ import {
   Menu,
   ChevronRight,
   Loader2,
-  KeyRound
+  KeyRound,
+  BarChart3
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
 import { SEO } from "@/components/SEO";
 
 const navItems = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
+  { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
   { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
 ];
@@ -29,41 +30,78 @@ export default function AdminDashboard() {
   const location = useLocation();
   const { user, profile, role, isLoading, signOut, isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Redirect if not authenticated
+  // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
-    if (!isLoading && !user) {
-      navigate("/fim-admin-portal-2024");
+    // Wait for auth to finish loading
+    if (isLoading) return;
+
+    // Mark that we've done the auth check
+    setAuthChecked(true);
+
+    // Not logged in at all - redirect to login
+    if (!user) {
+      navigate("/fim-admin-portal-2024", { replace: true });
+      return;
     }
+
+    // User exists but role is still loading (give it some time)
+    // The role might be fetched async after user is set
   }, [user, isLoading, navigate]);
 
-  // Redirect if not admin
+  // Separate effect for role check with delay to allow async role fetch
   useEffect(() => {
-    if (!isLoading && user && !role) {
-      navigate("/fim-admin-portal-2024");
-    }
-  }, [user, role, isLoading, navigate]);
+    if (!authChecked || isLoading || !user) return;
+
+    // Give role time to load - only redirect after a short delay if still no role
+    const timer = setTimeout(() => {
+      if (!role) {
+        console.log("No admin role found for user, redirecting to login");
+        navigate("/fim-admin-portal-2024", { replace: true });
+      }
+    }, 2000); // Wait 2 seconds for role to load
+
+    return () => clearTimeout(timer);
+  }, [authChecked, user, role, isLoading, navigate]);
 
   // Check if must change password
   useEffect(() => {
     if (profile?.must_change_password && location.pathname !== "/fim-admin-portal-2024/change-password") {
-      navigate("/fim-admin-portal-2024/change-password");
+      navigate("/fim-admin-portal-2024/change-password", { replace: true });
     }
-  }, [profile, location.pathname, navigate]);
+  }, [profile?.must_change_password, location.pathname, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/fim-admin-portal-2024");
+    navigate("/fim-admin-portal-2024", { replace: true });
   };
 
-  if (isLoading) {
+  // Show loading while auth is being checked
+  if (isLoading || !authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground mt-2">Memuat...</p>
+        </div>
       </div>
     );
   }
 
+  // Show loading while role is being fetched
+  if (user && !role) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground mt-2">Memeriksa akses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated
   if (!user || !role) {
     return null;
   }
@@ -83,7 +121,8 @@ export default function AdminDashboard() {
 
       <nav className="flex-1 p-4 space-y-1">
         {filteredNavItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || 
+            (item.href !== "/fim-admin-portal-2024/dashboard" && location.pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
