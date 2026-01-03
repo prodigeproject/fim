@@ -112,8 +112,23 @@ const Regional = () => {
                   style={{ animationDelay: `${index * 0.03}s` }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <MapPin className="h-4 w-4 text-primary" />
+                    <div className="h-10 w-10 rounded-lg border border-border bg-background overflow-hidden flex items-center justify-center">
+                      {region.logo_url ? (
+                        <img
+                          src={region.logo_url}
+                          alt={`Logo ${region.name}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-contain p-2"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-muted flex items-center justify-center">
+                          <span className="text-[10px] font-semibold tracking-wide text-muted-foreground">FIM</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground text-sm">{region.name}</h3>

@@ -45,6 +45,7 @@ import {
   Upload,
   Image,
   FileSpreadsheet,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -292,6 +293,57 @@ export default function ClubsManagement() {
     if (csvInputRef.current) csvInputRef.current.value = "";
   };
 
+  const exportToCSV = () => {
+    if (!clubs?.length) return;
+
+    const headers = [
+      "id",
+      "name",
+      "category",
+      "description",
+      "activities",
+      "instagram",
+      "email",
+      "logo_url",
+      "is_active",
+      "sort_order",
+    ];
+
+    const rows = clubs.map((c) => [
+      c.id,
+      c.name,
+      c.category,
+      c.description ?? "",
+      (c.activities ?? []).join(";"),
+      c.instagram ?? "",
+      c.email ?? "",
+      c.logo_url ?? "",
+      c.is_active ? "true" : "false",
+      String(c.sort_order ?? 0),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((cell) => `"${String(cell).replace(/\"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fim-clubs-backup-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Export CSV berhasil" });
+  };
+
   const handleEdit = (club: Club) => {
     setEditingClub(club);
     setFormData({
@@ -329,6 +381,10 @@ export default function ClubsManagement() {
             onChange={handleCSVImport}
             className="hidden"
           />
+          <Button variant="outline" onClick={exportToCSV} disabled={!clubs?.length}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Import CSV
