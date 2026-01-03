@@ -9,7 +9,9 @@ const corsHeaders = {
 
 interface BroadcastRequest {
   subject: string;
-  content: string; // plain text from admin UI
+  content: string;
+  testEmail?: string; // If provided, only send to this email as test
+  scheduled_id?: string; // If triggered by scheduler
 }
 
 function escapeHtml(input: string) {
@@ -19,6 +21,26 @@ function escapeHtml(input: string) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function buildEmailHtml(name: string | null, safeHtml: string) {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#111;max-width:640px;margin:0 auto;padding:24px;">
+        <p>Halo${name ? ` <strong>${escapeHtml(name)}</strong>` : ""},</p>
+        <div style="margin-top:16px;">${safeHtml}</div>
+        <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+        <p style="color:#666;font-size:12px;">
+          Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.
+        </p>
+      </body>
+    </html>
+  `;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -40,8 +62,6 @@ const handler = async (req: Request): Promise<Response> => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
     const authHeader = req.headers.get("Authorization") ?? "";
-
-    // Identify caller via JWT
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -60,7 +80,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Only super admins can broadcast
     const { data: isSuperAdmin, error: roleErr } = await supabaseAdmin.rpc(
       "has_role",
       { _user_id: user.id, _role: "super_admin" }
@@ -84,6 +103,8 @@ const handler = async (req: Request): Promise<Response> => {
     const body = (await req.json()) as Partial<BroadcastRequest>;
     const subject = body.subject?.trim() ?? "";
     const content = body.content?.trim() ?? "";
+    const testEmail = body.testEmail?.toLowerCase().trim();
+    const scheduledId = body.scheduled_id;
 
     if (!subject) {
       return new Response(JSON.stringify({ error: "Subject wajib diisi" }), {
@@ -100,8 +121,43 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const safeHtml = escapeHtml(content).replace(/\n/g, "<br/>");
+    const from = "Forum Indonesia Muda <onboarding@resend.dev>";
 
-    // Load recipients (active + confirmed)
+    // Test mode: only send to testEmail
+    if (testEmail) {
+      console.log(`Sending test email to: ${testEmail}`);
+
+      const html = buildEmailHtml("Admin", safeHtml);
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [testEmail],
+          subject: `[TEST] ${subject}`,
+          html,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Resend test error:", errData);
+        return new Response(
+          JSON.stringify({ error: "Gagal mengirim email test", details: errData }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, test: true, email: testEmail }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Full broadcast mode
     const { data: subscribers, error: subErr } = await supabaseAdmin
       .from("newsletter_subscribers")
       .select("email, name")
@@ -121,43 +177,19 @@ const handler = async (req: Request): Promise<Response> => {
       name: (s.name as string | null) ?? null,
     }));
 
-    const from = "Forum Indonesia Muda <onboarding@resend.dev>";
-
     let sent = 0;
     let failed = 0;
 
     for (const r of recipients) {
       try {
-        const personalized = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            </head>
-            <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#111;max-width:640px;margin:0 auto;padding:24px;">
-              <p>Halo${r.name ? ` <strong>${escapeHtml(r.name)}</strong>` : ""},</p>
-              <div style="margin-top:16px;">${safeHtml}</div>
-              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
-              <p style="color:#666;font-size:12px;">
-                Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.
-              </p>
-            </body>
-          </html>
-        `;
-
+        const html = buildEmailHtml(r.name, safeHtml);
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${resendApiKey}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            from,
-            to: [r.email],
-            subject,
-            html: personalized,
-          }),
+          body: JSON.stringify({ from, to: [r.email], subject, html }),
         });
 
         if (!res.ok) {
@@ -173,7 +205,20 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Audit log (best effort)
+    // Update scheduled_broadcasts row if applicable
+    if (scheduledId) {
+      await supabaseAdmin
+        .from("scheduled_broadcasts")
+        .update({
+          status: failed === recipients.length ? "failed" : "sent",
+          sent_at: new Date().toISOString(),
+          total_recipients: recipients.length,
+          sent_count: sent,
+          failed_count: failed,
+        })
+        .eq("id", scheduledId);
+    }
+
     void supabaseAdmin
       .rpc("log_audit_event", {
         p_user_id: user.id,
@@ -185,25 +230,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        total: recipients.length,
-        sent,
-        failed,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: true, total: recipients.length, sent, failed }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("newsletter-broadcast error:", error);
     return new Response(
       JSON.stringify({ error: error?.message || "Terjadi kesalahan" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };

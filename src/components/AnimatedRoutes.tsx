@@ -27,6 +27,8 @@ import UsersManagement from "@/pages/admin/UsersManagement";
 import NewsletterManagement from "@/pages/admin/NewsletterManagement";
 import AuditLogs from "@/pages/admin/AuditLogs";
 import ChangePassword from "@/pages/admin/ChangePassword";
+import ClubsManagement from "@/pages/admin/ClubsManagement";
+import RegionalsManagement from "@/pages/admin/RegionalsManagement";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -64,6 +66,8 @@ const AnimatedRoutes = () => {
                 <Route path="articles/:id/edit" element={<ArticleEditor />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
                 <Route path="newsletter" element={<NewsletterManagement />} />
+                <Route path="clubs" element={<ClubsManagement />} />
+                <Route path="regionals" element={<RegionalsManagement />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="change-password" element={<ChangePassword />} />
