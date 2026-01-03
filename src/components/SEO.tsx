@@ -6,6 +6,7 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: string;
+  noIndex?: boolean;
 }
 
 const defaultSEO = {
@@ -22,6 +23,7 @@ export function SEO({
   image = defaultSEO.image,
   url = defaultSEO.url,
   type = defaultSEO.type,
+  noIndex = false,
 }: SEOProps) {
   const fullTitle = title 
     ? `${title} | Forum Indonesia Muda` 
@@ -31,6 +33,7 @@ export function SEO({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
       
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />

@@ -1,0 +1,184 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(6, "Password minimal 6 karakter"),
+});
+
+export default function AdminLogin() {
+  const navigate = useNavigate();
+  const { signIn, user, role, isLoading: authLoading } = useAdminAuth();
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && role) {
+      navigate("/fim-admin-portal-2024/dashboard");
+    }
+  }, [user, role, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validate input
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
+      return;
+    }
+
+    // Check if blocked
+    if (attempts >= 5) {
+      setError("Terlalu banyak percobaan login. Coba lagi dalam 15 menit.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error: signInError } = await signIn(email, password);
+      
+      if (signInError) {
+        setAttempts(prev => prev + 1);
+        if (signInError.message.includes("Invalid login credentials")) {
+          setError("Email atau password salah");
+        } else {
+          setError(signInError.message);
+        }
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <SEO 
+        title="Admin Login" 
+        description="Login ke panel admin FIM"
+        noIndex={true}
+      />
+      
+      <div className="min-h-screen flex items-center justify-center bg-muted p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <ShieldAlert className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Admin Portal</CardTitle>
+            <CardDescription>
+              Masuk ke panel administrasi FIM
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {attempts >= 3 && attempts < 5 && (
+                <Alert>
+                  <AlertDescription>
+                    Tersisa {5 - attempts} percobaan login
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@forumindonesiamuda.org"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading || attempts >= 5}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading || attempts >= 5}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || attempts >= 5}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Masuk...
+                  </>
+                ) : (
+                  "Masuk"
+                )}
+              </Button>
+            </form>
+
+            <p className="text-xs text-muted-foreground text-center mt-6">
+              Halaman ini hanya untuk administrator FIM. 
+              <br />
+              Sesi akan berakhir otomatis setelah 30 menit tidak aktif.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}

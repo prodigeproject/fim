@@ -1,0 +1,381 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Pin, 
+  PinOff,
+  Loader2,
+  FileText
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const statusColors: Record<string, string> = {
+  published: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  archived: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+};
+
+const categoryLabels: Record<string, string> = {
+  pengumuman: "Pengumuman",
+  prestasi: "Prestasi",
+  kegiatan: "Kegiatan",
+  sosial: "Sosial",
+  opini: "Opini",
+  tips: "Tips",
+};
+
+export default function ArticlesManagement() {
+  const { user, isSuperAdmin } = useAdminAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  // Fetch articles
+  const { data: articles, isLoading } = useQuery({
+    queryKey: ["admin-articles", statusFilter, categoryFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("articles")
+        .select(`
+          id,
+          slug,
+          title,
+          category,
+          status,
+          is_pinned,
+          view_count,
+          created_at,
+          published_at,
+          author_id,
+          profiles!articles_author_id_fkey(username, full_name)
+        `)
+        .order("created_at", { ascending: false });
+      
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter as "draft" | "scheduled" | "published" | "archived");
+      }
+      if (categoryFilter !== "all") {
+        query = query.eq("category", categoryFilter as "pengumuman" | "prestasi" | "kegiatan" | "sosial" | "opini" | "tips");
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Delete article mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (articleId: string) => {
+      const { error } = await supabase
+        .from("articles")
+        .delete()
+        .eq("id", articleId);
+      
+      if (error) throw error;
+
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "delete_article",
+        p_resource_type: "article",
+        p_resource_id: articleId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
+      toast({ title: "Artikel berhasil dihapus" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal menghapus artikel",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Pin/Unpin article mutation
+  const pinMutation = useMutation({
+    mutationFn: async ({ articleId, isPinned }: { articleId: string; isPinned: boolean }) => {
+      const { error } = await supabase
+        .from("articles")
+        .update({ 
+          is_pinned: !isPinned,
+          pinned_at: !isPinned ? new Date().toISOString() : null,
+          pinned_by: !isPinned ? user?.id : null,
+        })
+        .eq("id", articleId);
+      
+      if (error) throw error;
+
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: isPinned ? "unpin_article" : "pin_article",
+        p_resource_type: "article",
+        p_resource_id: articleId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
+      toast({ title: "Status pin artikel diperbarui" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal memperbarui status pin",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Filter articles by search term
+  const filteredArticles = articles?.filter((article: any) => {
+    if (!searchTerm) return true;
+    return article.title.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  // Check if user can edit article
+  const canEdit = (article: any) => {
+    return isSuperAdmin || article.author_id === user?.id;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Manajemen Artikel</h1>
+          <p className="text-muted-foreground">
+            Kelola artikel blog FIM
+          </p>
+        </div>
+        <Link to="/fim-admin-portal-2024/articles/new">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Tulis Artikel
+          </Button>
+        </Link>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari artikel..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kategori</SelectItem>
+                <SelectItem value="pengumuman">Pengumuman</SelectItem>
+                <SelectItem value="prestasi">Prestasi</SelectItem>
+                <SelectItem value="kegiatan">Kegiatan</SelectItem>
+                <SelectItem value="sosial">Sosial</SelectItem>
+                <SelectItem value="opini">Opini</SelectItem>
+                <SelectItem value="tips">Tips</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Table */}
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16" />
+              ))}
+            </div>
+          ) : filteredArticles?.length ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Judul</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Penulis</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Views</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredArticles.map((article: any) => (
+                    <TableRow key={article.id}>
+                      <TableCell className="max-w-xs">
+                        <div className="flex items-center gap-2">
+                          {article.is_pinned && (
+                            <Pin className="h-4 w-4 text-accent flex-shrink-0" />
+                          )}
+                          <span className="font-medium truncate">{article.title}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {categoryLabels[article.category] || article.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {article.profiles?.full_name || article.profiles?.username}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[article.status]}>
+                          {article.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {article.view_count || 0}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                        {new Date(article.created_at).toLocaleDateString("id-ID")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Link to={`/blog/${article.slug}`} target="_blank">
+                            <Button variant="ghost" size="icon">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          
+                          {canEdit(article) && (
+                            <Link to={`/fim-admin-portal-2024/articles/${article.id}/edit`}>
+                              <Button variant="ghost" size="icon">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
+
+                          {isSuperAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => pinMutation.mutate({
+                                articleId: article.id,
+                                isPinned: article.is_pinned,
+                              })}
+                              disabled={pinMutation.isPending}
+                            >
+                              {article.is_pinned ? (
+                                <PinOff className="h-4 w-4" />
+                              ) : (
+                                <Pin className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+
+                          {isSuperAdmin && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Artikel?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tindakan ini tidak dapat dibatalkan. Artikel "{article.title}" akan dihapus permanen.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => deleteMutation.mutate(article.id)}
+                                  >
+                                    {deleteMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      "Hapus"
+                                    )}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Belum ada artikel
+              </p>
+              <Link to="/fim-admin-portal-2024/articles/new">
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tulis Artikel Pertama
+                </Button>
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

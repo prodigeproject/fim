@@ -5,11 +5,9 @@ import { SEO } from "@/components/SEO";
 import SocialShare from "@/components/SocialShare";
 import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useAlumniStories } from "@/hooks/useWordPress";
-import { isWordPressConfigured } from "@/services/wordpress";
-import { AlumniCardSkeleton, AlumniGridSkeleton, VideoTestimonialSkeleton } from "@/components/skeletons";
+import { AlumniGridSkeleton, VideoTestimonialSkeleton } from "@/components/skeletons";
 
-// Fallback data when WordPress is not configured
+// Fallback data
 const fallbackStories = [
   { id: 1, name: "Andi Pratama", batch: "FIM 5", sector: "Pendidikan", position: "Founder Sekolah Inspirasi", company: "Yogyakarta", photo: null, quote: "FIM mengajarkan saya bahwa perubahan dimulai dari pendidikan. Kini saya mendirikan sekolah gratis untuk anak-anak kurang mampu.", story: "500+ siswa terbantu" },
   { id: 2, name: "Siti Rahayu", batch: "FIM 8", sector: "Sosial", position: "CEO Yayasan Peduli Desa", company: "Makassar", photo: null, quote: "Jaringan FIM membantu saya membangun program pemberdayaan di 50 desa tertinggal.", story: "50 desa terdampak" },
@@ -51,27 +49,7 @@ const CeritaAlumni = () => {
   const [selectedSector, setSelectedSector] = useState("Semua");
   const [selectedVideo, setSelectedVideo] = useState<{ id: string; title: string } | null>(null);
   
-  // Fetch alumni stories from WordPress
-  const { data: wpStories, isLoading, error } = useAlumniStories({ per_page: 50 });
-  
-  // Use WordPress data if available, otherwise fallback
-  const stories = useMemo(() => {
-    if (!isWordPressConfigured() || !wpStories?.length) {
-      return fallbackStories;
-    }
-    return wpStories.map(story => ({
-      id: story.id,
-      name: story.name,
-      batch: story.batch,
-      sector: story.sector,
-      position: story.position || '',
-      company: story.company || '',
-      photo: story.photo,
-      quote: story.quote,
-      story: story.story,
-    }));
-  }, [wpStories]);
-
+  const stories = fallbackStories;
   const otherAlumni = fallbackOtherAlumni;
   const videoTestimonials = fallbackVideoTestimonials;
 
@@ -109,33 +87,29 @@ const CeritaAlumni = () => {
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Video Testimoni Alumni</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Dengarkan langsung cerita inspiratif dari alumni FIM</p>
 
-          {isLoading ? (
-            <VideoTestimonialSkeleton />
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {videoTestimonials.map((video, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedVideo(video)}
-                  className="group cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in bg-card"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="relative aspect-video">
-                    <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                      <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Play className="h-6 w-6 text-primary-foreground ml-1" fill="currentColor" />
-                      </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {videoTestimonials.map((video, index) => (
+              <div
+                key={index}
+                onClick={() => setSelectedVideo(video)}
+                className="group cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in bg-card"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="relative aspect-video">
+                  <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                    <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Play className="h-6 w-6 text-primary-foreground ml-1" fill="currentColor" />
                     </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground text-sm line-clamp-2 mb-1">{video.title}</h3>
-                    <p className="text-xs text-muted-foreground">{video.speaker}</p>
-                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="p-4">
+                  <h3 className="font-semibold text-foreground text-sm line-clamp-2 mb-1">{video.title}</h3>
+                  <p className="text-xs text-muted-foreground">{video.speaker}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -171,47 +145,39 @@ const CeritaAlumni = () => {
             ))}
           </div>
 
-          {isLoading ? (
-            <AlumniGridSkeleton />
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Gagal memuat cerita alumni. Silakan coba lagi nanti.</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-              {filteredStories.map((story, index) => {
-                const Icon = getSectorIcon(story.sector);
-                return (
-                  <div key={story.id} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {story.photo ? (
-                          <img src={story.photo} alt={story.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-2xl font-bold text-primary">{story.name.split(" ").map(n => n[0]).join("")}</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg text-foreground">{story.name}</h3>
-                        <p className="text-sm text-primary">{story.batch}</p>
-                        <p className="text-sm text-muted-foreground">{story.position}</p>
-                        <p className="text-xs text-muted-foreground">{story.company}</p>
-                      </div>
-                      <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-supporting" />
-                      </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {filteredStories.map((story, index) => {
+              const Icon = getSectorIcon(story.sector);
+              return (
+                <div key={story.id} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {story.photo ? (
+                        <img src={story.photo} alt={story.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl font-bold text-primary">{story.name.split(" ").map(n => n[0]).join("")}</span>
+                      )}
                     </div>
-                    <blockquote className="text-muted-foreground italic mb-6 relative pl-4 border-l-2 border-accent">"{story.quote}"</blockquote>
-                    <div className="flex items-center gap-2 pt-4 border-t border-border">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Dampak:</span>
-                      <span className="text-sm font-semibold text-supporting">{story.story}</span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-foreground">{story.name}</h3>
+                      <p className="text-sm text-primary">{story.batch}</p>
+                      <p className="text-sm text-muted-foreground">{story.position}</p>
+                      <p className="text-xs text-muted-foreground">{story.company}</p>
+                    </div>
+                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center">
+                      <Icon className="h-5 w-5 text-supporting" />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-          {!isLoading && filteredStories.length === 0 && <div className="text-center py-12"><p className="text-muted-foreground">Tidak ada cerita di sektor ini.</p></div>}
+                  <blockquote className="text-muted-foreground italic mb-6 relative pl-4 border-l-2 border-accent">"{story.quote}"</blockquote>
+                  <div className="flex items-center gap-2 pt-4 border-t border-border">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Dampak:</span>
+                    <span className="text-sm font-semibold text-supporting">{story.story}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {filteredStories.length === 0 && <div className="text-center py-12"><p className="text-muted-foreground">Tidak ada cerita di sektor ini.</p></div>}
         </div>
       </section>
 

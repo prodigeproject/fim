@@ -14,16 +14,283 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      articles: {
+        Row: {
+          author_affiliation:
+            | Database["public"]["Enums"]["author_affiliation"]
+            | null
+          author_id: string
+          category: Database["public"]["Enums"]["article_category"]
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_pinned: boolean | null
+          media_urls: Json | null
+          pinned_at: string | null
+          pinned_by: string | null
+          published_at: string | null
+          related_region: string | null
+          scheduled_at: string | null
+          slug: string
+          status: Database["public"]["Enums"]["article_status"] | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_affiliation?:
+            | Database["public"]["Enums"]["author_affiliation"]
+            | null
+          author_id: string
+          category: Database["public"]["Enums"]["article_category"]
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          media_urls?: Json | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          published_at?: string | null
+          related_region?: string | null
+          scheduled_at?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["article_status"] | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_affiliation?:
+            | Database["public"]["Enums"]["author_affiliation"]
+            | null
+          author_id?: string
+          category?: Database["public"]["Enums"]["article_category"]
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          media_urls?: Json | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          published_at?: string | null
+          related_region?: string | null
+          scheduled_at?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["article_status"] | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          attempted_at: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          success: boolean
+        }
+        Update: {
+          attempted_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          last_login_at: string | null
+          must_change_password: boolean | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          must_change_password?: boolean | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          must_change_password?: boolean | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      translations: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          id: string
+          key: string
+          language: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          key: string
+          language: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          key?: string
+          language?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_login_rate_limit: {
+        Args: { p_email: string; p_ip: string }
+        Returns: {
+          attempts_count: number
+          is_blocked: boolean
+          should_show_captcha: boolean
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_ip_address?: string
+          p_resource_id?: string
+          p_resource_type?: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      publish_scheduled_articles: { Args: never; Returns: number }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "moderator"
+      article_category:
+        | "pengumuman"
+        | "prestasi"
+        | "kegiatan"
+        | "sosial"
+        | "opini"
+        | "tips"
+      article_status: "draft" | "scheduled" | "published" | "archived"
+      author_affiliation: "fim_pusat" | "fim_club" | "fim_regional"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +417,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "moderator"],
+      article_category: [
+        "pengumuman",
+        "prestasi",
+        "kegiatan",
+        "sosial",
+        "opini",
+        "tips",
+      ],
+      article_status: ["draft", "scheduled", "published", "archived"],
+      author_affiliation: ["fim_pusat", "fim_club", "fim_regional"],
+    },
   },
 } as const
