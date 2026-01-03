@@ -2,3 +2,6 @@ project_id = "atfrjhydmhpdwfepbkij"
 
 [functions.notify-login]
 verify_jwt = false
+
+[functions.newsletter-subscribe]
+verify_jwt = false

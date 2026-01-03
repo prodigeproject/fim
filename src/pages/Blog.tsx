@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import SocialShare from "@/components/SocialShare";
+import NewsletterForm from "@/components/NewsletterForm";
 import { Calendar, User, ArrowRight, Pin, Search, X, Filter } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -577,23 +578,26 @@ const Blog = () => {
 
       {/* Newsletter CTA */}
       <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4 text-center">
-          <h3 className="text-2xl font-bold text-foreground mb-4">
-            Dapatkan Update Terbaru
-          </h3>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            Ikuti media sosial resmi FIM untuk informasi terbaru seputar kegiatan dan pendaftaran.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <a
-              href="https://instagram.com/forumindonesiamuda"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Follow Instagram
-            </a>
-            <SocialShare title="Blog & Berita Forum Indonesia Muda" />
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="text-2xl font-bold text-foreground mb-4">
+              Berlangganan Newsletter
+            </h3>
+            <p className="text-muted-foreground mb-8">
+              Dapatkan update terbaru seputar kegiatan, prestasi, dan informasi penting dari Forum Indonesia Muda langsung di inbox Anda.
+            </p>
+            <NewsletterForm className="max-w-xl mx-auto" />
+            <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
+              <a
+                href="https://instagram.com/forumindonesiamuda"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                📷 Follow Instagram
+              </a>
+              <SocialShare title="Blog & Berita Forum Indonesia Muda" />
+            </div>
           </div>
         </div>
       </section>
