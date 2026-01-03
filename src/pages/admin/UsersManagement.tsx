@@ -29,15 +29,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX } from "lucide-react";
+import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+
+async function extractFunctionErrorMessage(err: any): Promise<string> {
+  try {
+    const ctx = err?.context;
+    if (ctx && typeof ctx === "object" && typeof ctx.text === "function") {
+      const text = await ctx.text();
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          return parsed?.error || parsed?.message || text;
+        } catch {
+          return text;
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return err?.message || "Terjadi kesalahan";
+}
 
 export default function UsersManagement() {
   const { isSuperAdmin, user } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
+
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserRole, setNewUserRole] = useState<"super_admin" | "moderator">("moderator");
@@ -110,7 +133,15 @@ export default function UsersManagement() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(await extractFunctionErrorMessage(error));
+      }
+
+      // Some functions may return 200 with an error payload
+      if ((data as any)?.success === false) {
+        throw new Error((data as any)?.error || "Gagal membuat pengguna");
+      }
+
       return data as { success: boolean; user_id: string };
     },
     onSuccess: () => {
@@ -126,6 +157,38 @@ export default function UsersManagement() {
     onError: (error) => {
       toast({
         title: "Gagal membuat pengguna",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, email }: { userId: string; email: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { user_id: userId },
+      });
+
+      if (error) {
+        throw new Error(await extractFunctionErrorMessage(error));
+      }
+
+      const temporaryPassword = (data as any)?.temporary_password as string | undefined;
+      if (!temporaryPassword) {
+        throw new Error("Password sementara tidak diterima dari server");
+      }
+
+      return { email, temporaryPassword };
+    },
+    onSuccess: (res) => {
+      setResetResult(res);
+      setIsResetOpen(true);
+      toast({ title: "Password berhasil direset" });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal reset password",
         description: error.message,
         variant: "destructive",
       });
@@ -269,6 +332,41 @@ export default function UsersManagement() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog
+          open={isResetOpen}
+          onOpenChange={(open) => {
+            setIsResetOpen(open);
+            if (!open) setResetResult(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Password Sementara</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Berikan password ini ke <span className="font-medium">{resetResult?.email}</span>. Saat login pertama,
+              pengguna akan diminta mengganti password.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={resetResult?.temporaryPassword || ""} />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={async () => {
+                  if (!resetResult?.temporaryPassword) return;
+                  await navigator.clipboard.writeText(resetResult.temporaryPassword);
+                  toast({ title: "Password tersalin" });
+                }}
+                disabled={!resetResult?.temporaryPassword}
+                aria-label="Salin password"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -333,24 +431,47 @@ export default function UsersManagement() {
                       }
                     </TableCell>
                     <TableCell>
-                      {userItem.id !== user?.id && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleActiveMutation.mutate({
-                            userId: userItem.id,
-                            isActive: userItem.is_active,
-                          })}
-                          disabled={toggleActiveMutation.isPending}
-                        >
-                          {toggleActiveMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : userItem.is_active ? (
-                            <UserX className="h-4 w-4" />
-                          ) : (
-                            <UserPlus className="h-4 w-4" />
-                          )}
-                        </Button>
+                      {userItem.id !== user?.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              resetPasswordMutation.mutate({ userId: userItem.id, email: userItem.email })
+                            }
+                            disabled={resetPasswordMutation.isPending}
+                            title="Reset password"
+                          >
+                            {resetPasswordMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Key className="h-4 w-4" />
+                            )}
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              toggleActiveMutation.mutate({
+                                userId: userItem.id,
+                                isActive: userItem.is_active,
+                              })
+                            }
+                            disabled={toggleActiveMutation.isPending}
+                            title={userItem.is_active ? "Nonaktifkan" : "Aktifkan"}
+                          >
+                            {toggleActiveMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : userItem.is_active ? (
+                              <UserX className="h-4 w-4" />
+                            ) : (
+                              <UserPlus className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   </TableRow>

@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -287,6 +287,55 @@ export default function RegionalsManagement() {
     if (csvInputRef.current) csvInputRef.current.value = "";
   };
 
+  const exportToCSV = () => {
+    if (!regionals?.length) return;
+
+    const headers = [
+      "id",
+      "name",
+      "province",
+      "island",
+      "instagram",
+      "email",
+      "logo_url",
+      "is_active",
+      "sort_order",
+    ];
+
+    const rows = regionals.map((r) => [
+      r.id,
+      r.name,
+      r.province,
+      r.island,
+      r.instagram ?? "",
+      r.email ?? "",
+      r.logo_url ?? "",
+      r.is_active ? "true" : "false",
+      String(r.sort_order ?? 0),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((cell) => `"${String(cell).replace(/\"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fim-regionals-backup-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Export CSV berhasil" });
+  };
+
   const handleEdit = (regional: Regional) => {
     setEditingRegional(regional);
     setFormData({
@@ -324,6 +373,10 @@ export default function RegionalsManagement() {
             onChange={handleCSVImport}
             className="hidden"
           />
+          <Button variant="outline" onClick={exportToCSV} disabled={!regionals?.length}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Import CSV

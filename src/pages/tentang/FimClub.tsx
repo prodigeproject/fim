@@ -5,16 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Palette, BookOpen, Gamepad2, Code, Heart, Baby, GraduationCap, UserCog, Vote, Languages, ScrollText, PersonStanding, Award, Waves, Compass, DollarSign, Leaf, Coffee, Mail, Instagram } from "lucide-react";
+import { Users, Mail, Instagram } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Icon mapping for dynamic rendering
-const iconMap: Record<string, any> = {
-  Users, Palette, BookOpen, Gamepad2, Code, Heart, Baby, GraduationCap, 
-  UserCog, Vote, Languages, ScrollText, PersonStanding, Award, Waves, 
-  Compass, DollarSign, Leaf, Coffee, Mail, Instagram
-};
 
 const FimClub = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
@@ -93,62 +87,74 @@ const FimClub = () => {
             </div>
           ) : filteredClubs?.length ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredClubs.map((club, index) => {
-                const IconComponent = iconMap[club.icon] || Users;
-                return (
-                  <div 
-                    key={club.id} 
-                    className="bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" 
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-3 bg-primary/10 rounded-xl">
-                        <IconComponent className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-foreground">{club.name}</h3>
-                        <span className="text-xs text-muted-foreground">{club.category}</span>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-4">{club.description}</p>
-                    {club.activities?.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-foreground mb-2">Kegiatan:</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {club.activities.map((activity: string) => (
-                            <span key={activity} className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
-                              {activity}
-                            </span>
-                          ))}
+              {filteredClubs.map((club, index) => (
+                <div
+                  key={club.id}
+                  className="bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-xl border border-border bg-background overflow-hidden flex items-center justify-center">
+                      {club.logo_url ? (
+                        <img
+                          src={club.logo_url}
+                          alt={`Logo ${club.name}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-contain p-2"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-muted flex items-center justify-center">
+                          <span className="text-[10px] font-semibold tracking-wide text-muted-foreground">FIM</span>
                         </div>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
-                      {club.instagram && (
-                        <a 
-                          href={`https://instagram.com/${club.instagram}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          <Instagram className="h-3 w-3" />@{club.instagram}
-                        </a>
                       )}
-                      {club.email && (
-                        <a 
-                          href={`mailto:${club.email}`} 
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          <Mail className="h-3 w-3" />Email
-                        </a>
-                      )}
-                      <Link to={`/blog?category=${encodeURIComponent(club.name)}`}>
-                        <Button variant="ghost" size="sm" className="h-6 text-xs">Info Kegiatan</Button>
-                      </Link>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{club.name}</h3>
+                      <span className="text-xs text-muted-foreground">{club.category}</span>
                     </div>
                   </div>
-                );
-              })}
+                  <p className="text-muted-foreground text-sm mb-4">{club.description}</p>
+                  {club.activities?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-xs font-semibold text-foreground mb-2">Kegiatan:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {club.activities.map((activity: string) => (
+                          <span key={activity} className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded">
+                            {activity}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+                    {club.instagram && (
+                      <a
+                        href={`https://instagram.com/${club.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Instagram className="h-3 w-3" />@{club.instagram}
+                      </a>
+                    )}
+                    {club.email && (
+                      <a
+                        href={`mailto:${club.email}`}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Mail className="h-3 w-3" />Email
+                      </a>
+                    )}
+                    <Link to={`/blog?category=${encodeURIComponent(club.name)}`}>
+                      <Button variant="ghost" size="sm" className="h-6 text-xs">Info Kegiatan</Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-12">
