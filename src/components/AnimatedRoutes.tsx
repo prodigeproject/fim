@@ -38,6 +38,7 @@ import ResetPassword from "@/pages/admin/ResetPassword";
 import ProfileSettings from "@/pages/admin/ProfileSettings";
 import OnlineAdminsDashboard from "@/pages/admin/OnlineAdminsDashboard";
 import ArticleApprovals from "@/pages/admin/ArticleApprovals";
+import NotificationsPage from "@/pages/admin/NotificationsPage";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -87,6 +88,7 @@ const AnimatedRoutes = () => {
                 <Route path="sessions" element={<SessionsManagement />} />
                 <Route path="email-settings" element={<EmailSettings />} />
                 <Route path="prd" element={<PRDDocumentation />} />
+                <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="change-password" element={<ChangePassword />} />
                 <Route path="profile" element={<ProfileSettings />} />
               </Route>

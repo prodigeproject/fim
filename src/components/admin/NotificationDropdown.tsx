@@ -130,6 +130,9 @@ export function NotificationDropdown() {
               Tandai semua dibaca
             </Button>
           )}
+          <Link to="/admin/notifications" className="text-xs text-primary hover:underline">
+            Lihat Semua
+          </Link>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <ScrollArea className="h-80">
