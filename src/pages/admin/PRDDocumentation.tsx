@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +50,8 @@ import {
   Calendar,
   ArrowUpDown,
   Loader2,
+  Download,
+  FileDown,
 } from "lucide-react";
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -341,6 +345,76 @@ export default function PRDDocumentation() {
     );
   });
 
+  // Export to Markdown function
+  const exportToMarkdown = () => {
+    if (!documents || !changelog) return;
+
+    const now = new Date();
+    let md = `# PRD & Dokumentasi - Forum Indonesia Muda\n\n`;
+    md += `> Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: localeId })}\n\n`;
+    md += `---\n\n`;
+
+    // Stats summary
+    md += `## 📊 Ringkasan\n\n`;
+    md += `| Status | Jumlah |\n|--------|--------|\n`;
+    md += `| Total | ${stats.total} |\n`;
+    md += `| Planned | ${stats.planned} |\n`;
+    md += `| In Progress | ${stats.in_progress} |\n`;
+    md += `| Completed | ${stats.completed} |\n\n`;
+
+    // Documents by category
+    const categories = ["feature", "enhancement", "bug", "backlog"];
+    categories.forEach(cat => {
+      const catDocs = documents.filter(d => d.category === cat);
+      if (catDocs.length === 0) return;
+
+      md += `## ${categoryLabels[cat] || cat}\n\n`;
+      catDocs.forEach(doc => {
+        const statusIcon = doc.status === "completed" ? "✅" : doc.status === "in_progress" ? "🔄" : doc.status === "cancelled" ? "❌" : "📋";
+        md += `### ${statusIcon} ${doc.title}\n\n`;
+        if (doc.version) md += `**Version:** ${doc.version}\n\n`;
+        if (doc.priority) md += `**Priority:** ${doc.priority}\n\n`;
+        if (doc.description) md += `${doc.description}\n\n`;
+        if (doc.content) md += `${doc.content}\n\n`;
+        md += `---\n\n`;
+      });
+    });
+
+    // Changelog
+    if (changelog.length > 0) {
+      md += `## 📝 Changelog\n\n`;
+      changelog.forEach(log => {
+        md += `### v${log.version} - ${log.title}\n\n`;
+        if (log.release_date) {
+          md += `**Release Date:** ${format(new Date(log.release_date), "dd MMMM yyyy", { locale: localeId })}\n\n`;
+        }
+        if (log.description) md += `${log.description}\n\n`;
+        if (log.changes && log.changes.length > 0) {
+          md += `**Changes:**\n`;
+          log.changes.forEach((c: any) => {
+            const icon = c.type === "feature" ? "✨" : c.type === "security" ? "🔒" : c.type === "bugfix" ? "🐛" : "📌";
+            md += `- ${icon} ${c.description}\n`;
+          });
+          md += `\n`;
+        }
+        md += `---\n\n`;
+      });
+    }
+
+    // Download
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `prd-documentation-${format(now, "yyyy-MM-dd")}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Export berhasil", description: "File Markdown berhasil diunduh" });
+  };
+
   // Stats
   const stats = {
     total: documents?.length || 0,
@@ -363,11 +437,17 @@ export default function PRDDocumentation() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">📋 PRD & Dokumentasi</h1>
-        <p className="text-muted-foreground">
-          Lacak kebutuhan, status fitur, backlog, dan changelog pengembangan
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">📋 PRD & Dokumentasi</h1>
+          <p className="text-muted-foreground">
+            Lacak kebutuhan, status fitur, backlog, dan changelog pengembangan
+          </p>
+        </div>
+        <Button variant="outline" onClick={exportToMarkdown}>
+          <FileDown className="h-4 w-4 mr-2" />
+          Export Markdown
+        </Button>
       </div>
 
       {/* Stats */}

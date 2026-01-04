@@ -64,7 +64,32 @@ export default function AnalyticsDashboard() {
     },
   });
 
-  // Calculate statistics
+  // Fetch newsletter subscribers for analytics
+  const { data: subscribers } = useQuery({
+    queryKey: ["analytics-subscribers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("newsletter_subscribers")
+        .select("id, email, is_active, subscribed_at, unsubscribed_at, created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch scheduled broadcasts
+  const { data: broadcasts } = useQuery({
+    queryKey: ["analytics-broadcasts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scheduled_broadcasts")
+        .select("id, status, sent_count, failed_count, total_recipients, sent_at, created_at")
+        .eq("status", "sent");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate article statistics
   const stats = useMemo(() => {
     if (!articles) return null;
 
@@ -90,6 +115,66 @@ export default function AnalyticsDashboard() {
       draftCount: articles.filter(a => a.status === "draft").length,
     };
   }, [articles]);
+
+  // Calculate newsletter statistics
+  const newsletterStats = useMemo(() => {
+    if (!subscribers) return null;
+
+    const activeSubscribers = subscribers.filter(s => s.is_active);
+    const inactiveSubscribers = subscribers.filter(s => !s.is_active);
+    
+    // Growth in last 30 days
+    const last30Days = subDays(new Date(), 30);
+    const newSubscribers = subscribers.filter(s => 
+      s.subscribed_at && new Date(s.subscribed_at) >= last30Days
+    );
+    
+    // Unsubscribed in last 30 days
+    const recentUnsubscribes = subscribers.filter(s => 
+      s.unsubscribed_at && new Date(s.unsubscribed_at) >= last30Days
+    );
+
+    // Broadcast stats
+    const totalSent = broadcasts?.reduce((sum, b) => sum + (b.sent_count || 0), 0) || 0;
+    const totalFailed = broadcasts?.reduce((sum, b) => sum + (b.failed_count || 0), 0) || 0;
+    const deliveryRate = totalSent > 0 ? Math.round((totalSent / (totalSent + totalFailed)) * 100) : 0;
+
+    return {
+      totalSubscribers: subscribers.length,
+      activeSubscribers: activeSubscribers.length,
+      inactiveSubscribers: inactiveSubscribers.length,
+      newSubscribers30d: newSubscribers.length,
+      unsubscribes30d: recentUnsubscribes.length,
+      growthRate: subscribers.length > 0 ? Math.round((newSubscribers.length / subscribers.length) * 100) : 0,
+      totalBroadcastsSent: broadcasts?.length || 0,
+      totalEmailsSent: totalSent,
+      deliveryRate,
+    };
+  }, [subscribers, broadcasts]);
+
+  // Subscriber growth by day (last 30 days)
+  const subscriberGrowth = useMemo(() => {
+    if (!subscribers) return [];
+    
+    const last30Days = eachDayOfInterval({
+      start: subDays(new Date(), 29),
+      end: new Date(),
+    });
+
+    return last30Days.map(date => {
+      const dayStart = startOfDay(date);
+      const count = subscribers.filter(s => {
+        if (!s.subscribed_at) return false;
+        const subDate = startOfDay(new Date(s.subscribed_at));
+        return subDate.getTime() === dayStart.getTime();
+      }).length;
+
+      return {
+        date: format(date, "dd MMM", { locale: id }),
+        subscribers: count,
+      };
+    });
+  }, [subscribers]);
 
   // Top articles by views
   const topArticles = useMemo(() => {
@@ -439,6 +524,76 @@ export default function AnalyticsDashboard() {
         </Card>
       </div>
 
+      {/* Newsletter Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Subscriber</p>
+                <p className="text-3xl font-bold">{newsletterStats?.totalSubscribers || 0}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
+              <ArrowUp className="h-4 w-4" />
+              <span>+{newsletterStats?.newSubscribers30d || 0} (30 hari)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Subscriber Aktif</p>
+                <p className="text-3xl font-bold text-green-600">{newsletterStats?.activeSubscribers || 0}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {newsletterStats?.inactiveSubscribers || 0} tidak aktif
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Email Terkirim</p>
+                <p className="text-3xl font-bold">{newsletterStats?.totalEmailsSent?.toLocaleString() || 0}</p>
+              </div>
+              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-accent" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {newsletterStats?.totalBroadcastsSent || 0} broadcast
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Delivery Rate</p>
+                <p className="text-3xl font-bold text-green-600">{newsletterStats?.deliveryRate || 0}%</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">email berhasil terkirim</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Articles */}
@@ -621,6 +776,34 @@ export default function AnalyticsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Newsletter Subscriber Growth */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">📧 Pertumbuhan Subscriber Newsletter</CardTitle>
+          <CardDescription>Subscriber baru per hari (30 hari terakhir)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={subscriberGrowth}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="subscribers" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  name="Subscriber Baru"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
