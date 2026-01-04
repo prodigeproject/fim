@@ -25,9 +25,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Loader2, FileSpreadsheet } from "lucide-react";
+import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Loader2, FileSpreadsheet, ShieldX, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as XLSX from "xlsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Comprehensive action icons mapping
 const actionIcons: Record<string, React.ElementType> = {
@@ -62,6 +63,7 @@ const actionIcons: Record<string, React.ElementType> = {
   bulk_delete_articles: Trash2,
   bulk_archive_articles: Archive,
   bulk_publish_articles: Send,
+  unauthorized_access_attempt: ShieldX,
 };
 
 // Comprehensive action labels mapping
@@ -97,6 +99,7 @@ const actionLabels: Record<string, string> = {
   bulk_delete_articles: "Bulk Hapus Artikel",
   bulk_archive_articles: "Bulk Arsipkan Artikel",
   bulk_publish_articles: "Bulk Publish Artikel",
+  unauthorized_access_attempt: "Akses Ditolak",
 };
 
 export default function AuditLogs() {
@@ -107,6 +110,7 @@ export default function AuditLogs() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "security">("all");
   const [isExporting, setIsExporting] = useState(false);
 
   // Fetch audit logs with separate profile query
@@ -157,8 +161,14 @@ export default function AuditLogs() {
     enabled: isSuperAdmin,
   });
 
-  // Filter logs by search term
+  // Filter logs by search term and tab
   const filteredLogs = logs?.filter((log: any) => {
+    // First filter by tab
+    if (activeTab === "security" && log.action !== "unauthorized_access_attempt") {
+      return false;
+    }
+    
+    // Then filter by search term
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -171,6 +181,9 @@ export default function AuditLogs() {
 
   // Get unique actions for filter dropdown
   const uniqueActions = [...new Set(logs?.map((log: any) => log.action) || [])];
+  
+  // Count security logs
+  const securityLogsCount = logs?.filter((log: any) => log.action === "unauthorized_access_attempt").length || 0;
 
   // Export to CSV
   const exportToCSV = async () => {
@@ -274,6 +287,21 @@ export default function AuditLogs() {
         </p>
       </div>
 
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "security")}>
+        <TabsList>
+          <TabsTrigger value="all">Semua Log</TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <ShieldX className="h-4 w-4" />
+            Akses Ditolak
+            {securityLogsCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+                {securityLogsCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all" className="mt-4">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4">
@@ -435,6 +463,77 @@ export default function AuditLogs() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        
+        <TabsContent value="security" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-destructive/10 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Log Akses Ditolak</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Catatan percobaan akses halaman tanpa izin oleh moderator
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16" />
+                  ))}
+                </div>
+              ) : filteredLogs?.length ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Waktu</TableHead>
+                        <TableHead>Pengguna</TableHead>
+                        <TableHead>Halaman yang Dicoba</TableHead>
+                        <TableHead>Role</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLogs.map((log: any) => (
+                        <TableRow key={log.id} className="bg-destructive/5">
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                            {new Date(log.created_at).toLocaleString("id-ID")}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">
+                              {log.profiles?.full_name || log.profiles?.username || "Unknown"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-sm bg-muted px-2 py-1 rounded">
+                              {log.details?.attempted_path || "-"}
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-destructive border-destructive">
+                              {log.details?.user_role || "-"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <ShieldX className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground">Tidak ada percobaan akses tidak sah</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
