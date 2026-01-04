@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet, Download } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet, Download, ArrowUpAZ, ArrowDownZA } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -72,6 +72,7 @@ export default function RegionalsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [islandFilter, setIslandFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRegional, setEditingRegional] = useState<Regional | null>(null);
@@ -356,6 +357,9 @@ export default function RegionalsManagement() {
       r.province.toLowerCase().includes(searchTerm.toLowerCase());
     const matchIsland = islandFilter === "all" || r.island === islandFilter;
     return matchSearch && matchIsland;
+  }).sort((a, b) => {
+    const comparison = a.name.localeCompare(b.name, 'id');
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   return (
@@ -539,6 +543,14 @@ export default function RegionalsManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z"}
+            >
+              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
             <Select value={islandFilter} onValueChange={setIslandFilter}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter pulau" />
