@@ -32,6 +32,7 @@ import { Separator } from '@/components/ui/separator';
 import { TipTapEditor } from '@/components/admin/TipTapEditor';
 import { ImageUploader, uploadImageToStorage } from '@/components/admin/ImageUploader';
 import { ArticlePreview } from '@/components/admin/ArticlePreview';
+import { ArticleVersionHistory } from '@/components/admin/ArticleVersionHistory';
 import {
   Dialog,
   DialogContent,
@@ -197,15 +198,40 @@ export default function ArticleEditor() {
         needs_approval: needsApproval || false,
       };
 
-
       // Handle published_at - only set when first publishing
       if (status === 'published' && (!article?.published_at || article.status !== 'published')) {
         articleData.published_at = new Date().toISOString();
       }
 
-      // Handle published_at - only set when first publishing
-      if (status === 'published' && (!article?.published_at || article.status !== 'published')) {
-        articleData.published_at = new Date().toISOString();
+      // If editing, save current version before updating
+      if (isEditing && article) {
+        try {
+          // Get next version number
+          const { data: nextVersionData } = await supabase
+            .rpc("get_next_article_version", { p_article_id: id });
+
+          // Save current state as a version
+          await supabase
+            .from("article_versions")
+            .insert({
+              article_id: id,
+              version_number: nextVersionData || 1,
+              title: article.title,
+              content: article.content,
+              excerpt: article.excerpt,
+              category: article.category,
+              featured_image_url: article.featured_image_url,
+              tags: article.tags,
+              author_affiliation: article.author_affiliation,
+              related_region: article.related_region,
+              status: article.status,
+              created_by: user?.id,
+              change_summary: `Saved before ${newStatus === 'published' ? 'publishing' : 'update'}`,
+            });
+        } catch (versionError) {
+          console.error("Failed to save version:", versionError);
+          // Continue with save even if version save fails
+        }
       }
 
       if (isEditing) {
@@ -385,7 +411,17 @@ export default function ArticleEditor() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isEditing && id && (
+            <ArticleVersionHistory
+              articleId={id}
+              currentTitle={formData.title}
+              onRestore={() => {
+                // Refetch article data after restore
+                queryClient.invalidateQueries({ queryKey: ['article', id] });
+              }}
+            />
+          )}
           <Button
             variant="outline"
             size="sm"

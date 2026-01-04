@@ -1,8 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import mermaid from "mermaid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { 
+  Loader2, 
+  ZoomIn, 
+  ZoomOut, 
+  RotateCcw, 
+  Download,
+  Image as ImageIcon,
+  FileCode
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface MermaidDiagramProps {
   chart: string;
@@ -28,6 +43,7 @@ export function MermaidDiagram({ chart, title, className }: MermaidDiagramProps)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
+  const [svgContent, setSvgContent] = useState<string>("");
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -48,6 +64,7 @@ export function MermaidDiagram({ chart, title, className }: MermaidDiagramProps)
         
         if (containerRef.current) {
           containerRef.current.innerHTML = svg;
+          setSvgContent(svg);
         }
       } catch (err) {
         console.error("Mermaid render error:", err);
@@ -64,11 +81,109 @@ export function MermaidDiagram({ chart, title, className }: MermaidDiagramProps)
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.25, 0.5));
   const handleReset = () => setScale(1);
 
+  const downloadAsSVG = useCallback(() => {
+    if (!svgContent) {
+      toast.error("Diagram belum siap");
+      return;
+    }
+
+    try {
+      const blob = new Blob([svgContent], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title?.replace(/[^a-zA-Z0-9]/g, "-") || "diagram"}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("SVG berhasil diunduh");
+    } catch (err) {
+      console.error("Error downloading SVG:", err);
+      toast.error("Gagal mengunduh SVG");
+    }
+  }, [svgContent, title]);
+
+  const downloadAsPNG = useCallback(async () => {
+    if (!svgContent || !containerRef.current) {
+      toast.error("Diagram belum siap");
+      return;
+    }
+
+    try {
+      const svgElement = containerRef.current.querySelector("svg");
+      if (!svgElement) {
+        toast.error("SVG tidak ditemukan");
+        return;
+      }
+
+      // Get SVG dimensions
+      const bbox = svgElement.getBBox();
+      const width = Math.max(bbox.width + 40, 800);
+      const height = Math.max(bbox.height + 40, 600);
+
+      // Create a canvas
+      const canvas = document.createElement("canvas");
+      const scale = 2; // Higher resolution
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        toast.error("Canvas tidak didukung");
+        return;
+      }
+
+      // Fill white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+
+      // Create an image from SVG
+      const img = new Image();
+      const svgBlob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          ctx.drawImage(img, 20, 20);
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Failed to load SVG"));
+        };
+        img.src = url;
+      });
+
+      // Download as PNG
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error("Gagal membuat PNG");
+          return;
+        }
+        const pngUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = pngUrl;
+        a.download = `${title?.replace(/[^a-zA-Z0-9]/g, "-") || "diagram"}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(pngUrl);
+        toast.success("PNG berhasil diunduh");
+      }, "image/png");
+    } catch (err) {
+      console.error("Error downloading PNG:", err);
+      toast.error("Gagal mengunduh PNG");
+    }
+  }, [svgContent, title]);
+
   return (
     <Card className={className}>
       {title && (
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="text-lg">{title}</CardTitle>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={handleZoomOut} disabled={scale <= 0.5}>
@@ -83,6 +198,24 @@ export function MermaidDiagram({ chart, title, className }: MermaidDiagramProps)
               <Button variant="ghost" size="icon" onClick={handleReset}>
                 <RotateCcw className="h-4 w-4" />
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={!svgContent}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover">
+                  <DropdownMenuItem onClick={downloadAsPNG}>
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Download PNG
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={downloadAsSVG}>
+                    <FileCode className="h-4 w-4 mr-2" />
+                    Download SVG
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
@@ -159,6 +292,7 @@ flowchart TB
 export const databaseDiagram = `
 erDiagram
     articles ||--o{ article_comments : has
+    articles ||--o{ article_versions : has
     profiles ||--o{ articles : writes
     profiles ||--o{ user_roles : has
     profiles ||--o{ admin_sessions : owns
@@ -189,11 +323,12 @@ erDiagram
         enum role
     }
     
-    admin_sessions {
+    article_versions {
         uuid id PK
-        uuid user_id FK
-        text session_token
-        timestamp last_activity
+        uuid article_id FK
+        integer version_number
+        text title
+        text content
     }
 `;
 
