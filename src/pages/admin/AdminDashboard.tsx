@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -77,6 +78,9 @@ export default function AdminDashboard() {
 
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
+  
+  // Enable push notifications for super admins
+  usePushNotifications();
 
   // Auto-expand parent menu if child is active
   useEffect(() => {
