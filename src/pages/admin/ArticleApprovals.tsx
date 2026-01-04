@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { ArticleComments } from "@/components/admin/ArticleComments";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -31,7 +32,8 @@ import {
   Clock, 
   FileText,
   AlertTriangle,
-  Loader2
+  Loader2,
+  MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -68,6 +70,8 @@ export default function ArticleApprovals() {
   const [selectedArticle, setSelectedArticle] = useState<PendingArticle | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showCommentsDialog, setShowCommentsDialog] = useState(false);
+  const [commentsArticle, setCommentsArticle] = useState<PendingArticle | null>(null);
 
   // Fetch pending articles
   const { data: pendingArticles, isLoading } = useQuery({
@@ -298,6 +302,17 @@ export default function ArticleApprovals() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setCommentsArticle(article);
+                            setShowCommentsDialog(true);
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Diskusi
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="default"
                           onClick={() => approveMutation.mutate(article.id)}
                           disabled={approveMutation.isPending}
@@ -367,6 +382,21 @@ export default function ArticleApprovals() {
               Tolak Artikel
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Dialog */}
+      <Dialog open={showCommentsDialog} onOpenChange={setShowCommentsDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Diskusi Artikel</DialogTitle>
+            <DialogDescription className="line-clamp-2">
+              {commentsArticle?.title}
+            </DialogDescription>
+          </DialogHeader>
+          {commentsArticle && (
+            <ArticleComments articleId={commentsArticle.id} />
+          )}
         </DialogContent>
       </Dialog>
     </div>

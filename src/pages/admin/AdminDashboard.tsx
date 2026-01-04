@@ -3,7 +3,9 @@ import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePendingArticlesCount } from "@/hooks/usePendingArticlesCount";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   FileText,
@@ -34,12 +36,13 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   superAdminOnly?: boolean;
   children?: NavItem[];
+  badgeKey?: string;
 }
 
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
-  { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true },
+  { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
   { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
   { 
     name: "Newsletter", 
@@ -75,6 +78,9 @@ export default function AdminDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  
+  // Get pending articles count for badge
+  const pendingArticlesCount = usePendingArticlesCount();
 
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
@@ -187,6 +193,13 @@ export default function AdminDashboard() {
 
   const filteredNavItems = filterNavItems(navItems);
 
+  // Get badge count for nav items
+  const getBadgeCount = (badgeKey?: string): number => {
+    if (!badgeKey) return 0;
+    if (badgeKey === "pendingArticles") return pendingArticlesCount;
+    return 0;
+  };
+
   const NavItemComponent = ({ item, depth = 0 }: { item: NavItem; depth?: number }) => {
     const hasChildren = item.children && item.children.length > 0;
     const isOpen = openMenus.includes(item.name);
@@ -195,6 +208,7 @@ export default function AdminDashboard() {
     const hasActiveChild = hasChildren && item.children!.some(child => 
       location.pathname === child.href || location.pathname.startsWith(child.href + "/")
     );
+    const badgeCount = getBadgeCount(item.badgeKey);
 
     if (hasChildren) {
       return (
@@ -237,7 +251,15 @@ export default function AdminDashboard() {
       >
         <item.icon className="h-4 w-4" />
         {item.name}
-        {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
+        {badgeCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="ml-auto h-5 min-w-5 px-1.5 text-xs flex items-center justify-center"
+          >
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </Badge>
+        )}
+        {isActive && badgeCount === 0 && <ChevronRight className="h-4 w-4 ml-auto" />}
       </Link>
     );
   };
