@@ -5,6 +5,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -20,8 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Calendar, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Comprehensive action icons mapping
@@ -96,22 +105,33 @@ const actionLabels: Record<string, string> = {
 
 export default function AuditLogs() {
   const { isSuperAdmin } = useAdminAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch audit logs with separate profile query
   const { data: logs, isLoading } = useQuery({
-    queryKey: ["admin-audit-logs", actionFilter, sortOrder],
+    queryKey: ["admin-audit-logs", actionFilter, sortOrder, startDate, endDate],
     queryFn: async () => {
       let query = supabase
         .from("audit_logs")
         .select("*")
         .order("created_at", { ascending: sortOrder === "asc" })
-        .limit(200);
+        .limit(500);
       
       if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
+      }
+
+      if (startDate) {
+        query = query.gte("created_at", `${startDate}T00:00:00`);
+      }
+      if (endDate) {
+        query = query.lte("created_at", `${endDate}T23:59:59`);
       }
 
       const { data, error } = await query;
@@ -156,6 +176,47 @@ export default function AuditLogs() {
   // Get unique actions for filter dropdown
   const uniqueActions = [...new Set(logs?.map((log: any) => log.action) || [])];
 
+  // Export to CSV
+  const exportToCSV = async () => {
+    if (!filteredLogs?.length) {
+      toast({ title: "Tidak ada data untuk diekspor", variant: "destructive" });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const headers = ["Waktu", "Pengguna", "Aksi", "Detail", "IP Address"];
+      const rows = filteredLogs.map((log: any) => [
+        new Date(log.created_at).toLocaleString("id-ID"),
+        log.profiles?.full_name || log.profiles?.username || "System",
+        actionLabels[log.action] || log.action,
+        log.details ? JSON.stringify(log.details) : "",
+        log.ip_address || "",
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-log-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export berhasil" });
+    } catch (error) {
+      toast({ title: "Gagal export", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="text-center py-12">
@@ -179,36 +240,74 @@ export default function AuditLogs() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari berdasarkan aksi, pengguna, atau detail..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari berdasarkan aksi, pengguna, atau detail..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter aksi" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Aksi</SelectItem>
+                  {uniqueActions.map((action) => (
+                    <SelectItem key={action} value={action}>
+                      {actionLabels[action] || action}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
             </div>
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter aksi" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Aksi</SelectItem>
-                {uniqueActions.map((action) => (
-                  <SelectItem key={action} value={action}>
-                    {actionLabels[action] || action}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-            </Button>
+            
+            {/* Date Range Filter & Export */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                <div>
+                  <Label className="text-xs">Dari Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Sampai Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={exportToCSV} 
+                disabled={isExporting || !filteredLogs?.length}
+                className="gap-2"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export CSV
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -219,7 +318,13 @@ export default function AuditLogs() {
               ))}
             </div>
           ) : filteredLogs?.length ? (
-            <div className="overflow-x-auto">
+            <>
+              <p className="text-sm text-muted-foreground mb-4">
+                Menampilkan {filteredLogs.length} log
+                {startDate && ` dari ${format(new Date(startDate), "dd MMM yyyy", { locale: localeId })}`}
+                {endDate && ` sampai ${format(new Date(endDate), "dd MMM yyyy", { locale: localeId })}`}
+              </p>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -271,6 +376,7 @@ export default function AuditLogs() {
                 </TableBody>
               </Table>
             </div>
+            </>
           ) : (
             <p className="text-muted-foreground text-center py-8">
               Tidak ada log yang ditemukan
