@@ -1,7 +1,9 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import Forbidden from "@/pages/admin/Forbidden";
 
 interface RequireSuperAdminProps {
   children: React.ReactNode;
@@ -9,17 +11,40 @@ interface RequireSuperAdminProps {
 
 export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
   const { isSuperAdmin, isLoading, user, role } = useAdminAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const hasLoggedRef = useRef(false);
 
+  // Log unauthorized access attempt
   useEffect(() => {
-    // Wait for auth to load
-    if (isLoading) return;
-    
-    // If user is logged in but not super admin, redirect to dashboard
-    if (user && role && !isSuperAdmin) {
-      navigate("/admin/dashboard", { replace: true });
-    }
-  }, [isSuperAdmin, isLoading, user, role, navigate]);
+    const logUnauthorizedAccess = async () => {
+      // Only log if: not loading, user exists, has role, is NOT super admin, and hasn't logged yet
+      if (!isLoading && user && role && !isSuperAdmin && !hasLoggedRef.current) {
+        hasLoggedRef.current = true;
+        
+        try {
+          await supabase.rpc("log_audit_event", {
+            p_user_id: user.id,
+            p_action: "unauthorized_access_attempt",
+            p_resource_type: "admin_page",
+            p_details: {
+              attempted_path: location.pathname,
+              user_role: role,
+              message: "Moderator attempted to access super admin only page",
+            },
+          });
+        } catch (error) {
+          console.error("Failed to log unauthorized access:", error);
+        }
+      }
+    };
+
+    logUnauthorizedAccess();
+  }, [isLoading, user, role, isSuperAdmin, location.pathname]);
+
+  // Reset log flag when path changes
+  useEffect(() => {
+    hasLoggedRef.current = false;
+  }, [location.pathname]);
 
   // Show loading while checking auth
   if (isLoading) {
@@ -30,16 +55,9 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
     );
   }
 
-  // If not super admin, don't render anything (will redirect)
+  // If not super admin, show 403 page
   if (!isSuperAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-4">
-        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md">
-          <h2 className="text-lg font-semibold mb-2">Akses Ditolak</h2>
-          <p className="text-sm">Anda tidak memiliki izin untuk mengakses halaman ini. Halaman ini hanya dapat diakses oleh Super Admin.</p>
-        </div>
-      </div>
-    );
+    return <Forbidden />;
   }
 
   return <>{children}</>;
