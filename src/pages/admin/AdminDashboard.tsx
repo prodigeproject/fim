@@ -41,9 +41,16 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
-  { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
-  { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
-  { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
+  { 
+    name: "Artikel", 
+    href: "/fim-admin-portal-2024/articles", 
+    icon: FileText,
+    children: [
+      { name: "Manajemen Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
+      { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
+      { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
+    ]
+  },
   { 
     name: "Newsletter", 
     href: "/fim-admin-portal-2024/newsletter", 
@@ -56,9 +63,17 @@ const navItems: NavItem[] = [
   },
   { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound, superAdminOnly: true },
   { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin, superAdminOnly: true },
-  { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
-  { name: "Admin Online", href: "/fim-admin-portal-2024/online", icon: Monitor, superAdminOnly: true },
-  { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
+  { 
+    name: "Pengguna", 
+    href: "/fim-admin-portal-2024/users", 
+    icon: Users,
+    superAdminOnly: true,
+    children: [
+      { name: "Manajemen User", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
+      { name: "Admin Online", href: "/fim-admin-portal-2024/online", icon: Monitor, superAdminOnly: true },
+      { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
+    ]
+  },
   { 
     name: "Logs", 
     href: "/fim-admin-portal-2024/audit-logs", 
@@ -340,13 +355,13 @@ export default function AdminDashboard() {
       <SEO title="Admin Dashboard" description="Panel admin FIM" noIndex={true} />
       
       <div className="min-h-screen flex bg-muted">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col bg-card border-r">
+        {/* Desktop Sidebar - Sticky */}
+        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-card border-r z-30">
           <Sidebar />
         </aside>
 
         {/* Mobile Header */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:ml-64">
           <header className="lg:hidden flex items-center gap-4 p-4 bg-card border-b">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
