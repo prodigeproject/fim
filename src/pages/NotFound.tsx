@@ -58,7 +58,11 @@ const NotFound = () => {
         {/* Logo */}
         <div className="mb-8 animate-fade-in">
           <Link to="/">
-            <img src={logoFim} alt="Forum Indonesia Muda" className="h-16 mx-auto" />
+            <img 
+              src={logoFim} 
+              alt="Forum Indonesia Muda" 
+              className="h-16 mx-auto brightness-0 invert" 
+            />
           </Link>
         </div>
 

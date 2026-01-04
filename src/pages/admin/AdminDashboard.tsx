@@ -16,6 +16,9 @@ import {
   Mail,
   MapPin,
   UsersRound,
+  Monitor,
+  Settings,
+  BookOpen,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -28,7 +31,10 @@ const navItems = [
   { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound },
   { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
+  { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
   { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
+  { name: "Email Settings", href: "/fim-admin-portal-2024/email-settings", icon: Settings, superAdminOnly: true },
+  { name: "PRD & Docs", href: "/fim-admin-portal-2024/prd", icon: BookOpen, superAdminOnly: true },
 ];
 
 export default function AdminDashboard() {
