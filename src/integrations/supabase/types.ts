@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          message: string
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message: string
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_sessions: {
         Row: {
           created_at: string
@@ -50,6 +83,90 @@ export type Database = {
           session_token?: string
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      alumni_other: {
+        Row: {
+          batch: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          photo_url: string | null
+          sort_order: number | null
+          track_record: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          batch: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          photo_url?: string | null
+          sort_order?: number | null
+          track_record?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          batch?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          photo_url?: string | null
+          sort_order?: number | null
+          track_record?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      alumni_stories: {
+        Row: {
+          batch: string
+          company: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          photo_url: string | null
+          position: string | null
+          quote: string | null
+          sector: string
+          sort_order: number | null
+          story: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          batch: string
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          photo_url?: string | null
+          position?: string | null
+          quote?: string | null
+          sector: string
+          sort_order?: number | null
+          story?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          batch?: string
+          company?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          photo_url?: string | null
+          position?: string | null
+          quote?: string | null
+          sector?: string
+          sort_order?: number | null
+          story?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -598,6 +715,42 @@ export type Database = {
         }
         Relationships: []
       }
+      video_testimonials: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          speaker: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          youtube_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          speaker?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          youtube_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          speaker?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          youtube_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -643,7 +796,12 @@ export type Database = {
         | "sosial"
         | "opini"
         | "tips"
-      article_status: "draft" | "scheduled" | "published" | "archived"
+      article_status:
+        | "draft"
+        | "scheduled"
+        | "published"
+        | "archived"
+        | "rejected"
       author_affiliation: "fim_pusat" | "fim_club" | "fim_regional"
     }
     CompositeTypes: {
@@ -781,7 +939,13 @@ export const Constants = {
         "opini",
         "tips",
       ],
-      article_status: ["draft", "scheduled", "published", "archived"],
+      article_status: [
+        "draft",
+        "scheduled",
+        "published",
+        "archived",
+        "rejected",
+      ],
       author_affiliation: ["fim_pusat", "fim_club", "fim_regional"],
     },
   },

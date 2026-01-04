@@ -40,48 +40,49 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { 
     name: "Artikel", 
-    href: "/fim-admin-portal-2024/articles", 
+    href: "/admin/articles", 
     icon: FileText,
     children: [
-      { name: "Manajemen Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
-      { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
-      { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
+      { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
+      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
+      { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     ]
   },
   { 
     name: "Newsletter", 
-    href: "/fim-admin-portal-2024/newsletter", 
+    href: "/admin/newsletter", 
     icon: Mail,
     superAdminOnly: true,
     children: [
-      { name: "Subscribers", href: "/fim-admin-portal-2024/newsletter", icon: Mail, superAdminOnly: true },
-      { name: "Email Settings", href: "/fim-admin-portal-2024/email-settings", icon: Settings, superAdminOnly: true },
+      { name: "Subscribers", href: "/admin/newsletter", icon: Mail, superAdminOnly: true },
+      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true },
     ]
   },
-  { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound, superAdminOnly: true },
-  { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin, superAdminOnly: true },
+  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, superAdminOnly: true },
+  { name: "Regional", href: "/admin/regionals", icon: MapPin, superAdminOnly: true },
+  { name: "Alumni", href: "/admin/alumni", icon: Users, superAdminOnly: true },
   { 
     name: "Pengguna", 
-    href: "/fim-admin-portal-2024/users", 
+    href: "/admin/users", 
     icon: Users,
     superAdminOnly: true,
     children: [
-      { name: "Manajemen User", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
-      { name: "Admin Online", href: "/fim-admin-portal-2024/online", icon: Monitor, superAdminOnly: true },
-      { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
+      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true },
+      { name: "Admin Online", href: "/admin/online", icon: Monitor, superAdminOnly: true },
+      { name: "Sesi Aktif", href: "/admin/sessions", icon: Monitor, superAdminOnly: true },
     ]
   },
   { 
     name: "Logs", 
-    href: "/fim-admin-portal-2024/audit-logs", 
+    href: "/admin/audit-logs", 
     icon: ClipboardList,
     superAdminOnly: true,
     children: [
-      { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
-      { name: "PRD & Docs", href: "/fim-admin-portal-2024/prd", icon: BookOpen, superAdminOnly: true },
+      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, superAdminOnly: true },
+      { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
     ]
   },
 ];
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
 
     // Not logged in at all - redirect to login
     if (!user) {
-      navigate("/fim-admin-portal-2024", { replace: true });
+      navigate("/admin", { replace: true });
       return;
     }
   }, [user, isLoading, navigate]);
@@ -140,7 +141,7 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => {
       if (!role) {
         console.log("No admin role found for user, redirecting to login");
-        navigate("/fim-admin-portal-2024", { replace: true });
+        navigate("/admin", { replace: true });
       }
     }, 2000); // Wait 2 seconds for role to load
 
@@ -149,14 +150,14 @@ export default function AdminDashboard() {
 
   // Check if must change password
   useEffect(() => {
-    if (profile?.must_change_password && location.pathname !== "/fim-admin-portal-2024/change-password") {
-      navigate("/fim-admin-portal-2024/change-password", { replace: true });
+    if (profile?.must_change_password && location.pathname !== "/admin/change-password") {
+      navigate("/admin/change-password", { replace: true });
     }
   }, [profile?.must_change_password, location.pathname, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/fim-admin-portal-2024", { replace: true });
+    navigate("/admin", { replace: true });
   };
 
   const toggleMenu = (name: string) => {
@@ -219,7 +220,7 @@ export default function AdminDashboard() {
     const hasChildren = item.children && item.children.length > 0;
     const isOpen = openMenus.includes(item.name);
     const isActive = location.pathname === item.href || 
-      (!hasChildren && item.href !== "/fim-admin-portal-2024/dashboard" && location.pathname.startsWith(item.href));
+      (!hasChildren && item.href !== "/admin/dashboard" && location.pathname.startsWith(item.href));
     const hasActiveChild = hasChildren && item.children!.some(child => 
       location.pathname === child.href || location.pathname.startsWith(child.href + "/")
     );
@@ -318,7 +319,7 @@ export default function AdminDashboard() {
             className="w-full justify-start gap-2"
             onClick={() => {
               setMobileOpen(false);
-              navigate("/fim-admin-portal-2024/profile");
+              navigate("/admin/profile");
             }}
           >
             <UserCircle className="h-4 w-4" />
@@ -330,7 +331,7 @@ export default function AdminDashboard() {
             className="w-full justify-start gap-2"
             onClick={() => {
               setMobileOpen(false);
-              navigate("/fim-admin-portal-2024/change-password");
+              navigate("/admin/change-password");
             }}
           >
             <KeyRound className="h-4 w-4" />

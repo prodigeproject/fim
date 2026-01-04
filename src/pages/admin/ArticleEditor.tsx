@@ -226,17 +226,17 @@ export default function ArticleEditor() {
       
       if (result.needsApproval) {
         toast.success('Artikel dikirim untuk persetujuan Super Admin');
-        navigate('/fim-admin-portal-2024/articles');
+        navigate('/admin/articles');
       } else if (newStatus === 'published') {
         toast.success('Artikel berhasil dipublikasikan!');
-        navigate('/fim-admin-portal-2024/articles');
+        navigate('/admin/articles');
       } else if (newStatus === 'scheduled') {
         toast.success('Artikel dijadwalkan untuk dipublikasikan');
-        navigate('/fim-admin-portal-2024/articles');
+        navigate('/admin/articles');
       } else {
         toast.success('Draft tersimpan');
         if (!isEditing) {
-          navigate(`/fim-admin-portal-2024/articles/edit/${result.id}`, { replace: true });
+          navigate(`/admin/articles/edit/${result.id}`, { replace: true });
         }
       }
     },
@@ -346,7 +346,7 @@ export default function ArticleEditor() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/fim-admin-portal-2024/articles')}
+            onClick={() => navigate('/admin/articles')}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
