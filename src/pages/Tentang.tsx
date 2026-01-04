@@ -160,7 +160,7 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* Struktur Pengurus Section - Organizational Chart */}
+      {/* Struktur Pengurus Section - Modern Design */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
@@ -179,52 +179,31 @@ const Tentang = () => {
               <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
             </div>
             
-            {/* Org Chart - Yayasan */}
-            <div className="flex flex-col items-center">
-              {/* Top Level - Founders */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {strukturYayasan.slice(0, 2).map((person) => (
-                  <div key={person.name} className="bg-primary text-primary-foreground rounded-xl p-4 text-center shadow-lg min-w-[200px]">
-                    <div className="w-16 h-16 bg-primary-foreground/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            {/* Modern Grid Layout for Yayasan */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {strukturYayasan.map((person, index) => (
+                <div 
+                  key={person.name} 
+                  className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all animate-fade-in ${
+                    index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''
+                  }`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      index < 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
                       <User className="h-8 w-8" />
                     </div>
-                    <h4 className="font-semibold">{person.name}</h4>
-                    <p className="text-xs opacity-90">{person.position}</p>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Connecting Line */}
-              <div className="w-0.5 h-8 bg-border" />
-              
-              {/* Dewan */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {strukturYayasan.slice(2, 4).map((person) => (
-                  <div key={person.name} className="bg-supporting text-supporting-foreground rounded-xl p-4 text-center shadow-lg min-w-[200px]">
-                    <div className="w-14 h-14 bg-supporting-foreground/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <User className="h-7 w-7" />
+                    <div>
+                      <h4 className="font-bold text-foreground">{person.name}</h4>
+                      <p className={`text-sm ${index < 2 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                        {person.position}
+                      </p>
                     </div>
-                    <h4 className="font-semibold text-sm">{person.name}</h4>
-                    <p className="text-xs opacity-90">{person.position}</p>
                   </div>
-                ))}
-              </div>
-              
-              {/* Connecting Line */}
-              <div className="w-0.5 h-8 bg-border" />
-              
-              {/* Pengurus Yayasan */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {strukturYayasan.slice(4).map((person) => (
-                  <div key={person.name} className="bg-card rounded-xl p-4 text-center shadow-lg border border-border min-w-[180px]">
-                    <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <User className="h-7 w-7 text-primary" />
-                    </div>
-                    <h4 className="font-semibold text-sm text-foreground">{person.name}</h4>
-                    <p className="text-xs text-muted-foreground">{person.position}</p>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -237,91 +216,72 @@ const Tentang = () => {
               <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
             </div>
 
-            {/* Org Chart - FIM */}
-            <div className="flex flex-col items-center">
-              {/* BPH Top - Direktur Eksekutif */}
-              <div className="bg-primary text-primary-foreground rounded-xl p-5 text-center shadow-lg mb-4">
-                <div className="w-20 h-20 bg-primary-foreground/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <User className="h-10 w-10" />
-                </div>
-                <h4 className="font-bold text-lg">{bph[0].name}</h4>
-                <p className="text-sm opacity-90">{bph[0].position}</p>
-              </div>
-              
-              {/* Connecting Line */}
-              <div className="w-0.5 h-6 bg-border" />
-              
-              {/* BPH - Sekretaris Bendahara */}
-              <div className="bg-supporting text-supporting-foreground rounded-xl p-4 text-center shadow-lg mb-4 min-w-[200px]">
-                <div className="w-16 h-16 bg-supporting-foreground/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <User className="h-8 w-8" />
-                </div>
-                <h4 className="font-semibold">{bph[1].name}</h4>
-                <p className="text-xs opacity-90">{bph[1].position}</p>
-              </div>
-              
-              {/* Connecting Line */}
-              <div className="w-0.5 h-6 bg-border" />
-              
-              {/* Sekjend & Wasekjend */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {bph.slice(2).map((person) => (
-                  <div key={person.name} className="bg-accent/20 rounded-xl p-4 text-center shadow-lg min-w-[200px]">
-                    <div className="w-14 h-14 bg-accent/30 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <User className="h-7 w-7 text-accent-foreground" />
+            {/* BPH Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {bph.map((person, index) => (
+                <div 
+                  key={person.name}
+                  className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all animate-fade-in ${
+                    index === 0 ? 'lg:col-span-4 bg-gradient-to-r from-primary/5 to-supporting/5 border-2 border-primary/20' : ''
+                  }`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className={`flex ${index === 0 ? 'flex-row items-center' : 'flex-col items-center text-center'} gap-4`}>
+                    <div className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full flex items-center justify-center flex-shrink-0 ${
+                      index === 0 ? 'bg-primary text-primary-foreground' : 'bg-supporting/20'
+                    }`}>
+                      <User className={index === 0 ? 'h-10 w-10' : 'h-8 w-8'} />
                     </div>
-                    <h4 className="font-semibold text-sm text-foreground">{person.name}</h4>
-                    <p className="text-xs text-muted-foreground">{person.position}</p>
+                    <div className={index === 0 ? '' : 'text-center'}>
+                      <h4 className={`font-bold text-foreground ${index === 0 ? 'text-lg' : ''}`}>{person.name}</h4>
+                      <p className={`text-sm ${index === 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                        {person.position}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Biro Internal */}
+            <div className="mb-8">
+              <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                <Briefcase className="h-4 w-4 text-primary" />
+                Biro Internal
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                {biroInternal.map((person, index) => (
+                  <div key={person.name} className="bg-muted rounded-xl p-4 text-center animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                    <h5 className="font-medium text-sm text-foreground">{person.name}</h5>
                   </div>
                 ))}
               </div>
-              
-              {/* Connecting Line to Biro Internal */}
-              <div className="w-0.5 h-6 bg-border" />
-              
-              {/* Biro Internal */}
-              <div className="mb-6 w-full max-w-2xl">
-                <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                  <Briefcase className="h-4 w-4 text-primary" />
-                  Biro Internal
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {biroInternal.map((person) => (
-                    <div key={person.name} className="bg-muted rounded-lg p-3 text-center">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <User className="h-6 w-6 text-primary" />
+            </div>
+            
+            {/* Kepala Divisi/Biro */}
+            <div className="w-full">
+              <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+                {divisi.map((person, index) => (
+                  <div
+                    key={person.name + person.position}
+                    className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border animate-fade-in"
+                    style={{ animationDelay: `${index * 0.03}s` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="h-6 w-6 text-accent" />
                       </div>
-                      <h5 className="font-medium text-xs text-foreground">{person.name}</h5>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Horizontal line connecting to divisi */}
-              <div className="w-full max-w-4xl h-0.5 bg-border mb-6" />
-              
-              {/* Kepala Divisi/Biro - under BPH */}
-              <div className="w-full">
-                <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-5xl mx-auto">
-                  {divisi.map((person, index) => (
-                    <div
-                      key={person.name + person.position}
-                      className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border animate-fade-in"
-                      style={{ animationDelay: `${index * 0.03}s` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
-                          <User className="h-6 w-6 text-accent" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
-                          <p className="text-xs text-muted-foreground">{person.position}</p>
-                        </div>
+                      <div>
+                        <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
+                        <p className="text-xs text-muted-foreground">{person.position}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
 

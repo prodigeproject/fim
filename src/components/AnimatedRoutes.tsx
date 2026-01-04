@@ -29,6 +29,7 @@ import AuditLogs from "@/pages/admin/AuditLogs";
 import ChangePassword from "@/pages/admin/ChangePassword";
 import ClubsManagement from "@/pages/admin/ClubsManagement";
 import RegionalsManagement from "@/pages/admin/RegionalsManagement";
+import AlumniManagement from "@/pages/admin/AlumniManagement";
 import PRDDocumentation from "@/pages/admin/PRDDocumentation";
 import SessionsManagement from "@/pages/admin/SessionsManagement";
 import EmailSettings from "@/pages/admin/EmailSettings";
@@ -63,10 +64,10 @@ const AnimatedRoutes = () => {
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
         {/* Admin routes - wrapped in AdminAuthProvider */}
-        <Route path="/fim-admin-portal-2024" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
-        <Route path="/fim-admin-portal-2024/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
-        <Route path="/fim-admin-portal-2024/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
-        <Route path="/fim-admin-portal-2024/*" element={
+        <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+        <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
+        <Route path="/admin/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
+        <Route path="/admin/*" element={
           <AdminAuthProvider>
             <Routes>
               <Route element={<AdminDashboard />}>
@@ -79,6 +80,7 @@ const AnimatedRoutes = () => {
                 <Route path="newsletter" element={<NewsletterManagement />} />
                 <Route path="clubs" element={<ClubsManagement />} />
                 <Route path="regionals" element={<RegionalsManagement />} />
+                <Route path="alumni" element={<AlumniManagement />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="online" element={<OnlineAdminsDashboard />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
@@ -91,6 +93,9 @@ const AnimatedRoutes = () => {
             </Routes>
           </AdminAuthProvider>
         } />
+        
+        {/* Legacy admin route redirect */}
+        <Route path="/fim-admin-portal-2024/*" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
 
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>

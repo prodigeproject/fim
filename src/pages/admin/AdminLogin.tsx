@@ -33,7 +33,7 @@ export default function AdminLogin() {
       setRedirecting(true);
       // Small delay to prevent flash
       const timer = setTimeout(() => {
-        navigate("/fim-admin-portal-2024/dashboard", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -204,7 +204,7 @@ export default function AdminLogin() {
               </Button>
 
               <a
-                href="/fim-admin-portal-2024/forgot-password"
+                href="/admin/forgot-password"
                 className="block text-center text-sm text-muted-foreground hover:text-primary mt-4"
               >
                 Lupa password?

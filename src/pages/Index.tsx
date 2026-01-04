@@ -7,6 +7,8 @@ import { SEO } from "@/components/SEO";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -39,10 +41,23 @@ import logo28 from "@/assets/partners/logo-28.png";
 import logo29 from "@/assets/partners/logo-29.png";
 
 const Index = () => {
+  // Fetch regional count from database
+  const { data: regionalCount } = useQuery({
+    queryKey: ["regional-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("fim_regionals")
+        .select("*", { count: "exact", head: true })
+        .eq("is_active", true);
+      if (error) throw error;
+      return count || 61;
+    },
+  });
+
   const stats = [
     { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
     { icon: Users, value: "> 34", label: "Angkatan" },
-    { icon: MapPin, value: "61", label: "Regional" },
+    { icon: MapPin, value: regionalCount?.toString() || "61", label: "Regional" },
     { icon: Award, value: "4000+", label: "Alumni" },
   ];
 

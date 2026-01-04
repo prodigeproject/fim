@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,22 +53,30 @@ const categoryLabels: Record<string, string> = {
 
 export default function AnalyticsDashboard() {
   const { toast } = useToast();
+  const { user, isSuperAdmin } = useAdminAuth();
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all articles for analytics
+  // Fetch all articles for analytics - filter by author for moderators
   const { data: articles, isLoading } = useQuery({
-    queryKey: ["analytics-articles"],
+    queryKey: ["analytics-articles", user?.id, isSuperAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("articles")
-        .select("id, title, slug, category, view_count, status, created_at, published_at, tags")
+        .select("id, title, slug, category, view_count, status, created_at, published_at, tags, author_id")
         .order("view_count", { ascending: false });
       
+      // Moderators only see their own articles
+      if (!isSuperAdmin && user) {
+        query = query.eq("author_id", user.id);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   // Fetch newsletter subscribers for analytics

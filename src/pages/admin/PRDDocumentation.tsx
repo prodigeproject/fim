@@ -53,8 +53,10 @@ import {
   Download,
   FileDown,
   FileSpreadsheet,
+  FileType,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
 
 const statusIcons: Record<string, React.ElementType> = {
   planned: Clock,
@@ -517,6 +519,65 @@ export default function PRDDocumentation() {
     toast({ title: "Export Changelog XLSX berhasil" });
   };
 
+  // Export Changelog to PDF
+  const exportChangelogToPDF = () => {
+    if (!changelog?.length) return;
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const now = new Date();
+    
+    // Title
+    pdf.setFontSize(20);
+    pdf.text("Changelog - Forum Indonesia Muda", 20, 20);
+    pdf.setFontSize(10);
+    pdf.text(`Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: localeId })}`, 20, 28);
+    
+    let yPos = 45;
+    
+    changelog.forEach((log, index) => {
+      // Check if need new page
+      if (yPos > 260) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      pdf.setFontSize(14);
+      pdf.text(`v${log.version} - ${log.title}`, 20, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(10);
+      if (log.release_date) {
+        pdf.text(`Release: ${format(new Date(log.release_date), "dd MMMM yyyy", { locale: localeId })}`, 25, yPos);
+        yPos += 6;
+      }
+      
+      if (log.description) {
+        const descLines = pdf.splitTextToSize(log.description, 160);
+        pdf.text(descLines, 25, yPos);
+        yPos += descLines.length * 5;
+      }
+      
+      if (log.changes && log.changes.length > 0) {
+        yPos += 3;
+        log.changes.forEach((c: any) => {
+          if (yPos > 270) {
+            pdf.addPage();
+            yPos = 20;
+          }
+          const changeText = `• ${c.description}`;
+          const lines = pdf.splitTextToSize(changeText, 155);
+          pdf.text(lines, 30, yPos);
+          yPos += lines.length * 5;
+        });
+      }
+      
+      yPos += 10;
+    });
+
+    pdf.save(`changelog-${format(now, "yyyy-MM-dd")}.pdf`);
+    toast({ title: "Export Changelog PDF berhasil" });
+  };
+
   // Stats
   const stats = {
     total: documents?.length || 0,
@@ -558,6 +619,10 @@ export default function PRDDocumentation() {
           <Button variant="outline" onClick={exportChangelogToXLSX} disabled={!changelog?.length}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             XLSX Changelog
+          </Button>
+          <Button variant="outline" onClick={exportChangelogToPDF} disabled={!changelog?.length}>
+            <FileType className="h-4 w-4 mr-2" />
+            PDF Changelog
           </Button>
           <Button variant="outline" onClick={exportToMarkdown}>
             <FileDown className="h-4 w-4 mr-2" />

@@ -176,7 +176,7 @@ export default function ArticleApprovals() {
         .update({
           needs_approval: false,
           rejection_reason: reason,
-          status: "draft",
+          status: "rejected" as any,
         })
         .eq("id", articleId);
 
@@ -429,7 +429,7 @@ export default function ArticleApprovals() {
                           variant="outline"
                           asChild
                         >
-                          <Link to={`/fim-admin-portal-2024/articles/edit/${article.id}`}>
+                          <Link to={`/admin/articles/edit/${article.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
                             Preview
                           </Link>

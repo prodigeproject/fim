@@ -66,6 +66,7 @@ const statusColors: Record<string, string> = {
   draft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   archived: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+  rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
 
 const categoryLabels: Record<string, string> = {
@@ -329,7 +330,7 @@ export default function ArticlesManagement() {
             Kelola artikel blog FIM
           </p>
         </div>
-        <Link to="/fim-admin-portal-2024/articles/new">
+        <Link to="/admin/articles/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Tulis Artikel
@@ -367,6 +368,7 @@ export default function ArticlesManagement() {
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="scheduled">Scheduled</SelectItem>
                 <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
