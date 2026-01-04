@@ -33,7 +33,8 @@ import {
   FileText,
   AlertTriangle,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -72,6 +73,8 @@ export default function ArticleApprovals() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showCommentsDialog, setShowCommentsDialog] = useState(false);
   const [commentsArticle, setCommentsArticle] = useState<PendingArticle | null>(null);
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState("");
 
   // Fetch pending articles
   const { data: pendingArticles, isLoading } = useQuery({
@@ -181,6 +184,47 @@ export default function ArticleApprovals() {
     },
   });
 
+  // Request revision mutation
+  const revisionMutation = useMutation({
+    mutationFn: async ({ articleId, notes }: { articleId: string; notes: string }) => {
+      const { error } = await supabase
+        .from("articles")
+        .update({
+          revision_notes: notes,
+          revision_requested_at: new Date().toISOString(),
+          revision_requested_by: user?.id,
+          status: "draft",
+        })
+        .eq("id", articleId);
+
+      if (error) throw error;
+
+      // Log audit
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "request_revision",
+        p_resource_type: "article",
+        p_resource_id: articleId,
+        p_details: { notes },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-articles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
+      setShowRevisionDialog(false);
+      setSelectedArticle(null);
+      setRevisionNotes("");
+      toast({ title: "Permintaan revisi dikirim" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Gagal mengirim permintaan revisi", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleReject = () => {
     if (!selectedArticle || !rejectionReason.trim()) {
       toast({ 
@@ -192,6 +236,20 @@ export default function ArticleApprovals() {
     rejectMutation.mutate({ 
       articleId: selectedArticle.id, 
       reason: rejectionReason 
+    });
+  };
+
+  const handleRevision = () => {
+    if (!selectedArticle || !revisionNotes.trim()) {
+      toast({ 
+        title: "Catatan revisi wajib diisi", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    revisionMutation.mutate({ 
+      articleId: selectedArticle.id, 
+      notes: revisionNotes 
     });
   };
 
@@ -313,6 +371,17 @@ export default function ArticleApprovals() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedArticle(article);
+                            setShowRevisionDialog(true);
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Revisi
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="default"
                           onClick={() => approveMutation.mutate(article.id)}
                           disabled={approveMutation.isPending}
@@ -397,6 +466,42 @@ export default function ArticleApprovals() {
           {commentsArticle && (
             <ArticleComments articleId={commentsArticle.id} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Revision Dialog */}
+      <Dialog open={showRevisionDialog} onOpenChange={setShowRevisionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Minta Revisi</DialogTitle>
+            <DialogDescription>
+              Berikan catatan revisi untuk artikel "{selectedArticle?.title}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Catatan revisi... (contoh: Perbaiki judul, tambahkan gambar, dll)"
+              value={revisionNotes}
+              onChange={(e) => setRevisionNotes(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevisionDialog(false)}>
+              Batal
+            </Button>
+            <Button 
+              onClick={handleRevision}
+              disabled={revisionMutation.isPending || !revisionNotes.trim()}
+            >
+              {revisionMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RotateCcw className="h-4 w-4 mr-2" />
+              )}
+              Kirim Permintaan Revisi
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

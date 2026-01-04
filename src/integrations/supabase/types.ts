@@ -110,6 +110,9 @@ export type Database = {
           published_at: string | null
           rejection_reason: string | null
           related_region: string | null
+          revision_notes: string | null
+          revision_requested_at: string | null
+          revision_requested_by: string | null
           scheduled_at: string | null
           slug: string
           status: Database["public"]["Enums"]["article_status"] | null
@@ -139,6 +142,9 @@ export type Database = {
           published_at?: string | null
           rejection_reason?: string | null
           related_region?: string | null
+          revision_notes?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           scheduled_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["article_status"] | null
@@ -168,6 +174,9 @@ export type Database = {
           published_at?: string | null
           rejection_reason?: string | null
           related_region?: string | null
+          revision_notes?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           scheduled_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["article_status"] | null

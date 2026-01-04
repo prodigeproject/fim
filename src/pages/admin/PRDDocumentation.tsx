@@ -123,6 +123,8 @@ export default function PRDDocumentation() {
   const [isChangelogDialogOpen, setIsChangelogDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<PRDDocument | null>(null);
   const [editingChangelog, setEditingChangelog] = useState<PRDChangelog | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Form states
   const [formData, setFormData] = useState({
@@ -146,7 +148,7 @@ export default function PRDDocumentation() {
 
   // Fetch PRD documents
   const { data: documents, isLoading: docsLoading } = useQuery({
-    queryKey: ["prd-documents", statusFilter, categoryFilter],
+    queryKey: ["prd-documents", statusFilter, categoryFilter, startDate, endDate],
     queryFn: async () => {
       let query = supabase
         .from("prd_documents")
@@ -158,6 +160,12 @@ export default function PRDDocumentation() {
       }
       if (categoryFilter !== "all") {
         query = query.eq("category", categoryFilter);
+      }
+      if (startDate) {
+        query = query.gte("created_at", `${startDate}T00:00:00`);
+      }
+      if (endDate) {
+        query = query.lte("created_at", `${endDate}T23:59:59`);
       }
 
       const { data, error } = await query;
@@ -415,6 +423,41 @@ export default function PRDDocumentation() {
     toast({ title: "Export berhasil", description: "File Markdown berhasil diunduh" });
   };
 
+  // Export to CSV
+  const exportToCSV = () => {
+    if (!documents?.length) return;
+
+    const now = new Date();
+    const headers = ["Judul", "Kategori", "Status", "Prioritas", "Versi", "Deskripsi", "Tanggal Dibuat", "Tanggal Update"];
+    const rows = documents.map(doc => [
+      doc.title,
+      categoryLabels[doc.category] || doc.category,
+      doc.status,
+      doc.priority || "",
+      doc.version || "",
+      doc.description || "",
+      format(new Date(doc.created_at), "dd MMM yyyy", { locale: localeId }),
+      format(new Date(doc.updated_at), "dd MMM yyyy", { locale: localeId }),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `prd-documents-${format(now, "yyyy-MM-dd")}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Export CSV berhasil" });
+  };
+
   // Stats
   const stats = {
     total: documents?.length || 0,
@@ -444,10 +487,16 @@ export default function PRDDocumentation() {
             Lacak kebutuhan, status fitur, backlog, dan changelog pengembangan
           </p>
         </div>
-        <Button variant="outline" onClick={exportToMarkdown}>
-          <FileDown className="h-4 w-4 mr-2" />
-          Export Markdown
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV} disabled={!documents?.length}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={exportToMarkdown}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export Markdown
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -506,47 +555,76 @@ export default function PRDDocumentation() {
 
         <TabsContent value="documents" className="space-y-4">
           {/* Filters & Actions */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari dokumen..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari dokumen..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="planned">Planned</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  <SelectItem value="feature">Fitur</SelectItem>
+                  <SelectItem value="bug">Bug Fix</SelectItem>
+                  <SelectItem value="enhancement">Enhancement</SelectItem>
+                  <SelectItem value="backlog">Backlog</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="planned">Planned</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
-                <SelectItem value="feature">Fitur</SelectItem>
-                <SelectItem value="bug">Bug Fix</SelectItem>
-                <SelectItem value="enhancement">Enhancement</SelectItem>
-                <SelectItem value="backlog">Backlog</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-            </Button>
+            
+            {/* Date Range Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="grid grid-cols-2 gap-2 flex-1 max-w-md">
+                <div>
+                  <Label className="text-xs">Dari Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Sampai Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
             <Dialog open={isDocDialogOpen} onOpenChange={(open) => {
               setIsDocDialogOpen(open);
               if (!open) {
