@@ -39,6 +39,7 @@ import ProfileSettings from "@/pages/admin/ProfileSettings";
 import OnlineAdminsDashboard from "@/pages/admin/OnlineAdminsDashboard";
 import ArticleApprovals from "@/pages/admin/ArticleApprovals";
 import NotificationsPage from "@/pages/admin/NotificationsPage";
+import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -72,25 +73,28 @@ const AnimatedRoutes = () => {
           <AdminAuthProvider>
             <Routes>
               <Route element={<AdminDashboard />}>
+                {/* Routes accessible by all admins (moderator + super_admin) */}
                 <Route path="dashboard" element={<DashboardHome />} />
                 <Route path="articles" element={<ArticlesManagement />} />
                 <Route path="articles/new" element={<ArticleEditor />} />
                 <Route path="articles/edit/:id" element={<ArticleEditor />} />
-                <Route path="approvals" element={<ArticleApprovals />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
-                <Route path="newsletter" element={<NewsletterManagement />} />
-                <Route path="clubs" element={<ClubsManagement />} />
-                <Route path="regionals" element={<RegionalsManagement />} />
-                <Route path="alumni" element={<AlumniManagement />} />
-                <Route path="users" element={<UsersManagement />} />
-                <Route path="online" element={<OnlineAdminsDashboard />} />
-                <Route path="audit-logs" element={<AuditLogs />} />
-                <Route path="sessions" element={<SessionsManagement />} />
-                <Route path="email-settings" element={<EmailSettings />} />
-                <Route path="prd" element={<PRDDocumentation />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="change-password" element={<ChangePassword />} />
                 <Route path="profile" element={<ProfileSettings />} />
+                
+                {/* Super Admin only routes */}
+                <Route path="approvals" element={<RequireSuperAdmin><ArticleApprovals /></RequireSuperAdmin>} />
+                <Route path="newsletter" element={<RequireSuperAdmin><NewsletterManagement /></RequireSuperAdmin>} />
+                <Route path="clubs" element={<RequireSuperAdmin><ClubsManagement /></RequireSuperAdmin>} />
+                <Route path="regionals" element={<RequireSuperAdmin><RegionalsManagement /></RequireSuperAdmin>} />
+                <Route path="alumni" element={<RequireSuperAdmin><AlumniManagement /></RequireSuperAdmin>} />
+                <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
+                <Route path="online" element={<RequireSuperAdmin><OnlineAdminsDashboard /></RequireSuperAdmin>} />
+                <Route path="audit-logs" element={<RequireSuperAdmin><AuditLogs /></RequireSuperAdmin>} />
+                <Route path="sessions" element={<RequireSuperAdmin><SessionsManagement /></RequireSuperAdmin>} />
+                <Route path="email-settings" element={<RequireSuperAdmin><EmailSettings /></RequireSuperAdmin>} />
+                <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
               </Route>
             </Routes>
           </AdminAuthProvider>
