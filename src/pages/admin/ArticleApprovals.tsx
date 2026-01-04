@@ -110,7 +110,7 @@ export default function ArticleApprovals() {
 
   // Approve article mutation
   const approveMutation = useMutation({
-    mutationFn: async (articleId: string) => {
+    mutationFn: async (article: PendingArticle) => {
       const { error } = await supabase
         .from("articles")
         .update({
@@ -118,7 +118,7 @@ export default function ArticleApprovals() {
           approved_at: new Date().toISOString(),
           approved_by: user?.id,
         })
-        .eq("id", articleId);
+        .eq("id", article.id);
 
       if (error) throw error;
 
@@ -127,13 +127,37 @@ export default function ArticleApprovals() {
         p_user_id: user?.id,
         p_action: "approve_article",
         p_resource_type: "article",
-        p_resource_id: articleId,
+        p_resource_id: article.id,
       });
+
+      // Get author email for notification
+      const { data: authorProfile } = await supabase
+        .from("profiles")
+        .select("email, full_name, username")
+        .eq("id", article.author_id)
+        .single();
+
+      if (authorProfile?.email) {
+        // Send email notification
+        try {
+          await supabase.functions.invoke("notify-article-status", {
+            body: {
+              moderator_email: authorProfile.email,
+              moderator_name: authorProfile.full_name || authorProfile.username,
+              article_title: article.title,
+              status: "approved",
+              admin_name: profile?.full_name || profile?.username || "Super Admin",
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send approval notification email:", emailError);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-articles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
-      toast({ title: "Artikel disetujui" });
+      toast({ title: "Artikel disetujui", description: "Moderator akan menerima notifikasi email" });
     },
     onError: (error) => {
       toast({ 
@@ -146,7 +170,7 @@ export default function ArticleApprovals() {
 
   // Reject article mutation
   const rejectMutation = useMutation({
-    mutationFn: async ({ articleId, reason }: { articleId: string; reason: string }) => {
+    mutationFn: async ({ articleId, reason, article }: { articleId: string; reason: string; article: PendingArticle }) => {
       const { error } = await supabase
         .from("articles")
         .update({
@@ -166,6 +190,31 @@ export default function ArticleApprovals() {
         p_resource_id: articleId,
         p_details: { reason },
       });
+
+      // Get author email for notification
+      const { data: authorProfile } = await supabase
+        .from("profiles")
+        .select("email, full_name, username")
+        .eq("id", article.author_id)
+        .single();
+
+      if (authorProfile?.email) {
+        // Send email notification
+        try {
+          await supabase.functions.invoke("notify-article-status", {
+            body: {
+              moderator_email: authorProfile.email,
+              moderator_name: authorProfile.full_name || authorProfile.username,
+              article_title: article.title,
+              status: "rejected",
+              rejection_reason: reason,
+              admin_name: profile?.full_name || profile?.username || "Super Admin",
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send rejection notification email:", emailError);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-articles"] });
@@ -173,7 +222,7 @@ export default function ArticleApprovals() {
       setShowRejectDialog(false);
       setSelectedArticle(null);
       setRejectionReason("");
-      toast({ title: "Artikel ditolak" });
+      toast({ title: "Artikel ditolak", description: "Moderator akan menerima notifikasi email" });
     },
     onError: (error) => {
       toast({ 
@@ -260,7 +309,8 @@ export default function ArticleApprovals() {
     }
     rejectMutation.mutate({ 
       articleId: selectedArticle.id, 
-      reason: rejectionReason 
+      reason: rejectionReason,
+      article: selectedArticle
     });
   };
 
@@ -409,7 +459,7 @@ export default function ArticleApprovals() {
                         <Button
                           size="sm"
                           variant="default"
-                          onClick={() => approveMutation.mutate(article.id)}
+                          onClick={() => approveMutation.mutate(article)}
                           disabled={approveMutation.isPending}
                         >
                           {approveMutation.isPending ? (

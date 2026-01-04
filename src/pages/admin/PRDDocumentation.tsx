@@ -52,7 +52,9 @@ import {
   Loader2,
   Download,
   FileDown,
+  FileSpreadsheet,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const statusIcons: Record<string, React.ElementType> = {
   planned: Clock,
@@ -458,6 +460,63 @@ export default function PRDDocumentation() {
     toast({ title: "Export CSV berhasil" });
   };
 
+  // Export to XLSX for Documents
+  const exportDocsToXLSX = () => {
+    if (!documents?.length) return;
+
+    const now = new Date();
+    const data = documents.map(doc => ({
+      "Judul": doc.title,
+      "Kategori": categoryLabels[doc.category] || doc.category,
+      "Status": doc.status,
+      "Prioritas": doc.priority || "",
+      "Versi": doc.version || "",
+      "Deskripsi": doc.description || "",
+      "Konten": doc.content || "",
+      "Tanggal Dibuat": format(new Date(doc.created_at), "dd MMM yyyy", { locale: localeId }),
+      "Tanggal Update": format(new Date(doc.updated_at), "dd MMM yyyy", { locale: localeId }),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PRD Documents");
+
+    // Auto-size columns
+    ws["!cols"] = [
+      { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, 
+      { wch: 40 }, { wch: 50 }, { wch: 15 }, { wch: 15 },
+    ];
+
+    XLSX.writeFile(wb, `prd-documents-${format(now, "yyyy-MM-dd")}.xlsx`);
+    toast({ title: "Export XLSX berhasil" });
+  };
+
+  // Export Changelog to XLSX
+  const exportChangelogToXLSX = () => {
+    if (!changelog?.length) return;
+
+    const now = new Date();
+    const data = changelog.map(log => ({
+      "Versi": log.version,
+      "Judul": log.title,
+      "Deskripsi": log.description || "",
+      "Perubahan": log.changes?.map((c: any) => c.description).join("; ") || "",
+      "Tanggal Rilis": log.release_date ? format(new Date(log.release_date), "dd MMM yyyy", { locale: localeId }) : "",
+      "Tanggal Dibuat": format(new Date(log.created_at), "dd MMM yyyy", { locale: localeId }),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Changelog");
+
+    ws["!cols"] = [
+      { wch: 10 }, { wch: 30 }, { wch: 40 }, { wch: 60 }, { wch: 15 }, { wch: 15 },
+    ];
+
+    XLSX.writeFile(wb, `prd-changelog-${format(now, "yyyy-MM-dd")}.xlsx`);
+    toast({ title: "Export Changelog XLSX berhasil" });
+  };
+
   // Stats
   const stats = {
     total: documents?.length || 0,
@@ -487,14 +546,22 @@ export default function PRDDocumentation() {
             Lacak kebutuhan, status fitur, backlog, dan changelog pengembangan
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={exportToCSV} disabled={!documents?.length}>
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            CSV
+          </Button>
+          <Button variant="outline" onClick={exportDocsToXLSX} disabled={!documents?.length}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            XLSX Docs
+          </Button>
+          <Button variant="outline" onClick={exportChangelogToXLSX} disabled={!changelog?.length}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            XLSX Changelog
           </Button>
           <Button variant="outline" onClick={exportToMarkdown}>
             <FileDown className="h-4 w-4 mr-2" />
-            Export Markdown
+            Markdown
           </Button>
         </div>
       </div>
