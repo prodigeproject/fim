@@ -548,7 +548,7 @@ export default function ArticlesManagement() {
                            )}
                           
                           {canEdit(article) && (
-                            <Link to={`/fim-admin-portal-2024/articles/${article.id}/edit`}>
+                            <Link to={`/admin/articles/edit/${article.id}`}>
                               <Button variant="ghost" size="icon">
                                 <Edit className="h-4 w-4" />
                               </Button>
