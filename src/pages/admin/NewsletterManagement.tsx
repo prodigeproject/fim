@@ -63,9 +63,12 @@ import {
   Pencil,
   ArrowUpAZ,
   ArrowDownZA,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -78,6 +81,20 @@ interface Subscriber {
   unsubscribed_at: string | null;
 }
 
+// Email validation regex
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
+
+interface CSVImportResult {
+  success: number;
+  failed: number;
+  duplicates: number;
+  invalid: number;
+  errors: string[];
+}
+
 export default function NewsletterManagement() {
   const { isSuperAdmin, user, profile } = useAdminAuth();
   const { toast } = useToast();
@@ -86,12 +103,20 @@ export default function NewsletterManagement() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [isSubscriberDialogOpen, setIsSubscriberDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
   const [broadcastSubject, setBroadcastSubject] = useState("");
   const [broadcastContent, setBroadcastContent] = useState("");
   const [testEmailSent, setTestEmailSent] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState("09:00");
+
+  // CSV Import state
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvPreview, setCsvPreview] = useState<{ email: string; name: string }[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importResult, setImportResult] = useState<CSVImportResult | null>(null);
 
   // Subscriber form state
   const [subscriberForm, setSubscriberForm] = useState({
@@ -103,6 +128,13 @@ export default function NewsletterManagement() {
   const resetSubscriberForm = () => {
     setSubscriberForm({ email: "", name: "", is_active: true });
     setEditingSubscriber(null);
+  };
+
+  const resetImportState = () => {
+    setCsvFile(null);
+    setCsvPreview([]);
+    setImportProgress(0);
+    setImportResult(null);
   };
 
   const { data: subscribers, isLoading } = useQuery({
@@ -356,6 +388,144 @@ export default function NewsletterManagement() {
     toast({ title: "Export berhasil" });
   };
 
+  // Parse CSV file
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({ title: "Format file tidak valid", description: "Hanya file CSV yang diperbolehkan", variant: "destructive" });
+      return;
+    }
+
+    setCsvFile(file);
+    setImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      // Skip header row
+      const dataLines = lines.slice(1);
+      const parsed: { email: string; name: string }[] = [];
+
+      for (const line of dataLines) {
+        // Handle CSV with quotes
+        const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        if (matches && matches.length >= 1) {
+          const email = matches[0].replace(/"/g, '').trim();
+          const name = matches[1]?.replace(/"/g, '').trim() || '';
+          if (email) {
+            parsed.push({ email, name });
+          }
+        }
+      }
+
+      setCsvPreview(parsed.slice(0, 10)); // Preview first 10 rows
+      toast({ title: `${parsed.length} data ditemukan`, description: "Preview 10 data pertama ditampilkan" });
+    };
+    reader.readAsText(file);
+  };
+
+  // Import CSV to database
+  const handleImportCSV = async () => {
+    if (!csvFile) return;
+
+    setIsImporting(true);
+    setImportProgress(0);
+    
+    const result: CSVImportResult = {
+      success: 0,
+      failed: 0,
+      duplicates: 0,
+      invalid: 0,
+      errors: [],
+    };
+
+    try {
+      // Read full file
+      const text = await csvFile.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const dataLines = lines.slice(1);
+      
+      // Get existing emails
+      const existingEmails = new Set(subscribers?.map(s => s.email.toLowerCase()) || []);
+      
+      const toInsert: { email: string; name: string | null; is_active: boolean; subscribed_at: string }[] = [];
+      
+      for (const line of dataLines) {
+        const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        if (matches && matches.length >= 1) {
+          const email = matches[0].replace(/"/g, '').trim().toLowerCase();
+          const name = matches[1]?.replace(/"/g, '').trim() || null;
+          
+          if (!email) continue;
+          
+          if (!isValidEmail(email)) {
+            result.invalid++;
+            result.errors.push(`Invalid email: ${email}`);
+            continue;
+          }
+          
+          if (existingEmails.has(email)) {
+            result.duplicates++;
+            continue;
+          }
+          
+          existingEmails.add(email);
+          toInsert.push({
+            email,
+            name,
+            is_active: true,
+            subscribed_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Batch insert
+      const batchSize = 50;
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const { error } = await supabase.from("newsletter_subscribers").insert(batch);
+        
+        if (error) {
+          result.failed += batch.length;
+          result.errors.push(error.message);
+        } else {
+          result.success += batch.length;
+        }
+        
+        setImportProgress(Math.round(((i + batch.length) / toInsert.length) * 100));
+      }
+
+      // Audit log
+      await supabase.rpc("log_audit_event", {
+        p_user_id: user?.id,
+        p_action: "bulk_import_subscribers",
+        p_resource_type: "newsletter_subscriber",
+        p_details: { 
+          success: result.success, 
+          failed: result.failed, 
+          duplicates: result.duplicates,
+          invalid: result.invalid,
+        },
+      });
+
+      setImportResult(result);
+      queryClient.invalidateQueries({ queryKey: ["newsletter-subscribers"] });
+      
+      toast({ 
+        title: "Import selesai", 
+        description: `${result.success} berhasil, ${result.duplicates} duplikat, ${result.invalid} tidak valid`,
+      });
+    } catch (error: any) {
+      toast({ title: "Import gagal", description: error.message, variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const filteredSubscribers = subscribers?.filter((s) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
@@ -393,7 +563,136 @@ export default function NewsletterManagement() {
           <h1 className="text-2xl font-bold">Newsletter</h1>
           <p className="text-muted-foreground">Kelola subscriber newsletter FIM</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
+          {/* Import CSV Dialog */}
+          <Dialog 
+            open={isImportDialogOpen} 
+            onOpenChange={(open) => { 
+              setIsImportDialogOpen(open); 
+              if (!open) resetImportState(); 
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Import Subscriber dari CSV</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label>File CSV</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCSVUpload}
+                      disabled={isImporting}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Format: Email, Nama (header di baris pertama)
+                  </p>
+                </div>
+
+                {csvPreview.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Preview ({csvPreview.length} data pertama)</Label>
+                    <div className="max-h-40 overflow-y-auto border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Nama</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {csvPreview.map((row, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="text-sm">{row.email}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{row.name || "—"}</TableCell>
+                              <TableCell>
+                                {isValidEmail(row.email) ? (
+                                  <Badge className="bg-green-100 text-green-800 text-xs">Valid</Badge>
+                                ) : (
+                                  <Badge variant="destructive" className="text-xs">Invalid</Badge>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {isImporting && (
+                  <div className="space-y-2">
+                    <Label>Progress Import</Label>
+                    <Progress value={importProgress} />
+                    <p className="text-xs text-center text-muted-foreground">{importProgress}%</p>
+                  </div>
+                )}
+
+                {importResult && (
+                  <div className="p-4 border rounded-lg bg-muted/50 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Berhasil:</span>
+                      <span className="font-medium text-green-600">{importResult.success}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Duplikat (dilewati):</span>
+                      <span className="font-medium text-yellow-600">{importResult.duplicates}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Email tidak valid:</span>
+                      <span className="font-medium text-red-600">{importResult.invalid}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Gagal:</span>
+                      <span className="font-medium text-red-600">{importResult.failed}</span>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  className="w-full"
+                  onClick={handleImportCSV}
+                  disabled={!csvFile || isImporting || importResult !== null}
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Mengimport...
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Import Semua Data
+                    </>
+                  )}
+                </Button>
+
+                {importResult && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      resetImportState();
+                      setIsImportDialogOpen(false);
+                    }}
+                  >
+                    Selesai
+                  </Button>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Add Subscriber Dialog */}
           <Dialog 
             open={isSubscriberDialogOpen} 

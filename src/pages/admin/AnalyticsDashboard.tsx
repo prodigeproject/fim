@@ -31,7 +31,7 @@ import {
   Download,
   FileSpreadsheet
 } from "lucide-react";
-import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
+import { format, subDays, startOfDay, eachDayOfInterval, startOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { id } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,6 +114,38 @@ export default function AnalyticsDashboard() {
       recentViews,
       draftCount: articles.filter(a => a.status === "draft").length,
     };
+  }, [articles]);
+
+  // Monthly views chart (last 12 months)
+  const monthlyViews = useMemo(() => {
+    if (!articles) return [];
+    
+    const last12Months = eachMonthOfInterval({
+      start: startOfMonth(subMonths(new Date(), 11)),
+      end: startOfMonth(new Date()),
+    });
+
+    return last12Months.map(monthStart => {
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+      
+      // Get articles published in this month
+      const monthArticles = articles.filter(a => {
+        if (!a.published_at) return false;
+        const pubDate = new Date(a.published_at);
+        return pubDate >= monthStart && pubDate < monthEnd;
+      });
+
+      const views = monthArticles.reduce((sum, a) => sum + (a.view_count || 0), 0);
+      const articlesCount = monthArticles.length;
+
+      return {
+        month: format(monthStart, "MMM yy", { locale: id }),
+        fullMonth: format(monthStart, "MMMM yyyy", { locale: id }),
+        views,
+        articles: articlesCount,
+      };
+    });
   }, [articles]);
 
   // Calculate newsletter statistics
@@ -776,6 +808,36 @@ export default function AnalyticsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Monthly Views Comparison Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">📈 Views Artikel per Bulan</CardTitle>
+          <CardDescription>Perbandingan views artikel 12 bulan terakhir untuk melihat tren engagement</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyViews}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" />
+                <Tooltip 
+                  formatter={(value: number, name: string) => [
+                    value.toLocaleString(), 
+                    name === "views" ? "Total Views" : "Jumlah Artikel"
+                  ]}
+                  labelFormatter={(label) => monthlyViews.find(m => m.month === label)?.fullMonth || label}
+                />
+                <Legend />
+                <Bar yAxisId="left" dataKey="views" fill="hsl(var(--primary))" name="Views" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="articles" fill="hsl(var(--accent))" name="Artikel" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Newsletter Subscriber Growth */}
       <Card>
