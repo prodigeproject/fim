@@ -6,7 +6,8 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
+import { ArticleStatsCharts } from "@/components/admin/ArticleStatsCharts";
+import { BackupManager } from "@/components/admin/BackupManager";
 export default function DashboardHome() {
   const { profile, isSuperAdmin } = useAdminAuth();
 
@@ -123,9 +124,9 @@ export default function DashboardHome() {
   ];
 
   const organizationStatCards = [
-    { title: "FIM Club", value: clubCount || 0, icon: Users, color: "text-primary", link: "/fim-admin-portal-2024/clubs" },
-    { title: "Regional FIM", value: regionalCount || 0, icon: MapPin, color: "text-orange-500", link: "/fim-admin-portal-2024/regionals" },
-    { title: "Newsletter Aktif", value: subscriberStats?.active || 0, icon: Mail, color: "text-emerald-500", link: "/fim-admin-portal-2024/newsletter" },
+    { title: "FIM Club", value: clubCount || 0, icon: Users, color: "text-primary", link: "/admin/clubs" },
+    { title: "Regional FIM", value: regionalCount || 0, icon: MapPin, color: "text-orange-500", link: "/admin/regionals" },
+    { title: "Newsletter Aktif", value: subscriberStats?.active || 0, icon: Mail, color: "text-emerald-500", link: "/admin/newsletter" },
   ];
 
   const statusColors: Record<string, string> = {
@@ -210,7 +211,7 @@ export default function DashboardHome() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Artikel Terbaru</CardTitle>
-            <Link to="/fim-admin-portal-2024/articles">
+            <Link to="/admin/articles">
               <Button variant="outline" size="sm">Lihat Semua</Button>
             </Link>
           </CardHeader>
@@ -255,7 +256,7 @@ export default function DashboardHome() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Aktivitas Terbaru</CardTitle>
-              <Link to="/fim-admin-portal-2024/audit-logs">
+              <Link to="/admin/audit-logs">
                 <Button variant="outline" size="sm">Lihat Semua</Button>
               </Link>
             </CardHeader>
@@ -296,6 +297,21 @@ export default function DashboardHome() {
           </Card>
         )}
       </div>
+
+      {/* Article Stats Charts */}
+      {isSuperAdmin && (
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Statistik Artikel</h2>
+          <ArticleStatsCharts />
+        </div>
+      )}
+
+      {/* Backup Manager */}
+      {isSuperAdmin && (
+        <div>
+          <BackupManager />
+        </div>
+      )}
     </div>
   );
 }

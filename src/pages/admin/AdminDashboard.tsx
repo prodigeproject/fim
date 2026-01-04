@@ -29,6 +29,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
 
 interface NavItem {
   name: string;
@@ -363,18 +364,26 @@ export default function AdminDashboard() {
 
         {/* Mobile Header */}
         <div className="flex-1 flex flex-col lg:ml-64">
-          <header className="lg:hidden flex items-center gap-4 p-4 bg-card border-b">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
-                <Sidebar />
-              </SheetContent>
-            </Sheet>
-            <h1 className="text-lg font-bold">FIM Admin</h1>
+          <header className="lg:hidden flex items-center justify-between p-4 bg-card border-b">
+            <div className="flex items-center gap-4">
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-64">
+                  <Sidebar />
+                </SheetContent>
+              </Sheet>
+              <h1 className="text-lg font-bold">FIM Admin</h1>
+            </div>
+            <NotificationDropdown />
+          </header>
+
+          {/* Desktop Header with Notification */}
+          <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card/50">
+            <NotificationDropdown />
           </header>
 
           {/* Main Content */}
