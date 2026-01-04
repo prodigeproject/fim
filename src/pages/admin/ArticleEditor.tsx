@@ -182,7 +182,7 @@ export default function ArticleEditor() {
         status = 'draft';
       }
 
-      const articleData = {
+      const articleData: Record<string, unknown> = {
         title: fd.title,
         slug: fd.slug,
         content: fd.content,
@@ -194,22 +194,36 @@ export default function ArticleEditor() {
         related_region: fd.related_region || null,
         status,
         scheduled_at: status === 'scheduled' && fd.scheduled_at ? fd.scheduled_at.toISOString() : null,
-        published_at: status === 'published' ? new Date().toISOString() : null,
-        author_id: user?.id,
         needs_approval: needsApproval || false,
       };
+
+
+      // Handle published_at - only set when first publishing
+      if (status === 'published' && (!article?.published_at || article.status !== 'published')) {
+        articleData.published_at = new Date().toISOString();
+      }
+
+      // Handle published_at - only set when first publishing
+      if (status === 'published' && (!article?.published_at || article.status !== 'published')) {
+        articleData.published_at = new Date().toISOString();
+      }
 
       if (isEditing) {
         const { error } = await supabase
           .from('articles')
-          .update(articleData)
+          .update(articleData as any)
           .eq('id', id);
         if (error) throw error;
         return { id, needsApproval };
       } else {
+        // For new articles, ensure author_id is set
+        const insertData = {
+          ...articleData,
+          author_id: user?.id,
+        };
         const { data, error } = await supabase
           .from('articles')
-          .insert(articleData)
+          .insert(insertData as any)
           .select('id')
           .single();
         if (error) throw error;

@@ -53,7 +53,7 @@ export default function ChangePassword() {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          navigate("/fim-admin-portal-2024/dashboard");
+          navigate("/admin/dashboard");
         }, 2000);
       }
     } catch (err) {

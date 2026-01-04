@@ -7,7 +7,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { 
   FileText, 
-  Download, 
   Database, 
   Globe, 
   Shield, 
@@ -22,13 +21,22 @@ import {
   HardDrive,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  GitBranch
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import JSZip from "jszip";
 import * as XLSX from "xlsx";
+import { 
+  MermaidDiagram, 
+  architectureDiagram, 
+  databaseDiagram, 
+  authFlowDiagram, 
+  articleFlowDiagram,
+  securityDiagram 
+} from "@/components/admin/MermaidDiagram";
 
 // Data structures for documentation
 const publicPages = [
@@ -531,10 +539,14 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
       )}
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto">
           <TabsTrigger value="overview" className="text-xs">
             <Layers className="h-3 w-3 mr-1" />
             Ringkasan
+          </TabsTrigger>
+          <TabsTrigger value="architecture" className="text-xs">
+            <GitBranch className="h-3 w-3 mr-1" />
+            Arsitektur
           </TabsTrigger>
           <TabsTrigger value="public" className="text-xs">
             <Globe className="h-3 w-3 mr-1" />
@@ -670,6 +682,50 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="architecture">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5" />
+                  Diagram Arsitektur Sistem
+                </CardTitle>
+                <CardDescription>
+                  Visualisasi arsitektur aplikasi dan alur data
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <MermaidDiagram
+                chart={architectureDiagram}
+                title="🏗️ Arsitektur Aplikasi"
+              />
+              
+              <MermaidDiagram
+                chart={authFlowDiagram}
+                title="🔐 Alur Autentikasi"
+              />
+              
+              <MermaidDiagram
+                chart={articleFlowDiagram}
+                title="📝 Alur Artikel"
+              />
+              
+              <MermaidDiagram
+                chart={securityDiagram}
+                title="🛡️ Lapisan Keamanan"
+              />
+            </div>
+
+            <MermaidDiagram
+              chart={databaseDiagram}
+              title="🗄️ Entity Relationship Diagram"
+              className="w-full"
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="public">
