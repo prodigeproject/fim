@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,11 +29,15 @@ import {
   ArrowUp,
   ArrowDown,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileImage,
+  Loader2
 } from "lucide-react";
 import { format, subDays, startOfDay, eachDayOfInterval, startOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { id } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -49,6 +53,8 @@ const categoryLabels: Record<string, string> = {
 export default function AnalyticsDashboard() {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   // Fetch all articles for analytics
   const { data: articles, isLoading } = useQuery({
@@ -441,6 +447,78 @@ export default function AnalyticsDashboard() {
     }
   };
 
+  // Export to PDF with charts
+  const exportToPDF = async () => {
+    if (!reportRef.current || !stats) return;
+    setIsExportingPDF(true);
+
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      const now = new Date();
+      const monthYear = format(now, "MMMM yyyy", { locale: id });
+      
+      // Title
+      pdf.setFontSize(20);
+      pdf.text(`Laporan Analytics - ${monthYear}`, 20, 20);
+      pdf.setFontSize(10);
+      pdf.text(`Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: id })}`, 20, 28);
+      
+      // Summary stats
+      pdf.setFontSize(14);
+      pdf.text("Ringkasan Statistik", 20, 45);
+      pdf.setFontSize(11);
+      pdf.text(`Total Views: ${stats.totalViews.toLocaleString()}`, 25, 55);
+      pdf.text(`Total Artikel: ${stats.totalArticles}`, 25, 62);
+      pdf.text(`Artikel Published: ${stats.publishedArticles}`, 25, 69);
+      pdf.text(`Rata-rata Views/Artikel: ${stats.avgViewsPerArticle}`, 25, 76);
+      
+      // Newsletter stats
+      if (newsletterStats) {
+        pdf.text(`Total Subscriber: ${newsletterStats.totalSubscribers}`, 25, 86);
+        pdf.text(`Subscriber Aktif: ${newsletterStats.activeSubscribers}`, 25, 93);
+        pdf.text(`Delivery Rate: ${newsletterStats.deliveryRate}%`, 25, 100);
+      }
+      
+      // Top articles
+      pdf.setFontSize(14);
+      pdf.text("Top 10 Artikel", 20, 115);
+      pdf.setFontSize(9);
+      topArticles.slice(0, 10).forEach((article, i) => {
+        const y = 125 + (i * 6);
+        if (y < 280) {
+          pdf.text(`${i + 1}. ${article.fullTitle.substring(0, 50)}... - ${article.views.toLocaleString()} views`, 25, y);
+        }
+      });
+      
+      // Views by category
+      pdf.addPage();
+      pdf.setFontSize(14);
+      pdf.text("Views per Kategori", 20, 20);
+      pdf.setFontSize(11);
+      viewsByCategory.forEach((cat, i) => {
+        pdf.text(`${cat.name}: ${cat.views.toLocaleString()} views`, 25, 30 + (i * 8));
+      });
+      
+      // Trending topics
+      pdf.setFontSize(14);
+      pdf.text("Trending Topics", 20, 90);
+      pdf.setFontSize(10);
+      trendingTopics.slice(0, 10).forEach((topic, i) => {
+        pdf.text(`#${topic.tag} - ${topic.views.toLocaleString()} views (${topic.count} artikel)`, 25, 100 + (i * 7));
+      });
+
+      const filename = `laporan-analytics-${format(now, "yyyy-MM")}.pdf`;
+      pdf.save(filename);
+      
+      toast({ title: "PDF berhasil diexport", description: `File ${filename} berhasil diunduh` });
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast({ title: "Export PDF gagal", variant: "destructive" });
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -468,7 +546,7 @@ export default function AnalyticsDashboard() {
           <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
           <p className="text-muted-foreground">Statistik artikel dan engagement</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={exportToCSV} 
@@ -483,7 +561,19 @@ export default function AnalyticsDashboard() {
             disabled={isExporting}
           >
             <Download className="h-4 w-4 mr-2" />
-            Laporan Bulanan
+            Laporan TXT
+          </Button>
+          <Button 
+            variant="default" 
+            onClick={exportToPDF}
+            disabled={isExportingPDF}
+          >
+            {isExportingPDF ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileImage className="h-4 w-4 mr-2" />
+            )}
+            Export PDF
           </Button>
         </div>
       </div>

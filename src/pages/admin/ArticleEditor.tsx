@@ -173,10 +173,15 @@ export default function ArticleEditor() {
 
   // Save article mutation
   const saveMutation = useMutation({
-    mutationFn: async (data: { formData: ArticleFormData; newStatus?: ArticleStatus }) => {
-      const { formData: fd, newStatus } = data;
-      const status = newStatus || fd.status;
+    mutationFn: async (data: { formData: ArticleFormData; newStatus?: ArticleStatus; needsApproval?: boolean }) => {
+      const { formData: fd, newStatus, needsApproval } = data;
+      let status = newStatus || fd.status;
       
+      // If moderator is submitting for approval
+      if (needsApproval) {
+        status = 'draft';
+      }
+
       const articleData = {
         title: fd.title,
         slug: fd.slug,
@@ -191,6 +196,7 @@ export default function ArticleEditor() {
         scheduled_at: status === 'scheduled' && fd.scheduled_at ? fd.scheduled_at.toISOString() : null,
         published_at: status === 'published' ? new Date().toISOString() : null,
         author_id: user?.id,
+        needs_approval: needsApproval || false,
       };
 
       if (isEditing) {
@@ -199,7 +205,7 @@ export default function ArticleEditor() {
           .update(articleData)
           .eq('id', id);
         if (error) throw error;
-        return id;
+        return { id, needsApproval };
       } else {
         const { data, error } = await supabase
           .from('articles')
@@ -207,17 +213,21 @@ export default function ArticleEditor() {
           .select('id')
           .single();
         if (error) throw error;
-        return data.id;
+        return { id: data.id, needsApproval };
       }
     },
-    onSuccess: (articleId, variables) => {
+    onSuccess: (result, variables) => {
       const newStatus = variables.newStatus || formData.status;
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['article', articleId] });
+      queryClient.invalidateQueries({ queryKey: ['article', result.id] });
+      queryClient.invalidateQueries({ queryKey: ['pending-articles'] });
       
-      if (newStatus === 'published') {
+      if (result.needsApproval) {
+        toast.success('Artikel dikirim untuk persetujuan Super Admin');
+        navigate('/fim-admin-portal-2024/articles');
+      } else if (newStatus === 'published') {
         toast.success('Artikel berhasil dipublikasikan!');
         navigate('/fim-admin-portal-2024/articles');
       } else if (newStatus === 'scheduled') {
@@ -226,7 +236,7 @@ export default function ArticleEditor() {
       } else {
         toast.success('Draft tersimpan');
         if (!isEditing) {
-          navigate(`/fim-admin-portal-2024/articles/${articleId}/edit`, { replace: true });
+          navigate(`/fim-admin-portal-2024/articles/edit/${result.id}`, { replace: true });
         }
       }
     },
@@ -259,8 +269,14 @@ export default function ArticleEditor() {
       toast.error('Featured image harus diupload');
       return;
     }
-    saveMutation.mutate({ formData, newStatus: 'published' });
-  }, [formData, saveMutation]);
+    
+    // Moderator needs approval, Super Admin can publish directly
+    if (!isSuperAdmin) {
+      saveMutation.mutate({ formData, needsApproval: true });
+    } else {
+      saveMutation.mutate({ formData, newStatus: 'published' });
+    }
+  }, [formData, saveMutation, isSuperAdmin]);
 
   const scheduleArticle = useCallback(() => {
     if (!scheduleDate) {
@@ -444,7 +460,7 @@ export default function ArticleEditor() {
             ) : (
               <Send className="h-4 w-4 mr-2" />
             )}
-            Publikasikan
+            {isSuperAdmin ? 'Publikasikan' : 'Kirim untuk Persetujuan'}
           </Button>
         </div>
       </div>

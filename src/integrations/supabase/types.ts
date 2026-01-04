@@ -55,6 +55,8 @@ export type Database = {
       }
       articles: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           author_affiliation:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
@@ -67,9 +69,11 @@ export type Database = {
           id: string
           is_pinned: boolean | null
           media_urls: Json | null
+          needs_approval: boolean | null
           pinned_at: string | null
           pinned_by: string | null
           published_at: string | null
+          rejection_reason: string | null
           related_region: string | null
           scheduled_at: string | null
           slug: string
@@ -80,6 +84,8 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           author_affiliation?:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
@@ -92,9 +98,11 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           media_urls?: Json | null
+          needs_approval?: boolean | null
           pinned_at?: string | null
           pinned_by?: string | null
           published_at?: string | null
+          rejection_reason?: string | null
           related_region?: string | null
           scheduled_at?: string | null
           slug: string
@@ -105,6 +113,8 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           author_affiliation?:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
@@ -117,9 +127,11 @@ export type Database = {
           id?: string
           is_pinned?: boolean | null
           media_urls?: Json | null
+          needs_approval?: boolean | null
           pinned_at?: string | null
           pinned_by?: string | null
           published_at?: string | null
+          rejection_reason?: string | null
           related_region?: string | null
           scheduled_at?: string | null
           slug?: string

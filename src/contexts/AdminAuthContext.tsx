@@ -24,8 +24,10 @@ interface AdminAuthContextType {
   isSuperAdmin: boolean;
   isModerator: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithUsername: (username: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -212,6 +214,27 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Sign in with username instead of email
+  const signInWithUsername = async (username: string, password: string) => {
+    try {
+      // First, look up the email by username
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", username.toLowerCase())
+        .single();
+
+      if (profileError || !profileData) {
+        return { error: new Error("Username tidak ditemukan") };
+      }
+
+      // Now sign in with the email
+      return signIn(profileData.email, password);
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   const signOut = async () => {
     if (user) {
       await supabase.rpc("log_audit_event", {
@@ -260,6 +283,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfileAndRole(user.id);
+    }
+  };
+
   const value = {
     user,
     session,
@@ -269,8 +298,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     isSuperAdmin: role === "super_admin",
     isModerator: role === "moderator",
     signIn,
+    signInWithUsername,
     signOut,
     updatePassword,
+    refreshProfile,
   };
 
   return (
