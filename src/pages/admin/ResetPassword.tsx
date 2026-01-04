@@ -69,7 +69,7 @@ export default function ResetPassword() {
         setSuccess(true);
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          navigate("/fim-admin-portal-2024");
+          navigate("/admin");
         }, 3000);
       }
     } catch (err) {

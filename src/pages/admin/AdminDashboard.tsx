@@ -84,6 +84,7 @@ const navItems: NavItem[] = [
     children: [
       { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, superAdminOnly: true },
       { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
+      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
     ]
   },
 ];
@@ -282,21 +283,21 @@ export default function AdminDashboard() {
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-6 border-b">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="p-6 border-b shrink-0">
         <h1 className="text-xl font-bold text-foreground">FIM Admin</h1>
         <p className="text-xs text-muted-foreground mt-1">
           {role === "super_admin" ? "Super Admin" : "Moderator"}
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {filteredNavItems.map((item) => (
           <NavItemComponent key={item.href} item={item} />
         ))}
       </nav>
 
-      <div className="p-4 border-t">
+      <div className="p-4 border-t shrink-0">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
             <span className="text-sm font-bold text-primary">

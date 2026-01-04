@@ -33,7 +33,7 @@ export default function ForgotPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/fim-admin-portal-2024/reset-password`,
+        redirectTo: `${window.location.origin}/admin/reset-password`,
       });
 
       if (error) {
@@ -66,7 +66,7 @@ export default function ForgotPassword() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/fim-admin-portal-2024">
+              <Link to="/admin">
                 <Button className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Kembali ke Login
@@ -129,7 +129,7 @@ export default function ForgotPassword() {
               </Button>
 
               <Link
-                to="/fim-admin-portal-2024"
+                to="/admin"
                 className="block text-center text-sm text-muted-foreground hover:text-primary"
               >
                 <ArrowLeft className="inline h-4 w-4 mr-1" />

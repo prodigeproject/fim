@@ -616,7 +616,7 @@ export default function ArticlesManagement() {
               <p className="text-muted-foreground">
                 Belum ada artikel
               </p>
-              <Link to="/fim-admin-portal-2024/articles/new">
+              <Link to="/admin/articles/new">
                 <Button className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Tulis Artikel Pertama
