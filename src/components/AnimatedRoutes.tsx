@@ -34,6 +34,9 @@ import SessionsManagement from "@/pages/admin/SessionsManagement";
 import EmailSettings from "@/pages/admin/EmailSettings";
 import ForgotPassword from "@/pages/admin/ForgotPassword";
 import ResetPassword from "@/pages/admin/ResetPassword";
+import ProfileSettings from "@/pages/admin/ProfileSettings";
+import OnlineAdminsDashboard from "@/pages/admin/OnlineAdminsDashboard";
+import ArticleApprovals from "@/pages/admin/ArticleApprovals";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -70,17 +73,20 @@ const AnimatedRoutes = () => {
                 <Route path="dashboard" element={<DashboardHome />} />
                 <Route path="articles" element={<ArticlesManagement />} />
                 <Route path="articles/new" element={<ArticleEditor />} />
-                <Route path="articles/:id/edit" element={<ArticleEditor />} />
+                <Route path="articles/edit/:id" element={<ArticleEditor />} />
+                <Route path="approvals" element={<ArticleApprovals />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
                 <Route path="newsletter" element={<NewsletterManagement />} />
                 <Route path="clubs" element={<ClubsManagement />} />
                 <Route path="regionals" element={<RegionalsManagement />} />
                 <Route path="users" element={<UsersManagement />} />
+                <Route path="online" element={<OnlineAdminsDashboard />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="sessions" element={<SessionsManagement />} />
                 <Route path="email-settings" element={<EmailSettings />} />
                 <Route path="prd" element={<PRDDocumentation />} />
                 <Route path="change-password" element={<ChangePassword />} />
+                <Route path="profile" element={<ProfileSettings />} />
               </Route>
             </Routes>
           </AdminAuthProvider>

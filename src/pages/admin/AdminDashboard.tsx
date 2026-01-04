@@ -21,6 +21,7 @@ import {
   Settings,
   BookOpen,
   ClipboardList,
+  UserCircle,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -37,19 +38,22 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
+  { name: "Persetujuan", href: "/fim-admin-portal-2024/approvals", icon: ClipboardList, superAdminOnly: true },
   { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
   { 
     name: "Newsletter", 
     href: "/fim-admin-portal-2024/newsletter", 
     icon: Mail,
+    superAdminOnly: true,
     children: [
-      { name: "Subscribers", href: "/fim-admin-portal-2024/newsletter", icon: Mail },
+      { name: "Subscribers", href: "/fim-admin-portal-2024/newsletter", icon: Mail, superAdminOnly: true },
       { name: "Email Settings", href: "/fim-admin-portal-2024/email-settings", icon: Settings, superAdminOnly: true },
     ]
   },
-  { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound },
-  { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin },
+  { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound, superAdminOnly: true },
+  { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin, superAdminOnly: true },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
+  { name: "Admin Online", href: "/fim-admin-portal-2024/online", icon: Monitor, superAdminOnly: true },
   { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
   { 
     name: "Logs", 
@@ -267,6 +271,18 @@ export default function AdminDashboard() {
         </div>
 
         <div className="space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={() => {
+              setMobileOpen(false);
+              navigate("/fim-admin-portal-2024/profile");
+            }}
+          >
+            <UserCircle className="h-4 w-4" />
+            Pengaturan Profil
+          </Button>
           <Button
             variant="outline"
             size="sm"

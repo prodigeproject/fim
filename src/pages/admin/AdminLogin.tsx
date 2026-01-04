@@ -11,15 +11,15 @@ import { SEO } from "@/components/SEO";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Email tidak valid"),
+  identifier: z.string().min(1, "Email atau username wajib diisi"),
   password: z.string().min(6, "Password minimal 6 karakter"),
 });
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const { signIn, user, role, isLoading: authLoading } = useAdminAuth();
+  const { signIn, signInWithUsername, user, role, isLoading: authLoading } = useAdminAuth();
   
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function AdminLogin() {
     setError(null);
 
     // Validate input
-    const result = loginSchema.safeParse({ email, password });
+    const result = loginSchema.safeParse({ identifier, password });
     if (!result.success) {
       setError(result.error.errors[0].message);
       return;
@@ -59,12 +59,22 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      // Check if identifier is email or username
+      const isEmail = identifier.includes("@");
+      let signInError: Error | null = null;
+
+      if (isEmail) {
+        const result = await signIn(identifier, password);
+        signInError = result.error;
+      } else {
+        const result = await signInWithUsername(identifier, password);
+        signInError = result.error;
+      }
       
       if (signInError) {
         setAttempts(prev => prev + 1);
         if (signInError.message.includes("Invalid login credentials")) {
-          setError("Email atau password salah");
+          setError("Email/username atau password salah");
         } else {
           setError(signInError.message);
         }
@@ -136,15 +146,15 @@ export default function AdminLogin() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email atau Username</Label>
                 <Input
-                  id="email"
-                  type="email"
+                  id="identifier"
+                  type="text"
                   placeholder=""
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading || attempts >= 5}
-                  autoComplete="email"
+                  autoComplete="username"
                   required
                 />
               </div>
