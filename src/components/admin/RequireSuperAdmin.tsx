@@ -10,11 +10,11 @@ interface RequireSuperAdminProps {
 }
 
 export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
-  const { isSuperAdmin, isLoading, user, role } = useAdminAuth();
+  const { isSuperAdmin, isLoading, user, role, profile } = useAdminAuth();
   const location = useLocation();
   const hasLoggedRef = useRef(false);
 
-  // Log unauthorized access attempt
+  // Log unauthorized access attempt and notify via edge function
   useEffect(() => {
     const logUnauthorizedAccess = async () => {
       // Only log if: not loading, user exists, has role, is NOT super admin, and hasn't logged yet
@@ -22,6 +22,7 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
         hasLoggedRef.current = true;
         
         try {
+          // Log to audit_logs
           await supabase.rpc("log_audit_event", {
             p_user_id: user.id,
             p_action: "unauthorized_access_attempt",
@@ -32,6 +33,25 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
               message: "Moderator attempted to access super admin only page",
             },
           });
+
+          // Notify via edge function (tracks attempts and sends email after threshold)
+          const response = await supabase.functions.invoke("notify-unauthorized-access", {
+            body: {
+              userId: user.id,
+              username: profile?.username || "Unknown",
+              email: profile?.email || user.email || "Unknown",
+              attemptedPath: location.pathname,
+              userRole: role,
+              ipAddress: null, // Would need a service to get real IP
+              userAgent: navigator.userAgent,
+            },
+          });
+
+          if (response.error) {
+            console.error("Failed to notify unauthorized access:", response.error);
+          } else {
+            console.log("Unauthorized access tracked:", response.data);
+          }
         } catch (error) {
           console.error("Failed to log unauthorized access:", error);
         }
@@ -39,7 +59,7 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
     };
 
     logUnauthorizedAccess();
-  }, [isLoading, user, role, isSuperAdmin, location.pathname]);
+  }, [isLoading, user, role, isSuperAdmin, location.pathname, profile]);
 
   // Reset log flag when path changes
   useEffect(() => {

@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.notify-article-status]
 verify_jwt = false
+
+[functions.notify-unauthorized-access]
+verify_jwt = false

@@ -205,6 +205,68 @@ export type Database = {
           },
         ]
       }
+      article_versions: {
+        Row: {
+          article_id: string
+          author_affiliation: string | null
+          category: string
+          change_summary: string | null
+          content: string
+          created_at: string
+          created_by: string
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          related_region: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          version_number: number
+        }
+        Insert: {
+          article_id: string
+          author_affiliation?: string | null
+          category: string
+          change_summary?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          related_region?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          version_number?: number
+        }
+        Update: {
+          article_id?: string
+          author_affiliation?: string | null
+          category?: string
+          change_summary?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          related_region?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           approved_at: string | null
@@ -691,6 +753,42 @@ export type Database = {
         }
         Relationships: []
       }
+      unauthorized_access_attempts: {
+        Row: {
+          attempted_path: string
+          created_at: string
+          email: string | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+          user_role: string | null
+          username: string | null
+        }
+        Insert: {
+          attempted_path: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+          user_role?: string | null
+          username?: string | null
+        }
+        Update: {
+          attempted_path?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+          user_role?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -763,6 +861,10 @@ export type Database = {
           is_blocked: boolean
           should_show_captcha: boolean
         }[]
+      }
+      get_next_article_version: {
+        Args: { p_article_id: string }
+        Returns: number
       }
       has_role: {
         Args: {
