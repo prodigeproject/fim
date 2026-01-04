@@ -46,6 +46,8 @@ import {
   Image,
   FileSpreadsheet,
   Download,
+  ArrowUpAZ,
+  ArrowDownZA,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,6 +72,7 @@ export default function ClubsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -364,7 +367,10 @@ export default function ClubsManagement() {
     (c) =>
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    const comparison = a.name.localeCompare(b.name, 'id');
+    return sortOrder === "asc" ? comparison : -comparison;
+  });
 
   return (
     <div className="space-y-6">
@@ -551,6 +557,14 @@ export default function ClubsManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z"}
+            >
+              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
           </div>
 
           {isLoading ? (

@@ -42,7 +42,9 @@ import {
   MoreHorizontal,
   Archive,
   Send,
-  CheckSquare
+  CheckSquare,
+  ArrowUpAZ,
+  ArrowDownZA,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,6 +87,7 @@ export default function ArticlesManagement() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<string>("");
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Fetch articles
   const { data: articles, isLoading } = useQuery({
@@ -275,10 +278,13 @@ export default function ArticlesManagement() {
     },
   });
 
-  // Filter articles by search term
+  // Filter and sort articles by search term
   const filteredArticles = articles?.filter((article: any) => {
     if (!searchTerm) return true;
     return article.title.toLowerCase().includes(searchTerm.toLowerCase());
+  }).sort((a: any, b: any) => {
+    const comparison = a.title.localeCompare(b.title, 'id');
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   // Check if user can edit article
@@ -344,6 +350,14 @@ export default function ArticlesManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z"}
+            >
+              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Status" />

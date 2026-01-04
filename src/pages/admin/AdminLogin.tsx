@@ -140,10 +140,11 @@ export default function AdminLogin() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@forumindonesiamuda.org"
+                  placeholder=""
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading || attempts >= 5}
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -154,10 +155,11 @@ export default function AdminLogin() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder=""
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading || attempts >= 5}
+                    autoComplete="current-password"
                     required
                   />
                   <Button

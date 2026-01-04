@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   FileText,
   Users,
-  ClipboardList,
   LogOut,
   Menu,
   ChevronRight,
+  ChevronDown,
   Loader2,
   KeyRound,
   BarChart3,
@@ -19,22 +20,47 @@ import {
   Monitor,
   Settings,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const navItems = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  superAdminOnly?: boolean;
+  children?: NavItem[];
+}
+
+const navItems: NavItem[] = [
   { name: "Dashboard", href: "/fim-admin-portal-2024/dashboard", icon: LayoutDashboard },
   { name: "Artikel", href: "/fim-admin-portal-2024/articles", icon: FileText },
   { name: "Analytics", href: "/fim-admin-portal-2024/analytics", icon: BarChart3 },
-  { name: "Newsletter", href: "/fim-admin-portal-2024/newsletter", icon: Mail },
+  { 
+    name: "Newsletter", 
+    href: "/fim-admin-portal-2024/newsletter", 
+    icon: Mail,
+    children: [
+      { name: "Subscribers", href: "/fim-admin-portal-2024/newsletter", icon: Mail },
+      { name: "Email Settings", href: "/fim-admin-portal-2024/email-settings", icon: Settings, superAdminOnly: true },
+    ]
+  },
   { name: "FIM Club", href: "/fim-admin-portal-2024/clubs", icon: UsersRound },
   { name: "Regional", href: "/fim-admin-portal-2024/regionals", icon: MapPin },
   { name: "Pengguna", href: "/fim-admin-portal-2024/users", icon: Users, superAdminOnly: true },
   { name: "Sesi Aktif", href: "/fim-admin-portal-2024/sessions", icon: Monitor, superAdminOnly: true },
-  { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
-  { name: "Email Settings", href: "/fim-admin-portal-2024/email-settings", icon: Settings, superAdminOnly: true },
-  { name: "PRD & Docs", href: "/fim-admin-portal-2024/prd", icon: BookOpen, superAdminOnly: true },
+  { 
+    name: "Logs", 
+    href: "/fim-admin-portal-2024/audit-logs", 
+    icon: ClipboardList,
+    superAdminOnly: true,
+    children: [
+      { name: "Audit Log", href: "/fim-admin-portal-2024/audit-logs", icon: ClipboardList, superAdminOnly: true },
+      { name: "PRD & Docs", href: "/fim-admin-portal-2024/prd", icon: BookOpen, superAdminOnly: true },
+    ]
+  },
 ];
 
 export default function AdminDashboard() {
@@ -43,6 +69,24 @@ export default function AdminDashboard() {
   const { user, profile, role, isLoading, signOut, isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  // Enable realtime login notifications for super admins
+  useRealtimeLoginNotifications();
+
+  // Auto-expand parent menu if child is active
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children) {
+        const hasActiveChild = item.children.some(child => 
+          location.pathname === child.href || location.pathname.startsWith(child.href + "/")
+        );
+        if (hasActiveChild && !openMenus.includes(item.name)) {
+          setOpenMenus(prev => [...prev, item.name]);
+        }
+      }
+    });
+  }, [location.pathname]);
 
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
@@ -57,9 +101,6 @@ export default function AdminDashboard() {
       navigate("/fim-admin-portal-2024", { replace: true });
       return;
     }
-
-    // User exists but role is still loading (give it some time)
-    // The role might be fetched async after user is set
   }, [user, isLoading, navigate]);
 
   // Separate effect for role check with delay to allow async role fetch
@@ -87,6 +128,14 @@ export default function AdminDashboard() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/fim-admin-portal-2024", { replace: true });
+  };
+
+  const toggleMenu = (name: string) => {
+    setOpenMenus(prev => 
+      prev.includes(name) 
+        ? prev.filter(n => n !== name)
+        : [...prev, name]
+    );
   };
 
   // Show loading while auth is being checked
@@ -118,9 +167,72 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const filteredNavItems = navItems.filter(
-    item => !item.superAdminOnly || isSuperAdmin
-  );
+  const filterNavItems = (items: NavItem[]): NavItem[] => {
+    return items
+      .filter(item => !item.superAdminOnly || isSuperAdmin)
+      .map(item => ({
+        ...item,
+        children: item.children ? filterNavItems(item.children) : undefined,
+      }))
+      .filter(item => !item.children || item.children.length > 0);
+  };
+
+  const filteredNavItems = filterNavItems(navItems);
+
+  const NavItemComponent = ({ item, depth = 0 }: { item: NavItem; depth?: number }) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isOpen = openMenus.includes(item.name);
+    const isActive = location.pathname === item.href || 
+      (!hasChildren && item.href !== "/fim-admin-portal-2024/dashboard" && location.pathname.startsWith(item.href));
+    const hasActiveChild = hasChildren && item.children!.some(child => 
+      location.pathname === child.href || location.pathname.startsWith(child.href + "/")
+    );
+
+    if (hasChildren) {
+      return (
+        <Collapsible open={isOpen} onOpenChange={() => toggleMenu(item.name)}>
+          <CollapsibleTrigger asChild>
+            <button
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                hasActiveChild
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.name}
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 ml-auto" />
+              ) : (
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              )}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-4 mt-1 space-y-1">
+            {item.children!.map((child) => (
+              <NavItemComponent key={child.href} item={child} depth={depth + 1} />
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      );
+    }
+
+    return (
+      <Link
+        to={item.href}
+        onClick={() => setMobileOpen(false)}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        <item.icon className="h-4 w-4" />
+        {item.name}
+        {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
+      </Link>
+    );
+  };
 
   const Sidebar = () => (
     <div className="flex flex-col h-full">
@@ -131,27 +243,10 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {filteredNavItems.map((item) => {
-          const isActive = location.pathname === item.href || 
-            (item.href !== "/fim-admin-portal-2024/dashboard" && location.pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.name}
-              {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {filteredNavItems.map((item) => (
+          <NavItemComponent key={item.href} item={item} />
+        ))}
       </nav>
 
       <div className="p-4 border-t">

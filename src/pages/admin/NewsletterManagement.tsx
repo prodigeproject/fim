@@ -61,6 +61,8 @@ import {
   AlertCircle,
   Plus,
   Pencil,
+  ArrowUpAZ,
+  ArrowDownZA,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,6 +83,7 @@ export default function NewsletterManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [isSubscriberDialogOpen, setIsSubscriberDialogOpen] = useState(false);
   const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
@@ -357,6 +360,9 @@ export default function NewsletterManagement() {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return s.email.toLowerCase().includes(search) || (s.name && s.name.toLowerCase().includes(search));
+  }).sort((a, b) => {
+    const comparison = a.email.localeCompare(b.email, 'id');
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   const stats = {
@@ -615,6 +621,14 @@ export default function NewsletterManagement() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Cari email atau nama..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z"}
+            >
+              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
           </div>
 
           {isLoading ? (
