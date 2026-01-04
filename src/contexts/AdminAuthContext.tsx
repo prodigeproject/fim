@@ -229,13 +229,32 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const updatePassword = async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     
-    if (!error && user) {
+    if (!error && user && profile) {
+      // Check if this was the first password change (first login)
+      const wasFirstLogin = profile.must_change_password;
+      
       await supabase
         .from("profiles")
         .update({ must_change_password: false })
         .eq("id", user.id);
       
       setProfile(prev => prev ? { ...prev, must_change_password: false } : null);
+
+      // If it was first login and user is a moderator, notify super admin
+      if (wasFirstLogin && role === "moderator") {
+        supabase.functions.invoke("notify-first-login", {
+          body: {
+            moderatorEmail: profile.email,
+            moderatorUsername: profile.username,
+            moderatorFullName: profile.full_name,
+            ipAddress: "client",
+            userAgent: navigator.userAgent,
+            loginTime: new Date().toISOString(),
+          },
+        }).catch((err) => {
+          console.error("Failed to send first login notification:", err);
+        });
+      }
     }
     
     return { error };
