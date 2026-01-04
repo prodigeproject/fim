@@ -29,6 +29,11 @@ import AuditLogs from "@/pages/admin/AuditLogs";
 import ChangePassword from "@/pages/admin/ChangePassword";
 import ClubsManagement from "@/pages/admin/ClubsManagement";
 import RegionalsManagement from "@/pages/admin/RegionalsManagement";
+import PRDDocumentation from "@/pages/admin/PRDDocumentation";
+import SessionsManagement from "@/pages/admin/SessionsManagement";
+import EmailSettings from "@/pages/admin/EmailSettings";
+import ForgotPassword from "@/pages/admin/ForgotPassword";
+import ResetPassword from "@/pages/admin/ResetPassword";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -56,6 +61,8 @@ const AnimatedRoutes = () => {
 
         {/* Admin routes - wrapped in AdminAuthProvider */}
         <Route path="/fim-admin-portal-2024" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+        <Route path="/fim-admin-portal-2024/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
+        <Route path="/fim-admin-portal-2024/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
         <Route path="/fim-admin-portal-2024/*" element={
           <AdminAuthProvider>
             <Routes>
@@ -70,6 +77,9 @@ const AnimatedRoutes = () => {
                 <Route path="regionals" element={<RegionalsManagement />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="sessions" element={<SessionsManagement />} />
+                <Route path="email-settings" element={<EmailSettings />} />
+                <Route path="prd" element={<PRDDocumentation />} />
                 <Route path="change-password" element={<ChangePassword />} />
               </Route>
             </Routes>

@@ -190,6 +190,13 @@ export default function AdminLogin() {
                   "Masuk"
                 )}
               </Button>
+
+              <a
+                href="/fim-admin-portal-2024/forgot-password"
+                className="block text-center text-sm text-muted-foreground hover:text-primary mt-4"
+              >
+                Lupa password?
+              </a>
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-6">
