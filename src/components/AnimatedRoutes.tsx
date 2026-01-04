@@ -31,6 +31,7 @@ import ClubsManagement from "@/pages/admin/ClubsManagement";
 import RegionalsManagement from "@/pages/admin/RegionalsManagement";
 import AlumniManagement from "@/pages/admin/AlumniManagement";
 import PRDDocumentation from "@/pages/admin/PRDDocumentation";
+import TechnicalDocumentation from "@/pages/admin/TechnicalDocumentation";
 import SessionsManagement from "@/pages/admin/SessionsManagement";
 import EmailSettings from "@/pages/admin/EmailSettings";
 import ForgotPassword from "@/pages/admin/ForgotPassword";
@@ -95,6 +96,7 @@ const AnimatedRoutes = () => {
                 <Route path="sessions" element={<RequireSuperAdmin><SessionsManagement /></RequireSuperAdmin>} />
                 <Route path="email-settings" element={<RequireSuperAdmin><EmailSettings /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
+                <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
               </Route>
             </Routes>
           </AdminAuthProvider>
