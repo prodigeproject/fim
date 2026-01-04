@@ -64,7 +64,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function ArticleApprovals() {
-  const { isSuperAdmin, user } = useAdminAuth();
+  const { isSuperAdmin, user, profile } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -186,7 +186,7 @@ export default function ArticleApprovals() {
 
   // Request revision mutation
   const revisionMutation = useMutation({
-    mutationFn: async ({ articleId, notes }: { articleId: string; notes: string }) => {
+    mutationFn: async ({ articleId, notes, article }: { articleId: string; notes: string; article: PendingArticle }) => {
       const { error } = await supabase
         .from("articles")
         .update({
@@ -194,6 +194,7 @@ export default function ArticleApprovals() {
           revision_requested_at: new Date().toISOString(),
           revision_requested_by: user?.id,
           status: "draft",
+          needs_approval: false,
         })
         .eq("id", articleId);
 
@@ -207,6 +208,30 @@ export default function ArticleApprovals() {
         p_resource_id: articleId,
         p_details: { notes },
       });
+
+      // Get author email for notification
+      const { data: authorProfile } = await supabase
+        .from("profiles")
+        .select("email, full_name, username")
+        .eq("id", article.author_id)
+        .single();
+
+      if (authorProfile?.email) {
+        // Send email notification
+        try {
+          await supabase.functions.invoke("notify-revision", {
+            body: {
+              moderator_email: authorProfile.email,
+              moderator_name: authorProfile.full_name || authorProfile.username,
+              article_title: article.title,
+              revision_notes: notes,
+              admin_name: profile?.full_name || profile?.username || "Super Admin",
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send revision notification email:", emailError);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-articles"] });
@@ -214,7 +239,7 @@ export default function ArticleApprovals() {
       setShowRevisionDialog(false);
       setSelectedArticle(null);
       setRevisionNotes("");
-      toast({ title: "Permintaan revisi dikirim" });
+      toast({ title: "Permintaan revisi dikirim", description: "Moderator akan menerima notifikasi email" });
     },
     onError: (error) => {
       toast({ 
@@ -249,7 +274,8 @@ export default function ArticleApprovals() {
     }
     revisionMutation.mutate({ 
       articleId: selectedArticle.id, 
-      notes: revisionNotes 
+      notes: revisionNotes,
+      article: selectedArticle
     });
   };
 
