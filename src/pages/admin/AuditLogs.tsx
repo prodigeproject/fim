@@ -21,17 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Calendar, Loader2 } from "lucide-react";
+import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Loader2, FileSpreadsheet } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import * as XLSX from "xlsx";
 
 // Comprehensive action icons mapping
 const actionIcons: Record<string, React.ElementType> = {
@@ -217,6 +213,46 @@ export default function AuditLogs() {
     }
   };
 
+  // Export to XLSX
+  const exportToXLSX = async () => {
+    if (!filteredLogs?.length) {
+      toast({ title: "Tidak ada data untuk diekspor", variant: "destructive" });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const data = filteredLogs.map((log: any) => ({
+        "Waktu": new Date(log.created_at).toLocaleString("id-ID"),
+        "Pengguna": log.profiles?.full_name || log.profiles?.username || "System",
+        "Aksi": actionLabels[log.action] || log.action,
+        "Detail": log.details ? JSON.stringify(log.details) : "",
+        "IP Address": log.ip_address || "",
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Audit Log");
+
+      // Auto-size columns
+      const colWidths = [
+        { wch: 20 }, // Waktu
+        { wch: 25 }, // Pengguna
+        { wch: 20 }, // Aksi
+        { wch: 50 }, // Detail
+        { wch: 15 }, // IP Address
+      ];
+      ws["!cols"] = colWidths;
+
+      XLSX.writeFile(wb, `audit-log-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      toast({ title: "Export XLSX berhasil" });
+    } catch (error) {
+      toast({ title: "Gagal export", variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="text-center py-12">
@@ -295,18 +331,33 @@ export default function AuditLogs() {
                   />
                 </div>
               </div>
-              <Button 
-                onClick={exportToCSV} 
-                disabled={isExporting || !filteredLogs?.length}
-                className="gap-2"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Export CSV
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={exportToCSV} 
+                  disabled={isExporting || !filteredLogs?.length}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  CSV
+                </Button>
+                <Button 
+                  onClick={exportToXLSX} 
+                  disabled={isExporting || !filteredLogs?.length}
+                  className="gap-2"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="h-4 w-4" />
+                  )}
+                  XLSX
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>

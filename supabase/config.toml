@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.newsletter-subscribe]
 verify_jwt = false
+
+[functions.notify-revision]
+verify_jwt = false
+
+[functions.notify-article-status]
+verify_jwt = false
