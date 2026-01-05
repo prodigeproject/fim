@@ -54,25 +54,29 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
-        return;
+        setProfile(null);
+      } else {
+        setProfile(profileData as AdminProfile);
       }
 
-      setProfile(profileData as AdminProfile);
+      // Fetch role via RPC (avoids RLS issues on user_roles)
+      const { data: isSuper, error: superError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "super_admin",
+      });
 
-      // Fetch role
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
+      const { data: isModerator, error: modError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "moderator",
+      });
 
-      if (roleError) {
-        console.error("Error fetching role:", roleError);
+      if (superError || modError) {
+        console.error("Error fetching role via RPC:", superError || modError);
         setRole(null);
         return;
       }
 
-      setRole(roleData.role as AppRole);
+      setRole(isSuper ? "super_admin" : isModerator ? "moderator" : null);
     } catch (error) {
       console.error("Error in fetchProfileAndRole:", error);
     }
