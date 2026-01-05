@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -152,6 +153,28 @@ export default function TechnicalDocumentation() {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingBackup, setIsExportingBackup] = useState(false);
   const [backupProgress, setBackupProgress] = useState("");
+
+  const { data: tableCounts, isFetching: isFetchingCounts, dataUpdatedAt } = useQuery({
+    queryKey: ["technical-docs-table-counts"],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        databaseTables.map(async (t) => {
+          const { count, error } = await supabase
+            .from(t.name as any)
+            .select("*", { count: "exact", head: true });
+
+          if (error) {
+            return [t.name, null] as const;
+          }
+
+          return [t.name, count ?? 0] as const;
+        })
+      );
+
+      return Object.fromEntries(entries) as Record<string, number | null>;
+    },
+    refetchInterval: 30_000,
+  });
 
   const generatePDF = async () => {
     setIsExportingPdf(true);
@@ -813,6 +836,9 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
                         <div className="flex items-center gap-2">
                           <h3 className="font-mono font-semibold">{table.name}</h3>
                           <Badge variant="outline">{table.columns} kolom</Badge>
+                          <Badge variant="secondary">
+                            {isFetchingCounts ? "…" : tableCounts?.[table.name] ?? "-"} rows
+                          </Badge>
                           {table.rls && (
                             <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                               <Shield className="h-3 w-3 mr-1" />

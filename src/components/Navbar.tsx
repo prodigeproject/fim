@@ -35,6 +35,7 @@ const Navbar = () => {
         { name: "Program Unggulan", path: "/program/program-unggulan" },
       ],
     },
+    { name: "Daftar", path: "/daftar" },
     { name: "Cerita Alumni", path: "/cerita-alumni" },
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
@@ -114,6 +115,11 @@ const Navbar = () => {
             <SearchDialog />
             <ThemeToggle />
             <LanguageSwitcher />
+            <Link to="/daftar">
+              <Button variant="outline" className="font-semibold">
+                Daftar
+              </Button>
+            </Link>
             <Link to="/donasi">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
                 Donasi
@@ -192,6 +198,11 @@ const Navbar = () => {
                 <LanguageSwitcher />
                 <span className="text-sm text-muted-foreground">Pilih Bahasa</span>
               </div>
+              <Link to="/daftar" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" className="w-full">
+                  Daftar
+                </Button>
+              </Link>
               <Link to="/donasi" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-primary text-primary-foreground">
                   Donasi

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,11 @@ export default function RegistrationLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
-  if (user && registration) {
-    navigate("/daftar/dashboard", { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (user && registration) {
+      navigate("/daftar/dashboard", { replace: true });
+    }
+  }, [user, registration, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function RegistrationLogin() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -100,7 +101,7 @@ export default function RegistrationLogin() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -110,7 +111,7 @@ export default function RegistrationLogin() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,11 @@ export default function RegistrationSignup() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
-  if (user && registration) {
-    navigate("/daftar/dashboard", { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (user && registration) {
+      navigate("/daftar/dashboard", { replace: true });
+    }
+  }, [user, registration, navigate]);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -109,7 +110,7 @@ export default function RegistrationSignup() {
                       value={formData.fullName}
                       onChange={(e) => updateField("fullName", e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -125,7 +126,7 @@ export default function RegistrationSignup() {
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -141,7 +142,7 @@ export default function RegistrationSignup() {
                       value={formData.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -157,7 +158,7 @@ export default function RegistrationSignup() {
                       value={formData.password}
                       onChange={(e) => updateField("password", e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
@@ -174,7 +175,7 @@ export default function RegistrationSignup() {
                       value={formData.confirmPassword}
                       onChange={(e) => updateField("confirmPassword", e.target.value)}
                       className="pl-10"
-                      disabled={isLoading || isSubmitting}
+                      disabled={isSubmitting}
                     />
                   </div>
                   {formData.password && formData.confirmPassword && (
@@ -196,7 +197,7 @@ export default function RegistrationSignup() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

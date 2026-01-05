@@ -211,7 +211,11 @@ const Pelatihan = () => {
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Siap Menjadi Bagian dari FIM?</h2>
           <p className="text-muted-foreground max-w-xl mx-auto mb-8">Pendaftaran dibuka setiap tahun. Jangan lewatkan kesempatan untuk mengembangkan diri dan berkontribusi bagi Indonesia.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">Daftar Sekarang<ArrowRight className="ml-2 h-5 w-5" /></Button>
+            <Link to="/daftar">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Daftar Sekarang<ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/program/program-unggulan"><Button size="lg" variant="outline">Lihat Program Unggulan</Button></Link>
             <Link to="/faq"><Button size="lg" variant="outline">Lihat FAQ</Button></Link>
           </div>

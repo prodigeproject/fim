@@ -349,7 +349,7 @@ const Index = () => {
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">Siap Menjadi Bagian dari Perubahan?</h2>
           <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">Bergabunglah dengan ribuan pemuda Indonesia dalam membangun masa depan yang lebih baik.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/program/pelatihan">
+            <Link to="/daftar">
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
                 Daftar Sekarang <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

@@ -60,33 +60,39 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   }, [user, fetchRegistration]);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchRegistration(session.user.id).then(setRegistration);
+    // Set up auth state listener FIRST (avoid deadlocks)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user) {
+        // Defer Supabase calls
+        setTimeout(() => {
+          fetchRegistration(nextSession.user.id).then(setRegistration);
+        }, 0);
+      } else {
+        setRegistration(null);
       }
+
       setIsLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // THEN check for existing session
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: existingSession } }) => {
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
 
-        if (session?.user) {
-          const reg = await fetchRegistration(session.user.id);
-          setRegistration(reg);
-        } else {
-          setRegistration(null);
+        if (existingSession?.user) {
+          fetchRegistration(existingSession.user.id).then(setRegistration);
         }
 
         setIsLoading(false);
-      }
-    );
+      })
+      .catch(() => setIsLoading(false));
 
     return () => {
       subscription.unsubscribe();
@@ -97,17 +103,25 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
-      // Sign up with Supabase Auth
+      const redirectUrl = `${window.location.origin}/daftar/dashboard`;
+
+      // Sign up with Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
 
-      // Create registration record
-      const { error: regError } = await supabase
+      // Create registration record (return inserted row)
+      const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
           email,
@@ -115,13 +129,26 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           phone: phone || null,
           auth_user_id: authData.user.id,
           registration_status: "pending",
-        });
+        })
+        .select("*")
+        .single();
 
       if (regError) throw regError;
 
-      // Fetch the new registration
-      const reg = await fetchRegistration(authData.user.id);
-      setRegistration(reg);
+      setRegistration(regData as Registration);
+
+      // Notify super admin (fire-and-forget)
+      supabase.functions
+        .invoke("notify-new-registration", {
+          body: {
+            registrationId: regData.id,
+            fullName,
+            email,
+          },
+        })
+        .catch(() => {
+          // ignore notification failures
+        });
 
       return { error: null };
     } catch (error) {

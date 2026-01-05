@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
@@ -99,7 +99,30 @@ export default function AdminDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  
+
+  const sidebarScrollKey = "fim_admin_sidebar_scroll";
+  const sidebarNavRef = useRef<HTMLElement | null>(null);
+
+  const restoreSidebarScroll = useCallback(() => {
+    const el = sidebarNavRef.current;
+    if (!el) return;
+    const saved = sessionStorage.getItem(sidebarScrollKey);
+    if (saved) el.scrollTop = Number(saved);
+  }, []);
+
+  const persistSidebarScroll = useCallback(() => {
+    const el = sidebarNavRef.current;
+    if (!el) return;
+    sessionStorage.setItem(sidebarScrollKey, String(el.scrollTop));
+  }, []);
+
+  useEffect(() => {
+    restoreSidebarScroll();
+  }, [restoreSidebarScroll]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => restoreSidebarScroll());
+  }, [location.pathname, restoreSidebarScroll]);
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
 
@@ -260,16 +283,19 @@ export default function AdminDashboard() {
       );
     }
 
-    return (
-      <Link
-        to={item.href}
-        onClick={() => setMobileOpen(false)}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-          isActive
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-        }`}
-      >
+     return (
+       <Link
+         to={item.href}
+         onClick={() => {
+           persistSidebarScroll();
+           setMobileOpen(false);
+         }}
+         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+           isActive
+             ? "bg-primary text-primary-foreground"
+             : "text-muted-foreground hover:bg-muted hover:text-foreground"
+         }`}
+       >
         <item.icon className="h-4 w-4" />
         {item.name}
         {badgeCount > 0 && (
@@ -294,7 +320,11 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+      <nav
+        ref={sidebarNavRef}
+        onScroll={persistSidebarScroll}
+        className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0 overscroll-contain"
+      >
         {filteredNavItems.map((item) => (
           <NavItemComponent key={item.href} item={item} />
         ))}
