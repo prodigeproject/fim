@@ -62,6 +62,29 @@ export default function NotificationsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [readFilter, setReadFilter] = useState<string>("all");
 
+  // Get unread and read counts
+  const { data: countData } = useQuery({
+    queryKey: ["notification-counts", user?.id],
+    queryFn: async () => {
+      if (!user) return { unread: 0, read: 0 };
+      
+      const { count: unreadCount } = await supabase
+        .from("admin_notifications")
+        .select("*", { count: "exact", head: true })
+        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .eq("is_read", false);
+
+      const { count: readCount } = await supabase
+        .from("admin_notifications")
+        .select("*", { count: "exact", head: true })
+        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .eq("is_read", true);
+
+      return { unread: unreadCount || 0, read: readCount || 0 };
+    },
+    enabled: !!user,
+  });
+
   // Fetch all notifications with pagination
   const { data, isLoading } = useQuery({
     queryKey: ["all-notifications", user?.id, currentPage, typeFilter, readFilter],
@@ -191,7 +214,8 @@ export default function NotificationsPage() {
     return variants[type || "info"] || variants.info;
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const globalUnreadCount = countData?.unread || 0;
+  const globalReadCount = countData?.read || 0;
 
   return (
     <div className="space-y-6">
@@ -199,7 +223,7 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold">Notifikasi</h1>
           <p className="text-muted-foreground">
-            {totalCount} notifikasi total, {unreadCount} belum dibaca
+            {totalCount} notifikasi total
           </p>
         </div>
         <div className="flex gap-2">
@@ -207,7 +231,7 @@ export default function NotificationsPage() {
             variant="outline"
             size="sm"
             onClick={() => markAllAsReadMutation.mutate()}
-            disabled={markAllAsReadMutation.isPending || unreadCount === 0}
+            disabled={markAllAsReadMutation.isPending || globalUnreadCount === 0}
           >
             {markAllAsReadMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -220,7 +244,7 @@ export default function NotificationsPage() {
             variant="outline"
             size="sm"
             onClick={() => deleteAllReadMutation.mutate()}
-            disabled={deleteAllReadMutation.isPending}
+            disabled={deleteAllReadMutation.isPending || globalReadCount === 0}
           >
             {deleteAllReadMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -230,6 +254,34 @@ export default function NotificationsPage() {
             Hapus yang Dibaca
           </Button>
         </div>
+      </div>
+
+      {/* Category Stats */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Belum Dibaca</CardTitle>
+            <Bell className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{globalUnreadCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Notifikasi menunggu untuk dibaca
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sudah Dibaca</CardTitle>
+            <CheckCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{globalReadCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Notifikasi yang telah dibaca
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}

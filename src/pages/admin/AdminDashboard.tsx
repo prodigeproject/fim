@@ -394,13 +394,15 @@ export default function AdminDashboard() {
       <SEO title="Admin Dashboard" description="Panel admin FIM" noIndex={true} />
       
       <div className="min-h-screen flex bg-muted">
-        {/* Desktop Sidebar - Sticky */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-card border-r z-30">
-          <Sidebar />
+        {/* Desktop Sidebar - Not sticky, scrollable with main content */}
+        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:shrink-0 bg-card border-r">
+          <div className="sticky top-0 h-screen overflow-hidden">
+            <Sidebar />
+          </div>
         </aside>
 
         {/* Mobile Header */}
-        <div className="flex-1 flex flex-col lg:ml-64">
+        <div className="flex-1 flex flex-col min-w-0">
           <header className="lg:hidden flex items-center justify-between p-4 bg-card border-b">
             <div className="flex items-center gap-4">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
