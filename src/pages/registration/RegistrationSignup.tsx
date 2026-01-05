@@ -64,8 +64,8 @@ export default function RegistrationSignup() {
       toast.error("Pendaftaran gagal: " + error.message);
       setIsSubmitting(false);
     } else {
-      toast.success("Pendaftaran berhasil! Silakan lanjutkan pengisian data.");
-      navigate("/daftar/dashboard");
+      // Redirect to success page with message, then user logs in manually
+      navigate("/daftar/success");
     }
   };
 

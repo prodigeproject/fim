@@ -36,10 +36,10 @@ const Navbar = () => {
       ],
     },
     { name: "Daftar", path: "/daftar" },
-    { name: "Cerita Alumni", path: "/cerita-alumni" },
+    { name: "Alumni", path: "/cerita-alumni" },
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
-    { name: "Gabung Relawan", path: "/gabung-relawan" },
+    { name: "Relawan", path: "/gabung-relawan" },
   ];
 
   return (
