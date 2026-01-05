@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-unauthorized-access]
 verify_jwt = false
+
+[functions.notify-new-registration]
+verify_jwt = false
