@@ -4,6 +4,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePendingArticlesCount } from "@/hooks/usePendingArticlesCount";
+import { useNewRegistrationsCount } from "@/hooks/useNewRegistrationsCount";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -66,7 +67,7 @@ const navItems: NavItem[] = [
   { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, superAdminOnly: true },
   { name: "Regional", href: "/admin/regionals", icon: MapPin, superAdminOnly: true },
   { name: "Alumni", href: "/admin/alumni", icon: Users, superAdminOnly: true },
-  { name: "Registrasi FIM", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true },
+  { name: "Registrasi FIM", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true, badgeKey: "newRegistrations" },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
@@ -125,6 +126,7 @@ export default function AdminDashboard() {
   }, [location.pathname, restoreSidebarScroll]);
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
+  const newRegistrationsCount = useNewRegistrationsCount();
 
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
@@ -241,6 +243,7 @@ export default function AdminDashboard() {
   const getBadgeCount = (badgeKey?: string): number => {
     if (!badgeKey) return 0;
     if (badgeKey === "pendingArticles") return pendingArticlesCount;
+    if (badgeKey === "newRegistrations") return newRegistrationsCount;
     return 0;
   };
 
@@ -415,8 +418,8 @@ export default function AdminDashboard() {
             <NotificationDropdown />
           </header>
 
-          {/* Desktop Header with Notification */}
-          <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card/50">
+          {/* Desktop Header with Notification - not sticky */}
+          <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card">
             <NotificationDropdown />
           </header>
 

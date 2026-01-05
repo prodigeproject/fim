@@ -49,6 +49,7 @@ import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
 import RegistrationDashboard from "@/pages/registration/RegistrationDashboard";
 import TrainingRegistration from "@/pages/registration/TrainingRegistration";
+import RegistrationSuccess from "@/pages/registration/RegistrationSuccess";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -77,6 +78,7 @@ const AnimatedRoutes = () => {
         {/* Registration routes */}
         <Route path="/daftar" element={<RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider>} />
         <Route path="/daftar/signup" element={<RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider>} />
+        <Route path="/daftar/success" element={<RegistrationSuccess />} />
         <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
         <Route path="/daftar/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
 
