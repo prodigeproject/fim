@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
+import { diffWords } from "diff";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +18,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   History,
   RotateCcw,
   Eye,
   Loader2,
   Clock,
-  User,
   FileText,
   ChevronRight,
+  GitCompare,
 } from "lucide-react";
 import {
   Collapsible,
@@ -57,6 +66,34 @@ interface ArticleVersionHistoryProps {
   onRestore?: (version: ArticleVersion) => void;
 }
 
+// Diff rendering component
+function DiffView({ oldText, newText, type }: { oldText: string; newText: string; type: "text" | "html" }) {
+  const diff = useMemo(() => {
+    const oldClean = type === "html" ? oldText.replace(/<[^>]*>/g, " ") : oldText;
+    const newClean = type === "html" ? newText.replace(/<[^>]*>/g, " ") : newText;
+    return diffWords(oldClean, newClean);
+  }, [oldText, newText, type]);
+
+  return (
+    <div className="text-sm leading-relaxed">
+      {diff.map((part, index) => (
+        <span
+          key={index}
+          className={
+            part.added
+              ? "bg-green-200 dark:bg-green-900 text-green-900 dark:text-green-100"
+              : part.removed
+              ? "bg-red-200 dark:bg-red-900 text-red-900 dark:text-red-100 line-through"
+              : ""
+          }
+        >
+          {part.value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function ArticleVersionHistory({
   articleId,
   currentTitle,
@@ -66,6 +103,9 @@ export function ArticleVersionHistory({
   const [selectedVersion, setSelectedVersion] = useState<ArticleVersion | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isRestoreConfirmOpen, setIsRestoreConfirmOpen] = useState(false);
+  const [isDiffOpen, setIsDiffOpen] = useState(false);
+  const [diffVersion1, setDiffVersion1] = useState<string>("");
+  const [diffVersion2, setDiffVersion2] = useState<string>("");
   const { isSuperAdmin, user } = useAdminAuth();
   const queryClient = useQueryClient();
 
@@ -165,17 +205,30 @@ export function ArticleVersionHistory({
     setIsPreviewOpen(true);
   };
 
+  const handleOpenDiff = () => {
+    if (versions && versions.length >= 2) {
+      setDiffVersion1(versions[0].id);
+      setDiffVersion2(versions[1].id);
+      setIsDiffOpen(true);
+    }
+  };
+
+  const version1Data = versions?.find(v => v.id === diffVersion1);
+  const version2Data = versions?.find(v => v.id === diffVersion2);
+
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsOpen(true)}
-        className="gap-2"
-      >
-        <History className="h-4 w-4" />
-        Riwayat Versi
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsOpen(true)}
+          className="gap-2"
+        >
+          <History className="h-4 w-4" />
+          Riwayat Versi
+        </Button>
+      </div>
 
       {/* Main History Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -289,6 +342,135 @@ export function ArticleVersionHistory({
               </div>
             )}
           </ScrollArea>
+          
+          {/* Diff Button */}
+          {versions && versions.length >= 2 && (
+            <div className="pt-2 border-t">
+              <Button variant="outline" size="sm" onClick={handleOpenDiff} className="w-full gap-2">
+                <GitCompare className="h-4 w-4" />
+                Bandingkan Versi
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diff Dialog */}
+      <Dialog open={isDiffOpen} onOpenChange={setIsDiffOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitCompare className="h-5 w-5" />
+              Perbandingan Versi
+            </DialogTitle>
+            <DialogDescription>
+              Lihat perubahan antara dua versi artikel
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium">Versi Lama</label>
+              <Select value={diffVersion2} onValueChange={setDiffVersion2}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih versi" />
+                </SelectTrigger>
+                <SelectContent>
+                  {versions?.map((v) => (
+                    <SelectItem key={v.id} value={v.id} disabled={v.id === diffVersion1}>
+                      v{v.version_number} - {format(new Date(v.created_at), "dd MMM yyyy HH:mm", { locale: localeId })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 space-y-2">
+              <label className="text-sm font-medium">Versi Baru</label>
+              <Select value={diffVersion1} onValueChange={setDiffVersion1}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih versi" />
+                </SelectTrigger>
+                <SelectContent>
+                  {versions?.map((v) => (
+                    <SelectItem key={v.id} value={v.id} disabled={v.id === diffVersion2}>
+                      v{v.version_number} - {format(new Date(v.created_at), "dd MMM yyyy HH:mm", { locale: localeId })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {version1Data && version2Data && (
+            <ScrollArea className="h-[500px]">
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="content">Konten</TabsTrigger>
+                  <TabsTrigger value="title">Judul</TabsTrigger>
+                  <TabsTrigger value="excerpt">Excerpt</TabsTrigger>
+                  <TabsTrigger value="meta">Metadata</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="mt-4">
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="text-xs text-muted-foreground mb-2">
+                      <span className="inline-block px-2 py-1 bg-green-200 dark:bg-green-900 rounded mr-2">Ditambahkan</span>
+                      <span className="inline-block px-2 py-1 bg-red-200 dark:bg-red-900 rounded line-through">Dihapus</span>
+                    </div>
+                    <Separator className="my-2" />
+                    <DiffView oldText={version2Data.content} newText={version1Data.content} type="html" />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="title" className="mt-4">
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <h3 className="font-medium mb-2">Perbandingan Judul</h3>
+                    <DiffView oldText={version2Data.title} newText={version1Data.title} type="text" />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="excerpt" className="mt-4">
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <h3 className="font-medium mb-2">Perbandingan Excerpt</h3>
+                    <DiffView 
+                      oldText={version2Data.excerpt || ""} 
+                      newText={version1Data.excerpt || ""} 
+                      type="text" 
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="meta" className="mt-4">
+                  <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-sm mb-2">v{version2Data.version_number} (Lama)</h4>
+                        <div className="text-sm space-y-1">
+                          <p><span className="text-muted-foreground">Kategori:</span> {version2Data.category}</p>
+                          <p><span className="text-muted-foreground">Status:</span> {version2Data.status}</p>
+                          <p><span className="text-muted-foreground">Tags:</span> {version2Data.tags?.join(", ") || "-"}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm mb-2">v{version1Data.version_number} (Baru)</h4>
+                        <div className="text-sm space-y-1">
+                          <p><span className="text-muted-foreground">Kategori:</span> {version1Data.category}</p>
+                          <p><span className="text-muted-foreground">Status:</span> {version1Data.status}</p>
+                          <p><span className="text-muted-foreground">Tags:</span> {version1Data.tags?.join(", ") || "-"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </ScrollArea>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDiffOpen(false)}>
+              Tutup
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

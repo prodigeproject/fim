@@ -492,6 +492,143 @@ export type Database = {
         }
         Relationships: []
       }
+      fim_registrations: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          registration_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          registration_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          registration_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      fim_training_registrations: {
+        Row: {
+          achievements: Json | null
+          address: string | null
+          birth_date: string | null
+          birth_place: string | null
+          city: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          education: string | null
+          gender: string | null
+          graduation_year: string | null
+          how_did_you_know: string | null
+          id: string
+          impact_expected: string | null
+          institution: string | null
+          is_submitted: boolean | null
+          last_saved_at: string | null
+          major: string | null
+          motivation: string | null
+          occupation: string | null
+          organization: string | null
+          organizational_experience: Json | null
+          province: string | null
+          registration_id: string | null
+          social_contribution_experience: string | null
+          social_issue_concern: string | null
+          strategic_contribution_plan: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          why_join_fim: string | null
+        }
+        Insert: {
+          achievements?: Json | null
+          address?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          city?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          education?: string | null
+          gender?: string | null
+          graduation_year?: string | null
+          how_did_you_know?: string | null
+          id?: string
+          impact_expected?: string | null
+          institution?: string | null
+          is_submitted?: boolean | null
+          last_saved_at?: string | null
+          major?: string | null
+          motivation?: string | null
+          occupation?: string | null
+          organization?: string | null
+          organizational_experience?: Json | null
+          province?: string | null
+          registration_id?: string | null
+          social_contribution_experience?: string | null
+          social_issue_concern?: string | null
+          strategic_contribution_plan?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          why_join_fim?: string | null
+        }
+        Update: {
+          achievements?: Json | null
+          address?: string | null
+          birth_date?: string | null
+          birth_place?: string | null
+          city?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          education?: string | null
+          gender?: string | null
+          graduation_year?: string | null
+          how_did_you_know?: string | null
+          id?: string
+          impact_expected?: string | null
+          institution?: string | null
+          is_submitted?: boolean | null
+          last_saved_at?: string | null
+          major?: string | null
+          motivation?: string | null
+          occupation?: string | null
+          organization?: string | null
+          organizational_experience?: Json | null
+          province?: string | null
+          registration_id?: string | null
+          social_contribution_experience?: string | null
+          social_issue_concern?: string | null
+          strategic_contribution_plan?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          why_join_fim?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fim_training_registrations_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "fim_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempted_at: string | null
