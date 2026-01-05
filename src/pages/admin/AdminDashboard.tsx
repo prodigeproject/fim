@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
   { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, superAdminOnly: true },
   { name: "Regional", href: "/admin/regionals", icon: MapPin, superAdminOnly: true },
   { name: "Alumni", href: "/admin/alumni", icon: Users, superAdminOnly: true },
+  { name: "Registrasi FIM", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true },
   { 
     name: "Pengguna", 
     href: "/admin/users", 

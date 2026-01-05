@@ -91,6 +91,7 @@ export default function ArticleEditor() {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
   const [scheduleTime, setScheduleTime] = useState('09:00');
+  const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
 
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
@@ -153,13 +154,54 @@ export default function ArticleEditor() {
     }
   }, [formData.title, isEditing]);
 
-  // Auto-save draft
+  // Auto-backup every 5 minutes
+  useEffect(() => {
+    if (!isEditing || !id || !hasUnsavedChanges) return;
+
+    const autoBackupInterval = setInterval(async () => {
+      if (!formData.title.trim()) return;
+      
+      try {
+        // Get next version number
+        const { data: nextVersionData } = await supabase
+          .rpc("get_next_article_version", { p_article_id: id });
+
+        // Save auto-backup version
+        await supabase
+          .from("article_versions")
+          .insert({
+            article_id: id,
+            version_number: nextVersionData || 1,
+            title: formData.title,
+            content: formData.content,
+            excerpt: formData.excerpt,
+            category: formData.category,
+            featured_image_url: formData.featured_image_url,
+            tags: formData.tags,
+            author_affiliation: formData.author_affiliation,
+            related_region: formData.related_region,
+            status: formData.status,
+            created_by: user?.id,
+            change_summary: "Auto-backup (5 min)",
+          });
+
+        setAutoSavedAt(new Date());
+        console.log("Auto-backup saved at", new Date().toLocaleTimeString());
+      } catch (error) {
+        console.error("Auto-backup failed:", error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(autoBackupInterval);
+  }, [isEditing, id, hasUnsavedChanges, formData, user?.id]);
+
+  // Auto-save draft every 30 seconds
   useEffect(() => {
     if (!hasUnsavedChanges || formData.status !== 'draft') return;
 
     const timer = setTimeout(() => {
       saveDraft();
-    }, 30000); // Auto-save every 30 seconds
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, [formData, hasUnsavedChanges]);
@@ -394,8 +436,14 @@ export default function ArticleEditor() {
             <h1 className="text-2xl font-bold">
               {isEditing ? 'Edit Artikel' : 'Tulis Artikel Baru'}
             </h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               {statusBadge}
+              {autoSavedAt && (
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Auto-saved {format(autoSavedAt, 'HH:mm')}
+                </span>
+              )}
               {lastSaved && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" />
