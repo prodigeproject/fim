@@ -41,6 +41,12 @@ import OnlineAdminsDashboard from "@/pages/admin/OnlineAdminsDashboard";
 import ArticleApprovals from "@/pages/admin/ArticleApprovals";
 import NotificationsPage from "@/pages/admin/NotificationsPage";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
+import SecurityDashboard from "@/pages/admin/SecurityDashboard";
+import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
+import RegistrationLogin from "@/pages/registration/RegistrationLogin";
+import RegistrationSignup from "@/pages/registration/RegistrationSignup";
+import RegistrationDashboard from "@/pages/registration/RegistrationDashboard";
+import TrainingRegistration from "@/pages/registration/TrainingRegistration";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -65,6 +71,12 @@ const AnimatedRoutes = () => {
         {/* Legacy routes redirect */}
         <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
+
+        {/* Registration routes */}
+        <Route path="/daftar" element={<RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider>} />
+        <Route path="/daftar/signup" element={<RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider>} />
+        <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
+        <Route path="/daftar/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
 
         {/* Admin routes - wrapped in AdminAuthProvider */}
         <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
@@ -97,6 +109,7 @@ const AnimatedRoutes = () => {
                 <Route path="email-settings" element={<RequireSuperAdmin><EmailSettings /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
+                <Route path="security-dashboard" element={<RequireSuperAdmin><SecurityDashboard /></RequireSuperAdmin>} />
               </Route>
             </Routes>
           </AdminAuthProvider>

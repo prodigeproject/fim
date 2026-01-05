@@ -25,6 +25,7 @@ import {
   BookOpen,
   ClipboardList,
   UserCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -83,6 +84,7 @@ const navItems: NavItem[] = [
     superAdminOnly: true,
     children: [
       { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, superAdminOnly: true },
+      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, superAdminOnly: true },
       { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
       { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
     ]
