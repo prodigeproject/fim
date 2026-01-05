@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,8 @@ import {
   XCircle,
   CheckCircle2,
   History,
+  FileText,
+  Download,
 } from "lucide-react";
 
 interface Registration {
@@ -155,20 +158,38 @@ export default function RegistrationsManagement() {
 
   // Update status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, note }: { id: string; status: string; note?: string }) => {
+    mutationFn: async ({ id, status, note, email, name }: { id: string; status: string; note?: string; email: string; name: string }) => {
       const { error } = await supabase
         .from("fim_registrations")
         .update({ registration_status: status })
         .eq("id", id);
       if (error) throw error;
 
-      // Log to audit if needed
-      if (note) {
-        console.log("Reviewer note:", note);
+      // Send email notification to registrant
+      if (status === "approved" || status === "rejected") {
+        try {
+          const response = await supabase.functions.invoke("notify-registration-status", {
+            body: {
+              registrantEmail: email,
+              registrantName: name,
+              status: status,
+              reviewerNote: note || undefined,
+            },
+          });
+          
+          if (response.error) {
+            console.error("Failed to send email notification:", response.error);
+          } else {
+            console.log("Email notification sent successfully");
+          }
+        } catch (emailError) {
+          console.error("Error sending email notification:", emailError);
+        }
       }
     },
     onSuccess: (_, variables) => {
-      toast.success(`Status diubah menjadi ${variables.status === "approved" ? "Disetujui" : variables.status === "rejected" ? "Ditolak" : variables.status}`);
+      const statusText = variables.status === "approved" ? "Disetujui" : variables.status === "rejected" ? "Ditolak" : variables.status;
+      toast.success(`Status diubah menjadi ${statusText}. Email notifikasi telah dikirim.`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
     },
@@ -262,7 +283,9 @@ export default function RegistrationsManagement() {
       updateStatusMutation.mutate({ 
         id: selectedRegistration.id, 
         status: "approved",
-        note: reviewerNote 
+        note: reviewerNote,
+        email: selectedRegistration.email,
+        name: selectedRegistration.full_name,
       });
       setSelectedRegistration({ ...selectedRegistration, registration_status: "approved" });
     }
@@ -277,10 +300,209 @@ export default function RegistrationsManagement() {
       updateStatusMutation.mutate({ 
         id: selectedRegistration.id, 
         status: "rejected",
-        note: reviewerNote 
+        note: reviewerNote,
+        email: selectedRegistration.email,
+        name: selectedRegistration.full_name,
       });
       setSelectedRegistration({ ...selectedRegistration, registration_status: "rejected" });
     }
+  };
+
+  // Export individual PDF
+  const handleExportPDF = () => {
+    if (!selectedRegistration || !trainingData) {
+      toast.error("Data pendaftar tidak lengkap");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+    const lineHeight = 7;
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+
+    // Helper functions
+    const addTitle = (text: string) => {
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(text, pageWidth / 2, yPos, { align: "center" });
+      yPos += lineHeight * 2;
+    };
+
+    const addSection = (title: string) => {
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 64, 175);
+      doc.text(title, margin, yPos);
+      yPos += lineHeight;
+      doc.setTextColor(0, 0, 0);
+    };
+
+    const addField = (label: string, value: string | null | undefined) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(label + ":", margin, yPos);
+      doc.setFont("helvetica", "normal");
+      const textValue = value || "-";
+      const splitText = doc.splitTextToSize(textValue, contentWidth - 50);
+      doc.text(splitText, margin + 50, yPos);
+      yPos += lineHeight * Math.max(1, splitText.length);
+    };
+
+    const addLongText = (label: string, value: string | null | undefined) => {
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(label + ":", margin, yPos);
+      yPos += lineHeight;
+      doc.setFont("helvetica", "normal");
+      const textValue = value || "-";
+      const splitText = doc.splitTextToSize(textValue, contentWidth);
+      
+      splitText.forEach((line: string) => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(line, margin, yPos);
+        yPos += lineHeight * 0.8;
+      });
+      yPos += lineHeight * 0.5;
+    };
+
+    // Header
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, pageWidth, 40, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("FORMULIR PENDAFTARAN FIM", pageWidth / 2, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Forum Indonesia Muda", pageWidth / 2, 30, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+    yPos = 55;
+
+    // Status
+    const statusText = selectedRegistration.registration_status === "approved" ? "DISETUJUI" 
+      : selectedRegistration.registration_status === "rejected" ? "DITOLAK" 
+      : selectedRegistration.registration_status === "completed" ? "SELESAI" 
+      : "MENUNGGU";
+    const statusColor = selectedRegistration.registration_status === "approved" ? [34, 197, 94]
+      : selectedRegistration.registration_status === "rejected" ? [239, 68, 68]
+      : [234, 179, 8];
+    
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.roundedRect(pageWidth - margin - 40, 45, 40, 10, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text(statusText, pageWidth - margin - 20, 51, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+
+    // Data Pribadi
+    addSection("DATA PRIBADI");
+    addField("Nama Lengkap", selectedRegistration.full_name);
+    addField("Email", selectedRegistration.email);
+    addField("No. Telepon", selectedRegistration.phone);
+    addField("Tempat, Tgl Lahir", `${trainingData.birth_place || "-"}, ${trainingData.birth_date || "-"}`);
+    addField("Jenis Kelamin", trainingData.gender === "male" ? "Laki-laki" : trainingData.gender === "female" ? "Perempuan" : "-");
+    addField("Alamat", trainingData.address);
+    addField("Kota", trainingData.city);
+    addField("Provinsi", trainingData.province);
+    yPos += lineHeight;
+
+    // Pendidikan & Pekerjaan
+    addSection("PENDIDIKAN & PEKERJAAN");
+    addField("Pendidikan", trainingData.education?.toUpperCase());
+    addField("Institusi", trainingData.institution);
+    addField("Jurusan", trainingData.major);
+    addField("Tahun Lulus", trainingData.graduation_year);
+    addField("Pekerjaan", trainingData.occupation);
+    addField("Organisasi", trainingData.organization);
+    yPos += lineHeight;
+
+    // Pengalaman Organisasi
+    addSection("PENGALAMAN ORGANISASI");
+    if (Array.isArray(trainingData.organizational_experience) && trainingData.organizational_experience.length > 0) {
+      trainingData.organizational_experience.forEach((exp: any, i: number) => {
+        addField(`${i + 1}. ${exp.organization || "-"}`, `${exp.position || "-"} (${exp.year || "-"})`);
+        if (exp.description) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const descText = doc.splitTextToSize(exp.description, contentWidth - 10);
+          descText.forEach((line: string) => {
+            if (yPos > 280) { doc.addPage(); yPos = 20; }
+            doc.text(line, margin + 5, yPos);
+            yPos += lineHeight * 0.7;
+          });
+        }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.text("Tidak ada data", margin, yPos);
+      yPos += lineHeight;
+    }
+    yPos += lineHeight;
+
+    // Prestasi
+    addSection("5 PRESTASI TERBAIK");
+    if (Array.isArray(trainingData.achievements) && trainingData.achievements.some((a: any) => a.title)) {
+      trainingData.achievements.filter((a: any) => a.title).forEach((ach: any, i: number) => {
+        addField(`${i + 1}. ${ach.title || "-"}`, ach.year || "-");
+        if (ach.description) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const descText = doc.splitTextToSize(ach.description, contentWidth - 10);
+          descText.forEach((line: string) => {
+            if (yPos > 280) { doc.addPage(); yPos = 20; }
+            doc.text(line, margin + 5, yPos);
+            yPos += lineHeight * 0.7;
+          });
+        }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.text("Tidak ada data", margin, yPos);
+      yPos += lineHeight;
+    }
+    yPos += lineHeight;
+
+    // Motivasi
+    addSection("MOTIVASI & RENCANA");
+    addLongText("Dari Mana Mengetahui FIM", trainingData.how_did_you_know);
+    addLongText("Alasan Bergabung FIM", trainingData.why_join_fim);
+    addLongText("Motivasi", trainingData.motivation);
+    addLongText("Kepedulian Isu Sosial", trainingData.social_issue_concern);
+    addLongText("Pengalaman Kontribusi Sosial", trainingData.social_contribution_experience);
+    addLongText("Rencana Kontribusi Strategis", trainingData.strategic_contribution_plan);
+    addLongText("Dampak yang Diharapkan", trainingData.impact_expected);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text(
+      `Dicetak pada ${format(new Date(), "dd MMMM yyyy HH:mm", { locale: localeId })}`,
+      pageWidth / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: "center" }
+    );
+
+    // Save
+    const fileName = `Pendaftaran-FIM-${selectedRegistration.full_name.replace(/\s+/g, "-")}-${format(new Date(), "yyyyMMdd")}.pdf`;
+    doc.save(fileName);
+    toast.success("PDF berhasil diunduh");
   };
 
   return (
@@ -730,7 +952,15 @@ export default function RegistrationsManagement() {
                 />
               </div>
 
-              <SheetFooter className="flex gap-2 sm:justify-start">
+              <SheetFooter className="flex flex-wrap gap-2 sm:justify-start">
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  disabled={!trainingData}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
                 <Button
                   variant="default"
                   className="bg-green-600 hover:bg-green-700"
