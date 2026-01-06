@@ -500,6 +500,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          photo_url: string | null
           registration_status: string | null
           updated_at: string | null
         }
@@ -510,6 +511,7 @@ export type Database = {
           full_name: string
           id?: string
           phone?: string | null
+          photo_url?: string | null
           registration_status?: string | null
           updated_at?: string | null
         }
@@ -520,6 +522,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          photo_url?: string | null
           registration_status?: string | null
           updated_at?: string | null
         }

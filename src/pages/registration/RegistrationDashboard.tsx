@@ -118,6 +118,14 @@ export default function RegistrationDashboard() {
               <span className="text-sm text-muted-foreground hidden sm:block">
                 {registration.email}
               </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate("/daftar/profile")}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profil
+              </Button>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Keluar
