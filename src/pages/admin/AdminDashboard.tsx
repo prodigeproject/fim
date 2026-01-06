@@ -67,7 +67,17 @@ const navItems: NavItem[] = [
   { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, superAdminOnly: true },
   { name: "Regional", href: "/admin/regionals", icon: MapPin, superAdminOnly: true },
   { name: "Alumni", href: "/admin/alumni", icon: Users, superAdminOnly: true },
-  { name: "Registrasi FIM", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true, badgeKey: "newRegistrations" },
+  { 
+    name: "Registrasi FIM", 
+    href: "/admin/registrations", 
+    icon: ClipboardList, 
+    superAdminOnly: true, 
+    badgeKey: "newRegistrations",
+    children: [
+      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true, badgeKey: "newRegistrations" },
+      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, superAdminOnly: true },
+    ]
+  },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
