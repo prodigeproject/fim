@@ -276,13 +276,13 @@ export default function AdminDashboard() {
         <Collapsible open={isOpen} onOpenChange={() => toggleMenu(item.name)}>
           <CollapsibleTrigger asChild>
             <button
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 hasActiveChild
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-4 w-4 shrink-0" />
               {item.name}
               {isOpen ? (
                 <ChevronDown className="h-4 w-4 ml-auto" />
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
               )}
             </button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="pl-4 mt-1 space-y-1">
+          <CollapsibleContent className="pl-4 mt-0.5 space-y-0.5">
             {item.children!.map((child) => (
               <NavItemComponent key={child.href} item={child} depth={depth + 1} />
             ))}
@@ -304,13 +304,13 @@ export default function AdminDashboard() {
        <Link
          to={item.href}
          onClick={() => setMobileOpen(false)}
-         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
            isActive
              ? "bg-primary text-primary-foreground"
              : "text-muted-foreground hover:bg-muted hover:text-foreground"
          }`}
        >
-        <item.icon className="h-4 w-4" />
+        <item.icon className="h-4 w-4 shrink-0" />
         {item.name}
         {badgeCount > 0 && (
           <Badge 
@@ -327,21 +327,21 @@ export default function AdminDashboard() {
 
   const Sidebar = () => (
     <div className="flex flex-col h-full">
-      <div className="p-6 border-b shrink-0">
-        <h1 className="text-xl font-bold text-foreground">FIM Admin</h1>
-        <p className="text-xs text-muted-foreground mt-1">
+      <div className="p-4 border-b shrink-0">
+        <h1 className="text-lg font-bold text-foreground">FIM Admin</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
           {getRoleLabel()}
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-2 space-y-0.5">
         {filteredNavItems.map((item) => (
           <NavItemComponent key={item.href} item={item} />
         ))}
       </nav>
 
-      <div className="p-4 border-t shrink-0">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="p-3 border-t shrink-0">
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
             <span className="text-sm font-bold text-primary">
               {profile?.full_name?.[0] || profile?.username?.[0] || "A"}
@@ -357,38 +357,38 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2"
+            className="w-full justify-start gap-2 h-8 text-xs"
             onClick={() => {
               setMobileOpen(false);
               navigate("/admin/profile");
             }}
           >
-            <UserCircle className="h-4 w-4" />
-            Pengaturan Profil
+            <UserCircle className="h-3.5 w-3.5" />
+            Profil
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2"
+            className="w-full justify-start gap-2 h-8 text-xs"
             onClick={() => {
               setMobileOpen(false);
               navigate("/admin/change-password");
             }}
           >
-            <KeyRound className="h-4 w-4" />
+            <KeyRound className="h-3.5 w-3.5" />
             Ubah Password
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+            className="w-full justify-start gap-2 h-8 text-xs text-destructive hover:text-destructive"
             onClick={handleSignOut}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
             Keluar
           </Button>
         </div>
