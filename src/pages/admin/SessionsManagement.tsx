@@ -77,7 +77,7 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; devic
 }
 
 export default function SessionsManagement() {
-  const { isSuperAdmin, user, session } = useAdminAuth();
+  const { isSuperAdmin, user, session, role } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -127,15 +127,18 @@ export default function SessionsManagement() {
     return () => clearInterval(interval);
   }, [user, session, currentSessionId]);
 
-  // Fetch all sessions (super admin can see all, others see only their own)
+  // Fetch all sessions
+  // - Super admin can see all sessions
+  // - Admin/Moderator can only see their own sessions
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ["admin-sessions", isSuperAdmin],
+    queryKey: ["admin-sessions", isSuperAdmin, role],
     queryFn: async () => {
       let query = supabase
         .from("admin_sessions")
         .select("*")
         .order("last_activity", { ascending: false });
 
+      // Only super_admin can see all sessions, others see only their own
       if (!isSuperAdmin) {
         query = query.eq("user_id", user?.id);
       }
@@ -205,7 +208,8 @@ export default function SessionsManagement() {
   const currentUserSessions = sessions?.filter(s => s.user_id === user?.id) || [];
   const hasMultipleSessions = currentUserSessions.length > 1;
 
-  if (!isSuperAdmin && !user) {
+  // Allow all logged-in admin users to access this page
+  if (!user) {
     return (
       <div className="text-center py-12">
         <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

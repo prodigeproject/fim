@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
@@ -38,6 +38,8 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   superAdminOnly?: boolean;
+  adminOnly?: boolean; // New: accessible to admin but not moderator
+  hideFromAdmin?: boolean; // New: hide from admin role (user management)
   children?: NavItem[];
   badgeKey?: string;
 }
@@ -50,7 +52,7 @@ const navItems: NavItem[] = [
     icon: FileText,
     children: [
       { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
-      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, superAdminOnly: true, badgeKey: "pendingArticles" },
+      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, adminOnly: true, badgeKey: "pendingArticles" },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     ]
   },
@@ -58,47 +60,53 @@ const navItems: NavItem[] = [
     name: "Newsletter", 
     href: "/admin/newsletter", 
     icon: Mail,
-    superAdminOnly: true,
+    adminOnly: true,
     children: [
-      { name: "Subscribers", href: "/admin/newsletter", icon: Mail, superAdminOnly: true },
-      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true },
+      { name: "Subscribers", href: "/admin/newsletter", icon: Mail, adminOnly: true },
+      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, adminOnly: true },
     ]
   },
-  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, superAdminOnly: true },
-  { name: "Regional", href: "/admin/regionals", icon: MapPin, superAdminOnly: true },
-  { name: "Alumni", href: "/admin/alumni", icon: Users, superAdminOnly: true },
+  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, adminOnly: true },
+  { name: "Regional", href: "/admin/regionals", icon: MapPin, adminOnly: true },
+  { name: "Alumni", href: "/admin/alumni", icon: Users, adminOnly: true },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 
     icon: ClipboardList, 
-    superAdminOnly: true, 
+    adminOnly: true, 
     badgeKey: "newRegistrations",
     children: [
-      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, superAdminOnly: true, badgeKey: "newRegistrations" },
-      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, superAdminOnly: true },
+      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, adminOnly: true, badgeKey: "newRegistrations" },
+      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, adminOnly: true },
     ]
   },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
     icon: Users,
-    superAdminOnly: true,
+    superAdminOnly: true, // Only super_admin can manage users
+    hideFromAdmin: true, // Hide from admin role
     children: [
-      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true },
+      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true, hideFromAdmin: true },
       { name: "Admin Online", href: "/admin/online", icon: Monitor, superAdminOnly: true },
-      { name: "Sesi Aktif", href: "/admin/sessions", icon: Monitor, superAdminOnly: true },
+      { name: "Sesi Aktif", href: "/admin/sessions", icon: Monitor }, // Accessible to all including moderator
     ]
   },
+  { 
+    name: "Sesi Aktif", 
+    href: "/admin/sessions", 
+    icon: Monitor,
+  }, // Standalone for moderator access
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
     icon: ClipboardList,
-    superAdminOnly: true,
+    adminOnly: true,
     children: [
-      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, superAdminOnly: true },
-      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, superAdminOnly: true },
-      { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
-      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
+      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, adminOnly: true },
+      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, adminOnly: true },
+      { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, adminOnly: true },
+      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, adminOnly: true },
     ]
   },
 ];
@@ -111,29 +119,6 @@ export default function AdminDashboard() {
   const [authChecked, setAuthChecked] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
-  const sidebarScrollKey = "fim_admin_sidebar_scroll";
-  const sidebarNavRef = useRef<HTMLElement | null>(null);
-
-  const restoreSidebarScroll = useCallback(() => {
-    const el = sidebarNavRef.current;
-    if (!el) return;
-    const saved = sessionStorage.getItem(sidebarScrollKey);
-    if (saved) el.scrollTop = Number(saved);
-  }, []);
-
-  const persistSidebarScroll = useCallback(() => {
-    const el = sidebarNavRef.current;
-    if (!el) return;
-    sessionStorage.setItem(sidebarScrollKey, String(el.scrollTop));
-  }, []);
-
-  useEffect(() => {
-    restoreSidebarScroll();
-  }, [restoreSidebarScroll]);
-
-  useEffect(() => {
-    requestAnimationFrame(() => restoreSidebarScroll());
-  }, [location.pathname, restoreSidebarScroll]);
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
   const newRegistrationsCount = useNewRegistrationsCount();
@@ -143,6 +128,9 @@ export default function AdminDashboard() {
   
   // Enable push notifications for super admins
   usePushNotifications();
+
+  // Check if user is admin (has admin role) - note: "admin" role needs DB migration to take effect
+  const isAdmin = role === "super_admin" || (role as string) === "admin";
 
   // Auto-expand parent menu if child is active
   useEffect(() => {
@@ -237,9 +225,25 @@ export default function AdminDashboard() {
     return null;
   }
 
+  const getRoleLabel = () => {
+    if (role === "super_admin") return "Super Admin";
+    if ((role as string) === "admin") return "Admin";
+    return "Moderator";
+  };
+
   const filterNavItems = (items: NavItem[]): NavItem[] => {
     return items
-      .filter(item => !item.superAdminOnly || isSuperAdmin)
+      .filter(item => {
+        // superAdminOnly means only super_admin can see it
+        if (item.superAdminOnly && !isSuperAdmin) return false;
+        // hideFromAdmin means admin role cannot see it (only super_admin)
+        if (item.hideFromAdmin && (role as string) === "admin") return false;
+        // adminOnly means super_admin and admin can see, but not moderator
+        if (item.adminOnly && role === "moderator") return false;
+        // Special case: standalone Sesi Aktif should only show for moderator
+        if (item.name === "Sesi Aktif" && !item.children && role !== "moderator") return false;
+        return true;
+      })
       .map(item => ({
         ...item,
         children: item.children ? filterNavItems(item.children) : undefined,
@@ -299,10 +303,7 @@ export default function AdminDashboard() {
      return (
        <Link
          to={item.href}
-         onClick={() => {
-           persistSidebarScroll();
-           setMobileOpen(false);
-         }}
+         onClick={() => setMobileOpen(false)}
          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
            isActive
              ? "bg-primary text-primary-foreground"
@@ -329,15 +330,11 @@ export default function AdminDashboard() {
       <div className="p-6 border-b shrink-0">
         <h1 className="text-xl font-bold text-foreground">FIM Admin</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {role === "super_admin" ? "Super Admin" : "Moderator"}
+          {getRoleLabel()}
         </p>
       </div>
 
-      <nav
-        ref={sidebarNavRef}
-        onScroll={persistSidebarScroll}
-        className="flex-1 p-4 space-y-1"
-      >
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {filteredNavItems.map((item) => (
           <NavItemComponent key={item.href} item={item} />
         ))}
@@ -404,14 +401,14 @@ export default function AdminDashboard() {
       <SEO title="Admin Dashboard" description="Panel admin FIM" noIndex={true} />
       
       <div className="min-h-screen flex bg-muted">
-        {/* Desktop Sidebar - Not sticky, scrolls with page content */}
-        <aside className="hidden lg:block lg:w-64 lg:shrink-0 bg-card border-r">
+        {/* Desktop Sidebar - Fixed height with internal scroll */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 bg-card border-r h-screen sticky top-0">
           <Sidebar />
         </aside>
 
         {/* Mobile Header */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="lg:hidden flex items-center justify-between p-4 bg-card border-b">
+          <header className="lg:hidden flex items-center justify-between p-4 bg-card border-b sticky top-0 z-10">
             <div className="flex items-center gap-4">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
@@ -428,7 +425,7 @@ export default function AdminDashboard() {
             <NotificationDropdown />
           </header>
 
-          {/* Desktop Header with Notification - not sticky */}
+          {/* Desktop Header with Notification */}
           <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card">
             <NotificationDropdown />
           </header>

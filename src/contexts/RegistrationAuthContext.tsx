@@ -11,6 +11,7 @@ interface Registration {
   auth_user_id: string;
   created_at: string;
   updated_at: string;
+  email_verified?: boolean;
 }
 
 interface RegistrationAuthContextType {
@@ -120,15 +121,20 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
 
+      // Generate verification token
+      const verificationToken = crypto.randomUUID();
+
       // Create registration record (return inserted row)
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
-          email,
+          email: email.toLowerCase().trim(),
           full_name: fullName,
           phone: phone || null,
           auth_user_id: authData.user.id,
           registration_status: "pending",
+          email_verified: false,
+          email_verification_token: verificationToken,
         })
         .select("*")
         .single();
@@ -136,6 +142,19 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       if (regError) throw regError;
 
       setRegistration(regData as Registration);
+
+      // Send verification email
+      try {
+        await supabase.functions.invoke("send-verification-email", {
+          body: {
+            email: email.toLowerCase().trim(),
+            name: fullName,
+            token: verificationToken,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+      }
 
       // Notify super admin (fire-and-forget)
       supabase.functions
@@ -163,6 +182,14 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
+      // Check if user is an admin (has role in user_roles table)
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", (await supabase.auth.signInWithPassword({ email, password })).data?.user?.id || "")
+        .maybeSingle();
+
+      // First do the actual sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -170,8 +197,28 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       if (error) throw error;
 
+      // Check if this user has an admin role
       if (data.user) {
+        const { data: adminRole } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+
+        if (adminRole) {
+          // This is an admin user trying to login to registration portal
+          await supabase.auth.signOut();
+          throw new Error("Akun admin tidak dapat digunakan untuk login pendaftaran. Silakan gunakan /admin untuk login admin.");
+        }
+
         const reg = await fetchRegistration(data.user.id);
+        
+        if (!reg) {
+          // No registration found for this user
+          await supabase.auth.signOut();
+          throw new Error("Akun tidak terdaftar sebagai pendaftar FIM");
+        }
+
         setRegistration(reg);
       }
 

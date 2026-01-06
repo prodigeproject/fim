@@ -497,6 +497,9 @@ export type Database = {
           auth_user_id: string | null
           created_at: string | null
           email: string
+          email_verification_token: string | null
+          email_verified: boolean | null
+          email_verified_at: string | null
           full_name: string
           id: string
           phone: string | null
@@ -508,6 +511,9 @@ export type Database = {
           auth_user_id?: string | null
           created_at?: string | null
           email: string
+          email_verification_token?: string | null
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           full_name: string
           id?: string
           phone?: string | null
@@ -519,6 +525,9 @@ export type Database = {
           auth_user_id?: string | null
           created_at?: string | null
           email?: string
+          email_verification_token?: string | null
+          email_verified?: boolean | null
+          email_verified_at?: string | null
           full_name?: string
           id?: string
           phone?: string | null
@@ -1030,7 +1039,7 @@ export type Database = {
       publish_scheduled_articles: { Args: never; Returns: number }
     }
     Enums: {
-      app_role: "super_admin" | "moderator"
+      app_role: "super_admin" | "moderator" | "admin"
       article_category:
         | "pengumuman"
         | "prestasi"
@@ -1172,7 +1181,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "moderator"],
+      app_role: ["super_admin", "moderator", "admin"],
       article_category: [
         "pengumuman",
         "prestasi",

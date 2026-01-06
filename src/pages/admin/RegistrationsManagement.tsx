@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -39,6 +40,14 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Users,
   Search,
   FileSpreadsheet,
@@ -62,6 +71,8 @@ import {
   History,
   FileText,
   Download,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 
 interface Registration {
@@ -114,6 +125,20 @@ export default function RegistrationsManagement() {
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [reviewerNote, setReviewerNote] = useState("");
+  
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<"approve" | "reject" | null>(null);
+  const [bulkNote, setBulkNote] = useState("");
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  
+  // Email preview state
+  const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
+  const [emailPreviewData, setEmailPreviewData] = useState<{
+    action: "approve" | "reject";
+    registration: Registration;
+    note: string;
+  } | null>(null);
 
   // Fetch all registrations
   const { data: registrations, isLoading } = useQuery({
@@ -192,6 +217,56 @@ export default function RegistrationsManagement() {
       toast.success(`Status diubah menjadi ${statusText}. Email notifikasi telah dikirim.`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
+    },
+    onError: () => {
+      toast.error("Gagal memperbarui status");
+    },
+  });
+
+  // Bulk update mutation
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async ({ ids, status, note }: { ids: string[]; status: string; note: string }) => {
+      // Get registration details for email
+      const { data: regs } = await supabase
+        .from("fim_registrations")
+        .select("id, email, full_name")
+        .in("id", ids);
+
+      // Update all statuses
+      const { error } = await supabase
+        .from("fim_registrations")
+        .update({ registration_status: status })
+        .in("id", ids);
+      
+      if (error) throw error;
+
+      // Send emails for each registration
+      if (regs) {
+        for (const reg of regs) {
+          try {
+            await supabase.functions.invoke("notify-registration-status", {
+              body: {
+                registrantEmail: reg.email,
+                registrantName: reg.full_name,
+                status: status,
+                reviewerNote: note || undefined,
+              },
+            });
+          } catch (emailError) {
+            console.error(`Failed to send email to ${reg.email}:`, emailError);
+          }
+        }
+      }
+
+      return ids.length;
+    },
+    onSuccess: (count, variables) => {
+      const statusText = variables.status === "approved" ? "disetujui" : "ditolak";
+      toast.success(`${count} pendaftaran berhasil ${statusText}`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setSelectedIds(new Set());
+      setBulkNote("");
+      setIsBulkDialogOpen(false);
     },
     onError: () => {
       toast.error("Gagal memperbarui status");
@@ -278,34 +353,132 @@ export default function RegistrationsManagement() {
     rejected: registrations?.filter(r => r.registration_status === "rejected").length || 0,
   };
 
-  const handleApprove = () => {
-    if (selectedRegistration) {
-      updateStatusMutation.mutate({ 
-        id: selectedRegistration.id, 
-        status: "approved",
-        note: reviewerNote,
-        email: selectedRegistration.email,
-        name: selectedRegistration.full_name,
-      });
-      setSelectedRegistration({ ...selectedRegistration, registration_status: "approved" });
+  // Email preview helper
+  const generateEmailPreview = (action: "approve" | "reject", name: string, note: string) => {
+    if (action === "approve") {
+      return {
+        subject: "Selamat! Pendaftaran FIM Anda Disetujui",
+        body: `
+Halo ${name},
+
+Selamat! Pendaftaran Anda di Forum Indonesia Muda telah DISETUJUI.
+
+${note ? `Catatan dari reviewer:\n${note}\n\n` : ""}Tim kami akan segera menghubungi Anda untuk langkah selanjutnya.
+
+Terima kasih atas antusiasme Anda untuk bergabung dengan Forum Indonesia Muda!
+
+Salam hangat,
+Tim Forum Indonesia Muda
+        `.trim()
+      };
+    } else {
+      return {
+        subject: "Informasi Pendaftaran FIM",
+        body: `
+Halo ${name},
+
+Terima kasih atas minat Anda untuk bergabung dengan Forum Indonesia Muda.
+
+Setelah kami tinjau, dengan berat hati kami informasikan bahwa pendaftaran Anda belum dapat kami terima saat ini.
+
+${note ? `Catatan dari reviewer:\n${note}\n\n` : ""}Jangan berkecil hati, Anda dapat mencoba mendaftar kembali di periode selanjutnya.
+
+Salam hangat,
+Tim Forum Indonesia Muda
+        `.trim()
+      };
     }
   };
 
-  const handleReject = () => {
+  const handleApproveWithPreview = () => {
+    if (selectedRegistration) {
+      setEmailPreviewData({
+        action: "approve",
+        registration: selectedRegistration,
+        note: reviewerNote,
+      });
+      setIsEmailPreviewOpen(true);
+    }
+  };
+
+  const handleRejectWithPreview = () => {
     if (!reviewerNote.trim()) {
       toast.error("Mohon isi catatan alasan penolakan");
       return;
     }
     if (selectedRegistration) {
-      updateStatusMutation.mutate({ 
-        id: selectedRegistration.id, 
-        status: "rejected",
+      setEmailPreviewData({
+        action: "reject",
+        registration: selectedRegistration,
         note: reviewerNote,
-        email: selectedRegistration.email,
-        name: selectedRegistration.full_name,
       });
-      setSelectedRegistration({ ...selectedRegistration, registration_status: "rejected" });
+      setIsEmailPreviewOpen(true);
     }
+  };
+
+  const confirmSendEmail = () => {
+    if (!emailPreviewData) return;
+    
+    updateStatusMutation.mutate({
+      id: emailPreviewData.registration.id,
+      status: emailPreviewData.action === "approve" ? "approved" : "rejected",
+      note: emailPreviewData.note,
+      email: emailPreviewData.registration.email,
+      name: emailPreviewData.registration.full_name,
+    });
+    
+    setSelectedRegistration(prev => prev ? { ...prev, registration_status: emailPreviewData.action === "approve" ? "approved" : "rejected" } : null);
+    setIsEmailPreviewOpen(false);
+    setEmailPreviewData(null);
+  };
+
+  // Bulk selection handlers
+  const toggleSelectAll = () => {
+    if (!registrations) return;
+    
+    const eligibleRegs = registrations.filter(r => 
+      r.registration_status !== "approved" && r.registration_status !== "rejected"
+    );
+    
+    if (selectedIds.size === eligibleRegs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(eligibleRegs.map(r => r.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const openBulkDialog = (action: "approve" | "reject") => {
+    if (selectedIds.size === 0) {
+      toast.error("Pilih minimal satu pendaftaran");
+      return;
+    }
+    setBulkAction(action);
+    setIsBulkDialogOpen(true);
+  };
+
+  const handleBulkAction = () => {
+    if (!bulkAction || selectedIds.size === 0) return;
+    
+    if (bulkAction === "reject" && !bulkNote.trim()) {
+      toast.error("Mohon isi catatan alasan penolakan");
+      return;
+    }
+
+    bulkUpdateMutation.mutate({
+      ids: Array.from(selectedIds),
+      status: bulkAction === "approve" ? "approved" : "rejected",
+      note: bulkNote,
+    });
   };
 
   // Export individual PDF
@@ -323,13 +496,6 @@ export default function RegistrationsManagement() {
     const contentWidth = pageWidth - (margin * 2);
 
     // Helper functions
-    const addTitle = (text: string) => {
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text(text, pageWidth / 2, yPos, { align: "center" });
-      yPos += lineHeight * 2;
-    };
-
     const addSection = (title: string) => {
       if (yPos > 260) {
         doc.addPage();
@@ -505,6 +671,10 @@ export default function RegistrationsManagement() {
     toast.success("PDF berhasil diunduh");
   };
 
+  const eligibleForSelection = registrations?.filter(r => 
+    r.registration_status !== "approved" && r.registration_status !== "rejected"
+  ) || [];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -578,6 +748,42 @@ export default function RegistrationsManagement() {
         </Card>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedIds.size > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <span className="font-medium">
+                {selectedIds.size} pendaftaran dipilih
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => openBulkDialog("approve")}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Setujui Semua
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => openBulkDialog("reject")}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Tolak Semua
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -612,6 +818,12 @@ export default function RegistrationsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={eligibleForSelection.length > 0 && selectedIds.size === eligibleForSelection.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Nama</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telepon</TableHead>
@@ -623,39 +835,52 @@ export default function RegistrationsManagement() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : registrations && registrations.length > 0 ? (
-                  registrations.map((reg) => (
-                    <TableRow key={reg.id}>
-                      <TableCell className="font-medium">{reg.full_name}</TableCell>
-                      <TableCell>{reg.email}</TableCell>
-                      <TableCell>{reg.phone || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(reg.registration_status)}</TableCell>
-                      <TableCell>
-                        {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedRegistration(reg);
-                            setIsDetailOpen(true);
-                            setReviewerNote("");
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Detail
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  registrations.map((reg) => {
+                    const canSelect = reg.registration_status !== "approved" && reg.registration_status !== "rejected";
+                    return (
+                      <TableRow key={reg.id}>
+                        <TableCell>
+                          {canSelect ? (
+                            <Checkbox
+                              checked={selectedIds.has(reg.id)}
+                              onCheckedChange={() => toggleSelect(reg.id)}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{reg.full_name}</TableCell>
+                        <TableCell>{reg.email}</TableCell>
+                        <TableCell>{reg.phone || "-"}</TableCell>
+                        <TableCell>{getStatusBadge(reg.registration_status)}</TableCell>
+                        <TableCell>
+                          {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRegistration(reg);
+                              setIsDetailOpen(true);
+                              setReviewerNote("");
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Detail
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Tidak ada data pendaftaran
                     </TableCell>
                   </TableRow>
@@ -763,7 +988,6 @@ export default function RegistrationsManagement() {
 
                     {/* Experience Tab */}
                     <TabsContent value="experience" className="space-y-6 mt-4">
-                      {/* Organizational Experience */}
                       <div>
                         <h4 className="font-semibold flex items-center gap-2 mb-3">
                           <Briefcase className="h-4 w-4" />
@@ -784,7 +1008,6 @@ export default function RegistrationsManagement() {
                         )}
                       </div>
 
-                      {/* Achievements */}
                       <div>
                         <h4 className="font-semibold flex items-center gap-2 mb-3">
                           <Award className="h-4 w-4" />
@@ -964,7 +1187,7 @@ export default function RegistrationsManagement() {
                 <Button
                   variant="default"
                   className="bg-green-600 hover:bg-green-700"
-                  onClick={handleApprove}
+                  onClick={handleApproveWithPreview}
                   disabled={updateStatusMutation.isPending || selectedRegistration.registration_status === "approved"}
                 >
                   {updateStatusMutation.isPending ? (
@@ -976,7 +1199,7 @@ export default function RegistrationsManagement() {
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={handleReject}
+                  onClick={handleRejectWithPreview}
                   disabled={updateStatusMutation.isPending || selectedRegistration.registration_status === "rejected"}
                 >
                   {updateStatusMutation.isPending ? (
@@ -991,6 +1214,114 @@ export default function RegistrationsManagement() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={isEmailPreviewOpen} onOpenChange={setIsEmailPreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Preview Email Notifikasi
+            </DialogTitle>
+            <DialogDescription>
+              Berikut adalah email yang akan dikirim ke pendaftar
+            </DialogDescription>
+          </DialogHeader>
+          
+          {emailPreviewData && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-muted-foreground">Kepada</Label>
+                <p className="font-medium">{emailPreviewData.registration.email}</p>
+              </div>
+              
+              <div>
+                <Label className="text-muted-foreground">Subjek</Label>
+                <p className="font-medium">
+                  {generateEmailPreview(emailPreviewData.action, emailPreviewData.registration.full_name, emailPreviewData.note).subject}
+                </p>
+              </div>
+              
+              <div>
+                <Label className="text-muted-foreground">Isi Email</Label>
+                <div className="mt-2 p-4 bg-muted rounded-lg">
+                  <pre className="whitespace-pre-wrap text-sm font-sans">
+                    {generateEmailPreview(emailPreviewData.action, emailPreviewData.registration.full_name, emailPreviewData.note).body}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailPreviewOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={confirmSendEmail}
+              disabled={updateStatusMutation.isPending}
+              className={emailPreviewData?.action === "approve" ? "bg-green-600 hover:bg-green-700" : ""}
+              variant={emailPreviewData?.action === "reject" ? "destructive" : "default"}
+            >
+              {updateStatusMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4 mr-2" />
+              )}
+              Kirim Email & {emailPreviewData?.action === "approve" ? "Setujui" : "Tolak"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Action Dialog */}
+      <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkAction === "approve" ? "Setujui" : "Tolak"} {selectedIds.size} Pendaftaran
+            </DialogTitle>
+            <DialogDescription>
+              {bulkAction === "approve" 
+                ? "Semua pendaftaran yang dipilih akan disetujui dan email notifikasi akan dikirim."
+                : "Semua pendaftaran yang dipilih akan ditolak dan email notifikasi akan dikirim. Catatan wajib diisi."}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Catatan {bulkAction === "reject" && "(Wajib)"}</Label>
+              <Textarea
+                placeholder="Tulis catatan untuk semua pendaftar..."
+                value={bulkNote}
+                onChange={(e) => setBulkNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleBulkAction}
+              disabled={bulkUpdateMutation.isPending || (bulkAction === "reject" && !bulkNote.trim())}
+              className={bulkAction === "approve" ? "bg-green-600 hover:bg-green-700" : ""}
+              variant={bulkAction === "reject" ? "destructive" : "default"}
+            >
+              {bulkUpdateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : bulkAction === "approve" ? (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" />
+              )}
+              {bulkAction === "approve" ? "Setujui Semua" : "Tolak Semua"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
