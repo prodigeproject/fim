@@ -54,6 +54,7 @@ import RegistrationSuccess from "@/pages/registration/RegistrationSuccess";
 import RegistrationForgotPassword from "@/pages/registration/RegistrationForgotPassword";
 import RegistrationResetPassword from "@/pages/registration/RegistrationResetPassword";
 import RegistrationProfile from "@/pages/registration/RegistrationProfile";
+import VerifyEmail from "@/pages/registration/VerifyEmail";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -83,6 +84,7 @@ const AnimatedRoutes = () => {
         <Route path="/daftar" element={<RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider>} />
         <Route path="/daftar/signup" element={<RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider>} />
         <Route path="/daftar/success" element={<RegistrationSuccess />} />
+        <Route path="/daftar/verify" element={<VerifyEmail />} />
         <Route path="/daftar/forgot-password" element={<RegistrationForgotPassword />} />
         <Route path="/daftar/reset-password" element={<RegistrationResetPassword />} />
         <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
@@ -113,9 +115,9 @@ const AnimatedRoutes = () => {
                 <Route path="regionals" element={<RequireSuperAdmin><RegionalsManagement /></RequireSuperAdmin>} />
                 <Route path="alumni" element={<RequireSuperAdmin><AlumniManagement /></RequireSuperAdmin>} />
                 <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
-                <Route path="online" element={<RequireSuperAdmin><OnlineAdminsDashboard /></RequireSuperAdmin>} />
+                <Route path="online" element={<OnlineAdminsDashboard />} />
                 <Route path="audit-logs" element={<RequireSuperAdmin><AuditLogs /></RequireSuperAdmin>} />
-                <Route path="sessions" element={<RequireSuperAdmin><SessionsManagement /></RequireSuperAdmin>} />
+                <Route path="sessions" element={<SessionsManagement />} />
                 <Route path="email-settings" element={<RequireSuperAdmin><EmailSettings /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />

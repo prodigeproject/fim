@@ -117,6 +117,8 @@ export default function ArticleApprovals() {
           needs_approval: false,
           approved_at: new Date().toISOString(),
           approved_by: user?.id,
+          status: "published" as any, // Auto-publish after approval
+          published_at: new Date().toISOString(),
         })
         .eq("id", article.id);
 

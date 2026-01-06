@@ -104,14 +104,11 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
-      const redirectUrl = `${window.location.origin}/daftar/dashboard`;
-
-      // Sign up with Auth
+      // Sign up with Auth but don't auto-sign in
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
           },
@@ -124,7 +121,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       // Generate verification token
       const verificationToken = crypto.randomUUID();
 
-      // Create registration record (return inserted row)
+      // Create registration record
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
@@ -140,8 +137,6 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         .single();
 
       if (regError) throw regError;
-
-      setRegistration(regData as Registration);
 
       // Send verification email
       try {
@@ -168,6 +163,12 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         .catch(() => {
           // ignore notification failures
         });
+
+      // Sign out immediately after signup - user should login manually
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setRegistration(null);
 
       return { error: null };
     } catch (error) {

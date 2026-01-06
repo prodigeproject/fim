@@ -65,7 +65,7 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; devic
 }
 
 export default function OnlineAdminsDashboard() {
-  const { isSuperAdmin, user } = useAdminAuth();
+  const { isSuperAdmin, user, role } = useAdminAuth();
   const [now, setNow] = useState(new Date());
 
   // Update time every minute for relative time display
@@ -117,7 +117,7 @@ export default function OnlineAdminsDashboard() {
         role: roleMap?.[s.user_id],
       })) as OnlineAdmin[];
     },
-    enabled: isSuperAdmin,
+    enabled: !!role, // Enable for all admin roles
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -139,15 +139,7 @@ export default function OnlineAdminsDashboard() {
     return diff < 60 * 1000; // Active in last minute
   };
 
-  if (!isSuperAdmin) {
-    return (
-      <div className="text-center py-12">
-        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">Akses Ditolak</h2>
-        <p className="text-muted-foreground">Hanya Super Admin yang dapat mengakses halaman ini</p>
-      </div>
-    );
-  }
+  // Allow access for all admin roles
 
   return (
     <div className="space-y-6">

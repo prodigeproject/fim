@@ -32,6 +32,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItem {
   name: string;
@@ -89,14 +90,13 @@ const navItems: NavItem[] = [
     children: [
       { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true, hideFromAdmin: true },
       { name: "Admin Online", href: "/admin/online", icon: Monitor, superAdminOnly: true },
-      { name: "Sesi Aktif", href: "/admin/sessions", icon: Monitor }, // Accessible to all including moderator
     ]
   },
   { 
     name: "Sesi Aktif", 
     href: "/admin/sessions", 
     icon: Monitor,
-  }, // Standalone for moderator access
+  }, // Accessible to all roles
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
@@ -240,8 +240,6 @@ export default function AdminDashboard() {
         if (item.hideFromAdmin && (role as string) === "admin") return false;
         // adminOnly means super_admin and admin can see, but not moderator
         if (item.adminOnly && role === "moderator") return false;
-        // Special case: standalone Sesi Aktif should only show for moderator
-        if (item.name === "Sesi Aktif" && !item.children && role !== "moderator") return false;
         return true;
       })
       .map(item => ({
@@ -275,21 +273,28 @@ export default function AdminDashboard() {
       return (
         <Collapsible open={isOpen} onOpenChange={() => toggleMenu(item.name)}>
           <CollapsibleTrigger asChild>
-            <button
-              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                hasActiveChild
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.name}
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4 ml-auto" />
-              ) : (
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              )}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    hasActiveChild
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {item.name}
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4 ml-auto" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 ml-auto" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="lg:hidden">
+                <p>{item.name}</p>
+              </TooltipContent>
+            </Tooltip>
           </CollapsibleTrigger>
           <CollapsibleContent className="pl-4 mt-0.5 space-y-0.5">
             {item.children!.map((child) => (
@@ -301,99 +306,108 @@ export default function AdminDashboard() {
     }
 
      return (
-       <Link
-         to={item.href}
-         onClick={() => setMobileOpen(false)}
-         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-           isActive
-             ? "bg-primary text-primary-foreground"
-             : "text-muted-foreground hover:bg-muted hover:text-foreground"
-         }`}
-       >
-        <item.icon className="h-4 w-4 shrink-0" />
-        {item.name}
-        {badgeCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="ml-auto h-5 min-w-5 px-1.5 text-xs flex items-center justify-center"
-          >
-            {badgeCount > 99 ? "99+" : badgeCount}
-          </Badge>
-        )}
-        {isActive && badgeCount === 0 && <ChevronRight className="h-4 w-4 ml-auto" />}
-      </Link>
+       <Tooltip>
+         <TooltipTrigger asChild>
+           <Link
+             to={item.href}
+             onClick={() => setMobileOpen(false)}
+             className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+               isActive
+                 ? "bg-primary text-primary-foreground"
+                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
+             }`}
+           >
+            <item.icon className="h-4 w-4 shrink-0" />
+            {item.name}
+            {badgeCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="ml-auto h-5 min-w-5 px-1.5 text-xs flex items-center justify-center"
+              >
+                {badgeCount > 99 ? "99+" : badgeCount}
+              </Badge>
+            )}
+            {isActive && badgeCount === 0 && <ChevronRight className="h-4 w-4 ml-auto" />}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="lg:hidden">
+          <p>{item.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b shrink-0">
-        <h1 className="text-lg font-bold text-foreground">FIM Admin</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {getRoleLabel()}
-        </p>
-      </div>
-
-      <nav className="flex-1 p-2 space-y-0.5">
-        {filteredNavItems.map((item) => (
-          <NavItemComponent key={item.href} item={item} />
-        ))}
-      </nav>
-
-      <div className="p-3 border-t shrink-0">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">
-              {profile?.full_name?.[0] || profile?.username?.[0] || "A"}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {profile?.full_name || profile?.username}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {profile?.email}
-            </p>
-          </div>
+    <TooltipProvider>
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b shrink-0">
+          <h1 className="text-lg font-bold text-foreground">FIM Admin</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {getRoleLabel()}
+          </p>
         </div>
 
-        <div className="space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 h-8 text-xs"
-            onClick={() => {
-              setMobileOpen(false);
-              navigate("/admin/profile");
-            }}
-          >
-            <UserCircle className="h-3.5 w-3.5" />
-            Profil
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 h-8 text-xs"
-            onClick={() => {
-              setMobileOpen(false);
-              navigate("/admin/change-password");
-            }}
-          >
-            <KeyRound className="h-3.5 w-3.5" />
-            Ubah Password
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 h-8 text-xs text-destructive hover:text-destructive"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Keluar
-          </Button>
+        <nav className="flex-1 p-2 space-y-0.5">
+          {filteredNavItems.map((item) => (
+            <NavItemComponent key={item.href} item={item} />
+          ))}
+        </nav>
+
+        <div className="p-3 border-t shrink-0">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-primary">
+                {profile?.full_name?.[0] || profile?.username?.[0] || "A"}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {profile?.full_name || profile?.username}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {profile?.email}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 h-8 text-xs"
+              onClick={() => {
+                setMobileOpen(false);
+                navigate("/admin/profile");
+              }}
+            >
+              <UserCircle className="h-3.5 w-3.5" />
+              Profil
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 h-8 text-xs"
+              onClick={() => {
+                setMobileOpen(false);
+                navigate("/admin/change-password");
+              }}
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Ubah Password
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 h-8 text-xs text-destructive hover:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Keluar
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 
   return (
