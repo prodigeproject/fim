@@ -44,6 +44,7 @@ import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 import SecurityDashboard from "@/pages/admin/SecurityDashboard";
 import AdminNotFound from "@/pages/admin/AdminNotFound";
 import RegistrationsManagement from "@/pages/admin/RegistrationsManagement";
+import RegistrationStatsDashboard from "@/pages/admin/RegistrationStatsDashboard";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -115,6 +116,7 @@ const AnimatedRoutes = () => {
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
                 <Route path="security-dashboard" element={<RequireSuperAdmin><SecurityDashboard /></RequireSuperAdmin>} />
                 <Route path="registrations" element={<RequireSuperAdmin><RegistrationsManagement /></RequireSuperAdmin>} />
+                <Route path="registration-stats" element={<RequireSuperAdmin><RegistrationStatsDashboard /></RequireSuperAdmin>} />
                 <Route path="*" element={<AdminNotFound />} />
               </Route>
             </Routes>
