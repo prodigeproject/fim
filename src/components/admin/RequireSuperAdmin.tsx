@@ -24,7 +24,6 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
         try {
           // Log to audit_logs
           await supabase.rpc("log_audit_event", {
-            p_user_id: user.id,
             p_action: "unauthorized_access_attempt",
             p_resource_type: "admin_page",
             p_details: {

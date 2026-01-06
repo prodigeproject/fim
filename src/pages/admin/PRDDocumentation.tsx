@@ -216,7 +216,6 @@ export default function PRDDocumentation() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: editingDoc ? "edit_prd_document" : "create_prd_document",
         p_resource_type: "prd_document",
         p_details: { title: data.title },

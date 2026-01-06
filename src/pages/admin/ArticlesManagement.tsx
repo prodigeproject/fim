@@ -169,7 +169,6 @@ export default function ArticlesManagement() {
       if (error) throw error;
 
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "delete_article",
         p_resource_type: "article",
         p_resource_id: articleId,
@@ -203,7 +202,6 @@ export default function ArticlesManagement() {
       if (error) throw error;
 
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: isPinned ? "unpin_article" : "pin_article",
         p_resource_type: "article",
         p_resource_id: articleId,
@@ -250,7 +248,6 @@ export default function ArticlesManagement() {
 
       // Log audit for bulk action
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: `bulk_${action}_articles`,
         p_details: { article_ids: ids, count: ids.length },
       });

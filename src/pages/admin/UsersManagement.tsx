@@ -207,7 +207,6 @@ export default function UsersManagement() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: isActive ? "deactivate_user" : "activate_user",
         p_resource_type: "user",
         p_resource_id: userId,

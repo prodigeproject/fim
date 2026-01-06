@@ -186,7 +186,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: data.id ? "update_subscriber" : "add_subscriber",
         p_resource_type: "newsletter_subscriber",
         p_resource_id: data.id || null,
@@ -217,7 +216,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: isActive ? "deactivate_subscriber" : "activate_subscriber",
         p_resource_type: "newsletter_subscriber",
         p_resource_id: id,
@@ -239,7 +237,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "delete_subscriber",
         p_resource_type: "newsletter_subscriber",
         p_resource_id: subscriber.id,
@@ -305,7 +302,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "schedule_broadcast",
         p_resource_type: "scheduled_broadcast",
         p_details: { subject: payload.subject, scheduled_at: payload.scheduled_at },
@@ -333,7 +329,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "cancel_broadcast",
         p_resource_type: "scheduled_broadcast",
         p_resource_id: id,
@@ -501,7 +496,6 @@ export default function NewsletterManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "bulk_import_subscribers",
         p_resource_type: "newsletter_subscriber",
         p_details: { 

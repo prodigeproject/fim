@@ -172,7 +172,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       // Log successful login to audit
       if (data.user) {
         await supabase.rpc("log_audit_event", {
-          p_user_id: data.user.id,
           p_action: "login",
           p_details: { email },
         });
@@ -242,7 +241,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     if (user) {
       await supabase.rpc("log_audit_event", {
-        p_user_id: user.id,
         p_action: "logout",
       });
     }

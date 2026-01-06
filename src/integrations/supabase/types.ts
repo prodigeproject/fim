@@ -1024,18 +1024,30 @@ export type Database = {
       }
       increment_view_count: { Args: { article_id: string }; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      log_audit_event: {
-        Args: {
-          p_action: string
-          p_details?: Json
-          p_ip_address?: string
-          p_resource_id?: string
-          p_resource_type?: string
-          p_user_agent?: string
-          p_user_id: string
-        }
-        Returns: string
-      }
+      log_audit_event:
+        | {
+            Args: {
+              p_action: string
+              p_details?: Json
+              p_ip_address?: string
+              p_resource_id?: string
+              p_resource_type?: string
+              p_user_agent?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_action: string
+              p_details?: Json
+              p_ip_address?: string
+              p_resource_id?: string
+              p_resource_type?: string
+              p_user_agent?: string
+              p_user_id: string
+            }
+            Returns: string
+          }
       publish_scheduled_articles: { Args: never; Returns: number }
     }
     Enums: {

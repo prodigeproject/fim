@@ -175,7 +175,6 @@ export default function RegionalsManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: data.id ? "update_regional" : "create_regional",
         p_resource_type: "fim_regional",
         p_resource_id: data.id || null,
@@ -202,7 +201,6 @@ export default function RegionalsManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "delete_regional",
         p_resource_type: "fim_regional",
         p_resource_id: regional.id,
@@ -273,7 +271,6 @@ export default function RegionalsManagement() {
       if (error) throw error;
 
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "import_regionals_csv",
         p_resource_type: "fim_regional",
         p_details: { count: regionals.length },
