@@ -51,6 +51,9 @@ import RegistrationSignup from "@/pages/registration/RegistrationSignup";
 import RegistrationDashboard from "@/pages/registration/RegistrationDashboard";
 import TrainingRegistration from "@/pages/registration/TrainingRegistration";
 import RegistrationSuccess from "@/pages/registration/RegistrationSuccess";
+import RegistrationForgotPassword from "@/pages/registration/RegistrationForgotPassword";
+import RegistrationResetPassword from "@/pages/registration/RegistrationResetPassword";
+import RegistrationProfile from "@/pages/registration/RegistrationProfile";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -80,9 +83,11 @@ const AnimatedRoutes = () => {
         <Route path="/daftar" element={<RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider>} />
         <Route path="/daftar/signup" element={<RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider>} />
         <Route path="/daftar/success" element={<RegistrationSuccess />} />
+        <Route path="/daftar/forgot-password" element={<RegistrationForgotPassword />} />
+        <Route path="/daftar/reset-password" element={<RegistrationResetPassword />} />
         <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
+        <Route path="/daftar/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
         <Route path="/daftar/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
-
         {/* Admin routes - wrapped in AdminAuthProvider */}
         <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
         <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />

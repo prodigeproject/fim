@@ -37,8 +37,8 @@ export default function RegistrationSignup() {
     e.preventDefault();
 
     // Validation
-    if (!formData.fullName || !formData.email || !formData.password) {
-      toast.error("Nama lengkap, email, dan password wajib diisi");
+    if (!formData.fullName || !formData.email || !formData.password || !formData.phone) {
+      toast.error("Nama lengkap, email, nomor telepon, dan password wajib diisi");
       return;
     }
 
@@ -132,7 +132,7 @@ export default function RegistrationSignup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Nomor Telepon</Label>
+                  <Label htmlFor="phone">Nomor Telepon *</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -143,6 +143,7 @@ export default function RegistrationSignup() {
                       onChange={(e) => updateField("phone", e.target.value)}
                       className="pl-10"
                       disabled={isSubmitting}
+                      required
                     />
                   </div>
                 </div>

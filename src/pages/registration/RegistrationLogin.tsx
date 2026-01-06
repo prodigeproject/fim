@@ -105,6 +105,15 @@ export default function RegistrationLogin() {
                     />
                   </div>
                 </div>
+
+                <div className="flex justify-end">
+                  <Link
+                    to="/daftar/forgot-password"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Lupa password?
+                  </Link>
+                </div>
               </CardContent>
 
               <CardFooter className="flex flex-col gap-4">
