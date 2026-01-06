@@ -246,10 +246,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("admin-create-user: Role assigned successfully");
 
-    // Audit log (best effort)
-    supabaseAdmin
+    // Audit log (best effort) - use supabaseUser client for auth.uid()
+    supabaseUser
       .rpc("log_audit_event", {
-        p_user_id: user.id,
         p_action: "create_admin_user",
         p_resource_type: "user",
         p_resource_id: newUserId,

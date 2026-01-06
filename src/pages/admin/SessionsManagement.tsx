@@ -179,7 +179,6 @@ export default function SessionsManagement() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "terminate_session",
         p_resource_type: "admin_session",
         p_resource_id: sessionId,

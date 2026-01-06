@@ -124,7 +124,6 @@ export default function ArticleApprovals() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "approve_article",
         p_resource_type: "article",
         p_resource_id: article.id,
@@ -184,7 +183,6 @@ export default function ArticleApprovals() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "reject_article",
         p_resource_type: "article",
         p_resource_id: articleId,
@@ -251,7 +249,6 @@ export default function ArticleApprovals() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "request_revision",
         p_resource_type: "article",
         p_resource_id: articleId,

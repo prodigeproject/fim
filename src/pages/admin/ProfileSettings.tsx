@@ -55,7 +55,6 @@ export default function ProfileSettings() {
 
       // Log audit
       await supabase.rpc("log_audit_event", {
-        p_user_id: user.id,
         p_action: "update_profile",
         p_resource_type: "profile",
         p_resource_id: user.id,

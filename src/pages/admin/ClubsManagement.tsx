@@ -183,7 +183,6 @@ export default function ClubsManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: data.id ? "update_club" : "create_club",
         p_resource_type: "fim_club",
         p_resource_id: data.id || null,
@@ -208,7 +207,6 @@ export default function ClubsManagement() {
 
       // Audit log
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "delete_club",
         p_resource_type: "fim_club",
         p_resource_id: club.id,
@@ -281,7 +279,6 @@ export default function ClubsManagement() {
       if (error) throw error;
 
       await supabase.rpc("log_audit_event", {
-        p_user_id: user?.id,
         p_action: "import_clubs_csv",
         p_resource_type: "fim_club",
         p_details: { count: clubs.length },
