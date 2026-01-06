@@ -315,7 +315,7 @@ export default function AdminDashboard() {
   };
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full">
       <div className="p-6 border-b shrink-0">
         <h1 className="text-xl font-bold text-foreground">FIM Admin</h1>
         <p className="text-xs text-muted-foreground mt-1">
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
       <nav
         ref={sidebarNavRef}
         onScroll={persistSidebarScroll}
-        className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0 overscroll-contain"
+        className="flex-1 p-4 space-y-1"
       >
         {filteredNavItems.map((item) => (
           <NavItemComponent key={item.href} item={item} />
@@ -394,11 +394,9 @@ export default function AdminDashboard() {
       <SEO title="Admin Dashboard" description="Panel admin FIM" noIndex={true} />
       
       <div className="min-h-screen flex bg-muted">
-        {/* Desktop Sidebar - Not sticky, scrollable with main content */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:shrink-0 bg-card border-r">
-          <div className="sticky top-0 h-screen overflow-hidden">
-            <Sidebar />
-          </div>
+        {/* Desktop Sidebar - Not sticky, scrolls with page content */}
+        <aside className="hidden lg:block lg:w-64 lg:shrink-0 bg-card border-r">
+          <Sidebar />
         </aside>
 
         {/* Mobile Header */}
