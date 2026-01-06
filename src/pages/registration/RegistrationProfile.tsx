@@ -17,10 +17,53 @@ import {
   Camera,
   CheckCircle,
   Phone,
-  Save
+  Save,
+  AlertCircle
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
+
+// Indonesian phone number validation
+const validateIndonesianPhone = (phone: string): { valid: boolean; message: string } => {
+  const cleanedPhone = phone.replace(/\D/g, "");
+  
+  if (cleanedPhone.startsWith("08")) {
+    if (cleanedPhone.length >= 10 && cleanedPhone.length <= 13) {
+      return { valid: true, message: "" };
+    }
+    return { valid: false, message: "Nomor telepon harus 10-13 digit" };
+  }
+  
+  if (cleanedPhone.startsWith("628")) {
+    if (cleanedPhone.length >= 11 && cleanedPhone.length <= 14) {
+      return { valid: true, message: "" };
+    }
+    return { valid: false, message: "Nomor telepon harus 11-14 digit" };
+  }
+  
+  if (cleanedPhone.startsWith("8")) {
+    if (cleanedPhone.length >= 9 && cleanedPhone.length <= 12) {
+      return { valid: true, message: "" };
+    }
+    return { valid: false, message: "Nomor telepon harus 9-12 digit" };
+  }
+  
+  return { valid: false, message: "Nomor telepon harus dimulai dengan 08, 628, atau 8" };
+};
+
+const normalizePhoneNumber = (phone: string): string => {
+  const cleanedPhone = phone.replace(/\D/g, "");
+  
+  if (cleanedPhone.startsWith("628")) {
+    return "0" + cleanedPhone.substring(2);
+  }
+  
+  if (cleanedPhone.startsWith("8")) {
+    return "0" + cleanedPhone;
+  }
+  
+  return cleanedPhone;
+};
 
 export default function RegistrationProfile() {
   const navigate = useNavigate();
@@ -31,6 +74,7 @@ export default function RegistrationProfile() {
     fullName: "",
     phone: "",
   });
+  const [phoneError, setPhoneError] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -75,6 +119,16 @@ export default function RegistrationProfile() {
     }
   };
 
+  const handlePhoneChange = (value: string) => {
+    setProfileData(prev => ({ ...prev, phone: value }));
+    if (value) {
+      const validation = validateIndonesianPhone(value);
+      setPhoneError(validation.valid ? "" : validation.message);
+    } else {
+      setPhoneError("Nomor telepon wajib diisi");
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -88,14 +142,24 @@ export default function RegistrationProfile() {
       return;
     }
 
+    // Validate phone
+    const phoneValidation = validateIndonesianPhone(profileData.phone);
+    if (!phoneValidation.valid) {
+      toast.error(phoneValidation.message);
+      setPhoneError(phoneValidation.message);
+      return;
+    }
+
     setIsUpdatingProfile(true);
 
     try {
+      const normalizedPhone = normalizePhoneNumber(profileData.phone);
+      
       const { error } = await supabase
         .from("fim_registrations")
         .update({
           full_name: profileData.fullName,
-          phone: profileData.phone,
+          phone: normalizedPhone,
           updated_at: new Date().toISOString(),
         })
         .eq("id", registration?.id);
@@ -347,13 +411,22 @@ export default function RegistrationProfile() {
                           type="tel"
                           placeholder="08xxxxxxxxxx"
                           value={profileData.phone}
-                          onChange={(e) =>
-                            setProfileData((prev) => ({ ...prev, phone: e.target.value }))
-                          }
-                          className="pl-10"
+                          onChange={(e) => handlePhoneChange(e.target.value)}
+                          className={`pl-10 ${phoneError ? "border-destructive" : ""}`}
                           disabled={isUpdatingProfile}
                         />
                       </div>
+                      {phoneError ? (
+                        <div className="flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3 w-3" />
+                          <span>{phoneError}</span>
+                        </div>
+                      ) : profileData.phone ? (
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Format nomor valid</span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="space-y-2">
@@ -364,7 +437,7 @@ export default function RegistrationProfile() {
                       </p>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={isUpdatingProfile}>
+                    <Button type="submit" className="w-full" disabled={isUpdatingProfile || !!phoneError}>
                       {isUpdatingProfile ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (

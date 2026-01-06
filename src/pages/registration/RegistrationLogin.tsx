@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, ArrowRight, UserPlus } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 
@@ -16,6 +18,8 @@ export default function RegistrationLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -33,6 +37,21 @@ export default function RegistrationLogin() {
     }
 
     setIsSubmitting(true);
+    setNeedsVerification(false);
+
+    // First check if email is verified
+    const { data: regData, error: regError } = await supabase
+      .from("fim_registrations")
+      .select("email_verified")
+      .eq("email", email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (regData && regData.email_verified === false) {
+      setNeedsVerification(true);
+      setIsSubmitting(false);
+      return;
+    }
+
     const { error } = await signIn(email, password);
     
     if (error) {
@@ -41,6 +60,31 @@ export default function RegistrationLogin() {
     } else {
       toast.success("Login berhasil!");
       navigate("/daftar/dashboard");
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast.error("Masukkan email terlebih dahulu");
+      return;
+    }
+
+    setIsResendingVerification(true);
+
+    try {
+      const response = await supabase.functions.invoke("send-verification-email", {
+        body: { email: email.toLowerCase().trim() },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      toast.success("Email verifikasi telah dikirim ulang. Silakan cek inbox Anda.");
+    } catch (error: any) {
+      toast.error("Gagal mengirim ulang email verifikasi: " + error.message);
+    } finally {
+      setIsResendingVerification(false);
     }
   };
 
@@ -74,6 +118,24 @@ export default function RegistrationLogin() {
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
+                {needsVerification && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="ml-2">
+                      Email Anda belum diverifikasi. Silakan cek inbox email Anda untuk link verifikasi.
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="p-0 h-auto ml-1 text-destructive underline"
+                        onClick={handleResendVerification}
+                        disabled={isResendingVerification}
+                      >
+                        {isResendingVerification ? "Mengirim..." : "Kirim ulang email verifikasi"}
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">

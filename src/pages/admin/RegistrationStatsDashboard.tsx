@@ -5,13 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Users, 
   CheckCircle, 
   XCircle, 
   Clock, 
   TrendingUp,
-  Calendar,
+  Calendar as CalendarIcon,
   BarChart3
 } from "lucide-react";
 import { 
@@ -29,8 +32,10 @@ import {
   Bar,
   Legend
 } from "recharts";
-import { format, subDays, startOfWeek, eachDayOfInterval, eachWeekOfInterval, subWeeks } from "date-fns";
+import { format, subDays, startOfWeek, eachDayOfInterval, eachWeekOfInterval, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 interface Registration {
   id: string;
@@ -59,6 +64,11 @@ const STATUS_LABELS = {
 
 export default function RegistrationStatsDashboard() {
   const [timeRange, setTimeRange] = useState<"daily" | "weekly">("daily");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 13),
+    to: new Date(),
+  });
+  const [isCustomRange, setIsCustomRange] = useState(false);
 
   // Fetch all registrations
   const { data: registrations, isLoading: isLoadingRegistrations } = useQuery({
@@ -89,29 +99,36 @@ export default function RegistrationStatsDashboard() {
     refetchInterval: 30000,
   });
 
+  // Filter registrations by date range
+  const filteredRegistrations = registrations?.filter(r => {
+    if (!dateRange?.from || !dateRange?.to) return true;
+    const regDate = new Date(r.created_at);
+    return isWithinInterval(regDate, { start: dateRange.from, end: dateRange.to });
+  });
+
   // Calculate stats
-  const totalRegistrations = registrations?.length || 0;
-  const pendingCount = registrations?.filter(r => r.registration_status === "pending").length || 0;
-  const approvedCount = registrations?.filter(r => r.registration_status === "approved").length || 0;
-  const rejectedCount = registrations?.filter(r => r.registration_status === "rejected").length || 0;
+  const totalRegistrations = filteredRegistrations?.length || 0;
+  const pendingCount = filteredRegistrations?.filter(r => r.registration_status === "pending").length || 0;
+  const approvedCount = filteredRegistrations?.filter(r => r.registration_status === "approved").length || 0;
+  const rejectedCount = filteredRegistrations?.filter(r => r.registration_status === "rejected").length || 0;
 
   const submittedTrainingCount = trainingData?.filter(t => t.is_submitted).length || 0;
   const avgCompletion = trainingData?.length 
     ? Math.round(trainingData.reduce((acc, t) => acc + (t.completion_percentage || 0), 0) / trainingData.length)
     : 0;
 
-  // Prepare chart data for daily trend (last 14 days)
+  // Prepare chart data for daily trend
   const getDailyTrendData = () => {
-    if (!registrations) return [];
+    if (!filteredRegistrations || !dateRange?.from || !dateRange?.to) return [];
     
     const days = eachDayOfInterval({
-      start: subDays(new Date(), 13),
-      end: new Date(),
+      start: dateRange.from,
+      end: dateRange.to,
     });
 
     return days.map(day => {
       const dayStr = format(day, "yyyy-MM-dd");
-      const dayRegistrations = registrations.filter(r => 
+      const dayRegistrations = filteredRegistrations.filter(r => 
         format(new Date(r.created_at), "yyyy-MM-dd") === dayStr
       );
 
@@ -125,20 +142,20 @@ export default function RegistrationStatsDashboard() {
     });
   };
 
-  // Prepare chart data for weekly trend (last 8 weeks)
+  // Prepare chart data for weekly trend
   const getWeeklyTrendData = () => {
-    if (!registrations) return [];
+    if (!filteredRegistrations || !dateRange?.from || !dateRange?.to) return [];
     
     const weeks = eachWeekOfInterval({
-      start: subWeeks(new Date(), 7),
-      end: new Date(),
+      start: dateRange.from,
+      end: dateRange.to,
     }, { weekStartsOn: 1 });
 
     return weeks.map((weekStart, index) => {
-      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : new Date();
-      const weekRegistrations = registrations.filter(r => {
+      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : dateRange.to;
+      const weekRegistrations = filteredRegistrations.filter(r => {
         const regDate = new Date(r.created_at);
-        return regDate >= weekStart && regDate < weekEnd;
+        return regDate >= weekStart && regDate < (weekEnd || new Date());
       });
 
       return {
@@ -171,19 +188,82 @@ export default function RegistrationStatsDashboard() {
 
   const isLoading = isLoadingRegistrations || isLoadingTraining;
 
+  // Preset date ranges
+  const presetRanges = [
+    { label: "7 Hari", from: subDays(new Date(), 6), to: new Date() },
+    { label: "14 Hari", from: subDays(new Date(), 13), to: new Date() },
+    { label: "30 Hari", from: subDays(new Date(), 29), to: new Date() },
+    { label: "3 Bulan", from: subDays(new Date(), 89), to: new Date() },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Statistik Pendaftaran FIM</h1>
           <p className="text-muted-foreground">
             Dashboard analitik pendaftaran dan progress formulir
           </p>
         </div>
-        <Badge variant="outline" className="gap-1">
-          <TrendingUp className="h-3 w-3" />
-          Auto-refresh 30s
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="gap-1">
+            <TrendingUp className="h-3 w-3" />
+            Auto-refresh 30s
+          </Badge>
+          
+          {/* Date Range Picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {dateRange?.from && dateRange?.to ? (
+                  <>
+                    {format(dateRange.from, "dd MMM", { locale: id })} - {format(dateRange.to, "dd MMM yyyy", { locale: id })}
+                  </>
+                ) : (
+                  "Pilih Tanggal"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <div className="p-3 border-b">
+                <p className="text-sm font-medium mb-2">Periode Cepat</p>
+                <div className="flex flex-wrap gap-2">
+                  {presetRanges.map((preset) => (
+                    <Button
+                      key={preset.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDateRange({ from: preset.from, to: preset.to });
+                        setIsCustomRange(false);
+                      }}
+                      className={cn(
+                        dateRange?.from?.getTime() === preset.from.getTime() && 
+                        dateRange?.to?.getTime() === preset.to.getTime() && 
+                        !isCustomRange && "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange(range);
+                  setIsCustomRange(true);
+                }}
+                numberOfMonths={2}
+                locale={id}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -200,7 +280,9 @@ export default function RegistrationStatsDashboard() {
               <div className="text-2xl font-bold">{totalRegistrations}</div>
             )}
             <p className="text-xs text-muted-foreground">
-              Semua waktu
+              {dateRange?.from && dateRange?.to 
+                ? `${format(dateRange.from, "dd MMM", { locale: id })} - ${format(dateRange.to, "dd MMM", { locale: id })}`
+                : "Semua waktu"}
             </p>
           </CardContent>
         </Card>
@@ -302,11 +384,11 @@ export default function RegistrationStatsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                  <CalendarIcon className="h-5 w-5" />
                   Trend Pendaftaran
                 </CardTitle>
                 <CardDescription>
-                  Grafik pendaftaran {timeRange === "daily" ? "14 hari" : "8 minggu"} terakhir
+                  Grafik pendaftaran berdasarkan periode yang dipilih
                 </CardDescription>
               </div>
               <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as "daily" | "weekly")}>
