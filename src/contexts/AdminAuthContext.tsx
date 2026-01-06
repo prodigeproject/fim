@@ -143,76 +143,39 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Check rate limit first
-      const { data: rateLimitData } = await supabase.rpc("check_login_rate_limit", {
-        p_email: email,
-        p_ip: "client", // We can't get real IP from client
+      // Use server-side Edge Function for rate limiting and authentication
+      const response = await supabase.functions.invoke("admin-auth-login", {
+        body: { email, password },
       });
 
-      if (rateLimitData?.[0]?.is_blocked) {
-        return { error: new Error("Terlalu banyak percobaan login. Coba lagi dalam 15 menit.") };
+      if (response.error) {
+        console.error("Login function error:", response.error);
+        return { error: new Error(response.error.message || "Login gagal") };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const data = response.data;
 
-      // Log login attempt
-      await supabase.from("login_attempts").insert({
-        email,
-        ip_address: "client",
-        success: !error,
-      });
-
-      if (error) {
-        return { error };
+      // Check for error response
+      if (data.error) {
+        return { 
+          error: new Error(data.error),
+          blocked: data.blocked,
+          shouldShowCaptcha: data.shouldShowCaptcha,
+          remainingAttempts: data.remainingAttempts,
+        };
       }
 
-      // Log successful login to audit
-      if (data.user) {
-        await supabase.rpc("log_audit_event", {
-          p_action: "login",
-          p_details: { email },
-        });
-
-        // Update last login
-        await supabase
-          .from("profiles")
-          .update({ last_login_at: new Date().toISOString() })
-          .eq("id", data.user.id);
-
-        // Fetch profile and role for notification
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", data.user.id)
-          .single();
-
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .single();
-
-        // Send login notification email (fire and forget)
-        supabase.functions.invoke("notify-login", {
-          body: {
-            userId: data.user.id,
-            email: data.user.email,
-            username: profileData?.username || email.split("@")[0],
-            role: roleData?.role || "unknown",
-            ipAddress: "client",
-            userAgent: navigator.userAgent,
-            loginTime: new Date().toISOString(),
-          },
-        }).catch((err) => {
-          console.error("Failed to send login notification:", err);
+      // Set session from Edge Function response
+      if (data.session?.access_token && data.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
         });
       }
 
       return { error: null };
     } catch (err) {
+      console.error("Login error:", err);
       return { error: err as Error };
     }
   };

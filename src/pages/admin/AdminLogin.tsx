@@ -61,22 +61,24 @@ export default function AdminLogin() {
     try {
       // Check if identifier is email or username
       const isEmail = identifier.includes("@");
-      let signInError: Error | null = null;
+      let signInResult: any = null;
 
       if (isEmail) {
-        const result = await signIn(identifier, password);
-        signInError = result.error;
+        signInResult = await signIn(identifier, password);
       } else {
-        const result = await signInWithUsername(identifier, password);
-        signInError = result.error;
+        signInResult = await signInWithUsername(identifier, password);
       }
       
-      if (signInError) {
+      if (signInResult.error) {
         setAttempts(prev => prev + 1);
-        if (signInError.message.includes("Invalid login credentials")) {
-          setError("Email/username atau password salah");
+        
+        // Handle blocked status
+        if (signInResult.blocked) {
+          setError("Terlalu banyak percobaan login. Coba lagi dalam 15 menit.");
+        } else if (signInResult.remainingAttempts !== undefined) {
+          setError(`${signInResult.error.message}. Tersisa ${signInResult.remainingAttempts} percobaan.`);
         } else {
-          setError(signInError.message);
+          setError(signInResult.error.message);
         }
         setIsLoading(false);
       }
