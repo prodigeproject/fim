@@ -47,6 +47,7 @@ import AdminNotFound from "@/pages/admin/AdminNotFound";
 import RegistrationsManagement from "@/pages/admin/RegistrationsManagement";
 import RegistrationStatsDashboard from "@/pages/admin/RegistrationStatsDashboard";
 import LoginMonitoringDashboard from "@/pages/admin/LoginMonitoringDashboard";
+import RolesManagement from "@/pages/admin/RolesManagement";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -126,6 +127,7 @@ const AnimatedRoutes = () => {
                 
                 {/* Super Admin only routes */}
                 <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
+                <Route path="roles" element={<RequireSuperAdmin><RolesManagement /></RequireSuperAdmin>} />
                 <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
