@@ -41,10 +41,12 @@ import OnlineAdminsDashboard from "@/pages/admin/OnlineAdminsDashboard";
 import ArticleApprovals from "@/pages/admin/ArticleApprovals";
 import NotificationsPage from "@/pages/admin/NotificationsPage";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
+import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import SecurityDashboard from "@/pages/admin/SecurityDashboard";
 import AdminNotFound from "@/pages/admin/AdminNotFound";
 import RegistrationsManagement from "@/pages/admin/RegistrationsManagement";
 import RegistrationStatsDashboard from "@/pages/admin/RegistrationStatsDashboard";
+import LoginMonitoringDashboard from "@/pages/admin/LoginMonitoringDashboard";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -98,32 +100,36 @@ const AnimatedRoutes = () => {
           <AdminAuthProvider>
             <Routes>
               <Route element={<AdminDashboard />}>
-                {/* Routes accessible by all admins (moderator + super_admin) */}
+                {/* Routes accessible by all admins (moderator, admin, super_admin) */}
                 <Route path="dashboard" element={<DashboardHome />} />
                 <Route path="articles" element={<ArticlesManagement />} />
                 <Route path="articles/new" element={<ArticleEditor />} />
                 <Route path="articles/edit/:id" element={<ArticleEditor />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="approvals" element={<ArticleApprovals />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="change-password" element={<ChangePassword />} />
                 <Route path="profile" element={<ProfileSettings />} />
+                <Route path="sessions" element={<SessionsManagement />} />
+                <Route path="online" element={<OnlineAdminsDashboard />} />
+                
+                {/* Routes accessible by admin and super_admin (not moderator) */}
+                <Route path="newsletter" element={<RequireAdmin><NewsletterManagement /></RequireAdmin>} />
+                <Route path="email-settings" element={<RequireAdmin><EmailSettings /></RequireAdmin>} />
+                <Route path="clubs" element={<RequireAdmin><ClubsManagement /></RequireAdmin>} />
+                <Route path="regionals" element={<RequireAdmin><RegionalsManagement /></RequireAdmin>} />
+                <Route path="alumni" element={<RequireAdmin><AlumniManagement /></RequireAdmin>} />
+                <Route path="audit-logs" element={<RequireAdmin><AuditLogs /></RequireAdmin>} />
+                <Route path="security-dashboard" element={<RequireAdmin><SecurityDashboard /></RequireAdmin>} />
+                <Route path="registrations" element={<RequireAdmin><RegistrationsManagement /></RequireAdmin>} />
+                <Route path="registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
                 
                 {/* Super Admin only routes */}
-                <Route path="approvals" element={<RequireSuperAdmin><ArticleApprovals /></RequireSuperAdmin>} />
-                <Route path="newsletter" element={<RequireSuperAdmin><NewsletterManagement /></RequireSuperAdmin>} />
-                <Route path="clubs" element={<RequireSuperAdmin><ClubsManagement /></RequireSuperAdmin>} />
-                <Route path="regionals" element={<RequireSuperAdmin><RegionalsManagement /></RequireSuperAdmin>} />
-                <Route path="alumni" element={<RequireSuperAdmin><AlumniManagement /></RequireSuperAdmin>} />
                 <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
-                <Route path="online" element={<OnlineAdminsDashboard />} />
-                <Route path="audit-logs" element={<RequireSuperAdmin><AuditLogs /></RequireSuperAdmin>} />
-                <Route path="sessions" element={<SessionsManagement />} />
-                <Route path="email-settings" element={<RequireSuperAdmin><EmailSettings /></RequireSuperAdmin>} />
+                <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
-                <Route path="security-dashboard" element={<RequireSuperAdmin><SecurityDashboard /></RequireSuperAdmin>} />
-                <Route path="registrations" element={<RequireSuperAdmin><RegistrationsManagement /></RequireSuperAdmin>} />
-                <Route path="registration-stats" element={<RequireSuperAdmin><RegistrationStatsDashboard /></RequireSuperAdmin>} />
+                
                 <Route path="*" element={<AdminNotFound />} />
               </Route>
             </Routes>
