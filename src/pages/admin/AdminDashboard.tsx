@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
     icon: FileText,
     children: [
       { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
-      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, adminOnly: true, badgeKey: "pendingArticles" },
+      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, badgeKey: "pendingArticles" },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     ]
   },
@@ -61,52 +61,49 @@ const navItems: NavItem[] = [
     name: "Newsletter", 
     href: "/admin/newsletter", 
     icon: Mail,
-    adminOnly: true,
     children: [
-      { name: "Subscribers", href: "/admin/newsletter", icon: Mail, adminOnly: true },
-      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, adminOnly: true },
+      { name: "Subscribers", href: "/admin/newsletter", icon: Mail },
+      { name: "Email Settings", href: "/admin/email-settings", icon: Settings },
     ]
   },
-  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, adminOnly: true },
-  { name: "Regional", href: "/admin/regionals", icon: MapPin, adminOnly: true },
-  { name: "Alumni", href: "/admin/alumni", icon: Users, adminOnly: true },
+  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
+  { name: "Regional", href: "/admin/regionals", icon: MapPin },
+  { name: "Alumni", href: "/admin/alumni", icon: Users },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 
     icon: ClipboardList, 
-    adminOnly: true, 
     badgeKey: "newRegistrations",
     children: [
-      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, adminOnly: true, badgeKey: "newRegistrations" },
-      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, adminOnly: true },
+      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
+      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3 },
     ]
   },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
     icon: Users,
-    superAdminOnly: true, // Only super_admin can manage users
-    hideFromAdmin: true, // Hide from admin role
+    superAdminOnly: true,
     children: [
-      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true, hideFromAdmin: true },
-      { name: "Admin Online", href: "/admin/online", icon: Monitor, superAdminOnly: true },
+      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true },
+      { name: "Admin Online", href: "/admin/online", icon: Monitor },
+      { name: "Login Monitoring", href: "/admin/login-monitoring", icon: ShieldAlert },
     ]
   },
   { 
     name: "Sesi Aktif", 
     href: "/admin/sessions", 
     icon: Monitor,
-  }, // Accessible to all roles
+  },
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
     icon: ClipboardList,
-    adminOnly: true,
     children: [
-      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, adminOnly: true },
-      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, adminOnly: true },
-      { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, adminOnly: true },
-      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, adminOnly: true },
+      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList },
+      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert },
+      { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
+      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
     ]
   },
 ];
