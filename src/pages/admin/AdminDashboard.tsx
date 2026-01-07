@@ -86,6 +86,7 @@ const navItems: NavItem[] = [
     superAdminOnly: true,
     children: [
       { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true },
+      { name: "Manajemen Role", href: "/admin/roles", icon: ShieldAlert, superAdminOnly: true },
       { name: "Admin Online", href: "/admin/online", icon: Monitor },
       { name: "Login Monitoring", href: "/admin/login-monitoring", icon: ShieldAlert },
     ]
