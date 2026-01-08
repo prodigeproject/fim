@@ -106,42 +106,60 @@ export default function RolesManagement() {
   // Create role mutation
   const createRoleMutation = useMutation({
     mutationFn: async (data: { name: string; label: string; description: string }) => {
+      // First create the role
       const { data: role, error } = await supabase
         .from("dynamic_roles")
         .insert({
           name: data.name.toLowerCase().replace(/\s+/g, "_"),
           label: data.label,
           description: data.description || null,
+          is_system: false,
         })
         .select()
         .single();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error creating role:", error);
+        throw new Error(error.message);
+      }
+
+      if (!role) {
+        throw new Error("Role tidak berhasil dibuat");
+      }
 
       // Create default permissions for new role
       const permissionKeys = Object.keys(PERMISSION_LABELS);
+      const permissionsToInsert = permissionKeys.map((key) => ({
+        role_id: role.id,
+        permission_key: key,
+        can_view: false,
+        can_create: false,
+        can_edit: false,
+        can_delete: false,
+      }));
+
       const { error: permError } = await supabase
         .from("role_permissions")
-        .insert(
-          permissionKeys.map((key) => ({
-            role_id: role.id,
-            permission_key: key,
-            can_view: false,
-            can_create: false,
-            can_edit: false,
-            can_delete: false,
-          }))
-        );
-      if (permError) throw permError;
+        .insert(permissionsToInsert);
+      
+      if (permError) {
+        console.error("Error creating permissions:", permError);
+        // Still return role even if permissions fail - they can be added later
+      }
 
       return role;
     },
-    onSuccess: () => {
+    onSuccess: (role) => {
       queryClient.invalidateQueries({ queryKey: ["dynamic-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["role-permissions"] });
       toast.success("Role berhasil dibuat");
       setIsAddDialogOpen(false);
       setFormData({ name: "", label: "", description: "" });
+      // Auto-select the new role
+      setSelectedRole(role);
     },
     onError: (error: Error) => {
+      console.error("Create role error:", error);
       toast.error(`Gagal membuat role: ${error.message}`);
     },
   });

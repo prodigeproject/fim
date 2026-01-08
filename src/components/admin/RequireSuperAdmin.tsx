@@ -9,6 +9,9 @@ interface RequireSuperAdminProps {
   children: React.ReactNode;
 }
 
+/**
+ * RequireSuperAdmin - Only allows access for super_admin role
+ */
 export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
   const { isSuperAdmin, isLoading, user, role, profile } = useAdminAuth();
   const location = useLocation();
@@ -25,11 +28,11 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
           // Log to audit_logs
           await supabase.rpc("log_audit_event", {
             p_action: "unauthorized_access_attempt",
-            p_resource_type: "admin_page",
+            p_resource_type: "super_admin_page",
             p_details: {
               attempted_path: location.pathname,
               user_role: role,
-              message: "Moderator attempted to access super admin only page",
+              message: "User attempted to access super admin only page",
             },
           });
 
@@ -48,8 +51,6 @@ export function RequireSuperAdmin({ children }: RequireSuperAdminProps) {
 
           if (response.error) {
             console.error("Failed to notify unauthorized access:", response.error);
-          } else {
-            console.log("Unauthorized access tracked:", response.data);
           }
         } catch (error) {
           console.error("Failed to log unauthorized access:", error);

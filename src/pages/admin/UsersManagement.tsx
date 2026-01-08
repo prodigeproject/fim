@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -29,9 +30,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy } from "lucide-react";
+import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface DynamicRole {
+  id: string;
+  name: string;
+  label: string;
+  description: string | null;
+  is_system: boolean;
+}
 
 async function extractFunctionErrorMessage(err: any): Promise<string> {
   try {
@@ -59,11 +68,14 @@ export default function UsersManagement() {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedDynamicRoleId, setSelectedDynamicRoleId] = useState<string>("");
   const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"super_admin" | "moderator">("moderator");
+  const [newUserRole, setNewUserRole] = useState<"super_admin" | "moderator" | "admin">("moderator");
   const [newUserPassword, setNewUserPassword] = useState("");
 
   // Fetch users (profiles)
@@ -72,8 +84,7 @@ export default function UsersManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select(
-          `
+        .select(`
           id,
           username,
           full_name,
@@ -81,8 +92,7 @@ export default function UsersManagement() {
           is_active,
           last_login_at,
           created_at
-        `
-        )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -95,7 +105,7 @@ export default function UsersManagement() {
   const { data: rolesMap } = useQuery({
     queryKey: ["admin-users-roles", users?.map((u) => u.id).join(",")],
     queryFn: async () => {
-      if (!users?.length) return {} as Record<string, "super_admin" | "moderator">;
+      if (!users?.length) return {} as Record<string, "super_admin" | "moderator" | "admin">;
 
       const ids = users.map((u) => u.id);
       const { data, error } = await supabase
@@ -105,11 +115,55 @@ export default function UsersManagement() {
 
       if (error) throw error;
 
-      const map: Record<string, "super_admin" | "moderator"> = {};
+      const map: Record<string, "super_admin" | "moderator" | "admin"> = {};
       (data ?? []).forEach((r: any) => {
         // If a user ever has multiple rows, prefer super_admin
         if (map[r.user_id] === "super_admin") return;
         map[r.user_id] = r.role;
+      });
+      return map;
+    },
+    enabled: isSuperAdmin && !!users?.length,
+  });
+
+  // Fetch dynamic roles
+  const { data: dynamicRoles } = useQuery({
+    queryKey: ["dynamic-roles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("dynamic_roles")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as DynamicRole[];
+    },
+    enabled: isSuperAdmin,
+  });
+
+  // Fetch user dynamic roles
+  const { data: userDynamicRoles } = useQuery({
+    queryKey: ["user-dynamic-roles", users?.map((u) => u.id).join(",")],
+    queryFn: async () => {
+      if (!users?.length) return {} as Record<string, string[]>;
+
+      const ids = users.map((u) => u.id);
+      const { data, error } = await supabase
+        .from("user_dynamic_roles")
+        .select("user_id, role_id, dynamic_roles(name, label)")
+        .in("user_id", ids);
+
+      if (error) throw error;
+
+      const map: Record<string, { roleId: string; name: string; label: string }[]> = {};
+      (data ?? []).forEach((r: any) => {
+        if (!map[r.user_id]) map[r.user_id] = [];
+        if (r.dynamic_roles) {
+          map[r.user_id].push({
+            roleId: r.role_id,
+            name: r.dynamic_roles.name,
+            label: r.dynamic_roles.label,
+          });
+        }
       });
       return map;
     },
@@ -122,7 +176,7 @@ export default function UsersManagement() {
       email: string;
       password: string;
       full_name: string;
-      role: "super_admin" | "moderator";
+      role: "super_admin" | "moderator" | "admin";
     }) => {
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
         body: {
@@ -227,6 +281,93 @@ export default function UsersManagement() {
     },
   });
 
+  // Assign dynamic role to user
+  const assignDynamicRoleMutation = useMutation({
+    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
+      // Check if already assigned
+      const { data: existing } = await supabase
+        .from("user_dynamic_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("role_id", roleId)
+        .single();
+
+      if (existing) {
+        throw new Error("Role sudah di-assign ke user ini");
+      }
+
+      const { error } = await supabase
+        .from("user_dynamic_roles")
+        .insert({
+          user_id: userId,
+          role_id: roleId,
+          assigned_by: user?.id,
+        });
+
+      if (error) throw error;
+
+      // Log audit
+      await supabase.rpc("log_audit_event", {
+        p_action: "assign_dynamic_role",
+        p_resource_type: "user",
+        p_resource_id: userId,
+        p_details: { role_id: roleId },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-dynamic-roles"] });
+      setIsRoleDialogOpen(false);
+      setSelectedUserId(null);
+      setSelectedDynamicRoleId("");
+      toast({ title: "Role berhasil di-assign" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal assign role",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove dynamic role from user
+  const removeDynamicRoleMutation = useMutation({
+    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
+      const { error } = await supabase
+        .from("user_dynamic_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role_id", roleId);
+
+      if (error) throw error;
+
+      // Log audit
+      await supabase.rpc("log_audit_event", {
+        p_action: "remove_dynamic_role",
+        p_resource_type: "user",
+        p_resource_id: userId,
+        p_details: { role_id: roleId },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-dynamic-roles"] });
+      toast({ title: "Role berhasil dihapus" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal hapus role",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const openRoleDialog = (userId: string) => {
+    setSelectedUserId(userId);
+    setSelectedDynamicRoleId("");
+    setIsRoleDialogOpen(true);
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="text-center py-12">
@@ -238,6 +379,32 @@ export default function UsersManagement() {
       </div>
     );
   }
+
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return (
+          <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+            <ShieldCheck className="h-3 w-3 mr-1" />
+            Super Admin
+          </Badge>
+        );
+      case "admin":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+            <ShieldAlert className="h-3 w-3 mr-1" />
+            Admin
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary">
+            <Shield className="h-3 w-3 mr-1" />
+            Moderator
+          </Badge>
+        );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -291,12 +458,13 @@ export default function UsersManagement() {
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "super_admin" | "moderator")}>
+                <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "super_admin" | "moderator" | "admin")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="moderator">Moderator</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -332,6 +500,7 @@ export default function UsersManagement() {
           </DialogContent>
         </Dialog>
 
+        {/* Password Reset Result Dialog */}
         <Dialog
           open={isResetOpen}
           onOpenChange={(open) => {
@@ -366,6 +535,54 @@ export default function UsersManagement() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Assign Dynamic Role Dialog */}
+        <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Role Dinamis</DialogTitle>
+              <DialogDescription>
+                Pilih role dinamis untuk di-assign ke pengguna ini
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Role Dinamis</Label>
+                <Select value={selectedDynamicRoleId} onValueChange={setSelectedDynamicRoleId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dynamicRoles?.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  if (selectedUserId && selectedDynamicRoleId) {
+                    assignDynamicRoleMutation.mutate({
+                      userId: selectedUserId,
+                      roleId: selectedDynamicRoleId,
+                    });
+                  }
+                }}
+                disabled={!selectedDynamicRoleId || assignDynamicRoleMutation.isPending}
+              >
+                {assignDynamicRoleMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ShieldAlert className="h-4 w-4 mr-2" />
+                )}
+                Assign Role
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -380,103 +597,131 @@ export default function UsersManagement() {
               ))}
             </div>
           ) : users?.length ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Login Terakhir</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((userItem: any) => (
-                  <TableRow key={userItem.id}>
-                    <TableCell>
-                      <div className="font-medium">{userItem.full_name || userItem.username}</div>
-                      <div className="text-xs text-muted-foreground">@{userItem.username}</div>
-                    </TableCell>
-                    <TableCell>{userItem.email}</TableCell>
-                     <TableCell>
-                       {rolesMap?.[userItem.id] === "super_admin" ? (
-                         <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                           <ShieldCheck className="h-3 w-3 mr-1" />
-                           Super Admin
-                         </Badge>
-                       ) : (
-                         <Badge variant="secondary">
-                           <Shield className="h-3 w-3 mr-1" />
-                           Moderator
-                         </Badge>
-                       )}
-                     </TableCell>
-                    <TableCell>
-                      {userItem.is_active ? (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                          Aktif
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          Nonaktif
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {userItem.last_login_at 
-                        ? new Date(userItem.last_login_at).toLocaleString("id-ID")
-                        : "Belum pernah"
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {userItem.id !== user?.id ? (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              resetPasswordMutation.mutate({ userId: userItem.id, email: userItem.email })
-                            }
-                            disabled={resetPasswordMutation.isPending}
-                            title="Reset password"
-                          >
-                            {resetPasswordMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Key className="h-4 w-4" />
-                            )}
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              toggleActiveMutation.mutate({
-                                userId: userItem.id,
-                                isActive: userItem.is_active,
-                              })
-                            }
-                            disabled={toggleActiveMutation.isPending}
-                            title={userItem.is_active ? "Nonaktifkan" : "Aktifkan"}
-                          >
-                            {toggleActiveMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : userItem.is_active ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <UserPlus className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Role Dinamis</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Login Terakhir</TableHead>
+                    <TableHead>Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((userItem: any) => (
+                    <TableRow key={userItem.id}>
+                      <TableCell>
+                        <div className="font-medium">{userItem.full_name || userItem.username}</div>
+                        <div className="text-xs text-muted-foreground">@{userItem.username}</div>
+                      </TableCell>
+                      <TableCell>{userItem.email}</TableCell>
+                      <TableCell>
+                        {getRoleDisplay(rolesMap?.[userItem.id] || "moderator")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {userDynamicRoles?.[userItem.id]?.map((dr) => (
+                            <Badge
+                              key={dr.roleId}
+                              variant="outline"
+                              className="cursor-pointer hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => {
+                                if (userItem.id !== user?.id) {
+                                  removeDynamicRoleMutation.mutate({
+                                    userId: userItem.id,
+                                    roleId: dr.roleId,
+                                  });
+                                }
+                              }}
+                              title={userItem.id !== user?.id ? "Klik untuk hapus" : ""}
+                            >
+                              {dr.label}
+                              {userItem.id !== user?.id && (
+                                <span className="ml-1 text-xs">×</span>
+                              )}
+                            </Badge>
+                          )) || (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {userItem.is_active ? (
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                            Aktif
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            Nonaktif
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {userItem.last_login_at 
+                          ? new Date(userItem.last_login_at).toLocaleString("id-ID")
+                          : "Belum pernah"
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {userItem.id !== user?.id ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openRoleDialog(userItem.id)}
+                              title="Assign role dinamis"
+                            >
+                              <ShieldAlert className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                resetPasswordMutation.mutate({ userId: userItem.id, email: userItem.email })
+                              }
+                              disabled={resetPasswordMutation.isPending}
+                              title="Reset password"
+                            >
+                              {resetPasswordMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Key className="h-4 w-4" />
+                              )}
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                toggleActiveMutation.mutate({
+                                  userId: userItem.id,
+                                  isActive: userItem.is_active,
+                                })
+                              }
+                              disabled={toggleActiveMutation.isPending}
+                              title={userItem.is_active ? "Nonaktifkan" : "Aktifkan"}
+                            >
+                              {toggleActiveMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : userItem.is_active ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserPlus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <p className="text-muted-foreground text-center py-8">
               Belum ada pengguna
