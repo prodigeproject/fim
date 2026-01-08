@@ -270,37 +270,25 @@ export default function AdminDashboard() {
     if (hasChildren) {
       return (
         <Collapsible open={isOpen} onOpenChange={() => toggleMenu(item.name)}>
-          <div className="flex items-center gap-1">
-            {/* Main navigation link - clickable to navigate */}
-            <Link
-              to={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex-1 flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          <CollapsibleTrigger asChild>
+            <button
+              className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 hasActiveChild || isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.name}
-            </Link>
-            {/* Toggle button for submenu */}
-            <CollapsibleTrigger asChild>
-              <button
-                className={`p-1.5 rounded-md transition-colors ${
-                  hasActiveChild
-                    ? "text-primary hover:bg-primary/10"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {isOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </button>
-            </CollapsibleTrigger>
-          </div>
+              <div className="flex items-center gap-2">
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.name}
+              </div>
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          </CollapsibleTrigger>
           <CollapsibleContent className="pl-4 mt-0.5 space-y-0.5">
             {item.children!.map((child) => (
               <NavItemComponent key={child.href} item={child} depth={depth + 1} />
