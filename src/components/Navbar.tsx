@@ -35,7 +35,6 @@ const Navbar = () => {
         { name: "Program Unggulan", path: "/program/program-unggulan" },
       ],
     },
-    { name: "Daftar", path: "/daftar" },
     { name: "Alumni", path: "/cerita-alumni" },
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
