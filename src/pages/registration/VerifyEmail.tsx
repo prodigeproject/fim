@@ -23,10 +23,10 @@ export default function VerifyEmail() {
       }
 
       try {
-        // Find registration with this token
+        // Find registration with this token and check expiration
         const { data: registration, error: fetchError } = await supabase
           .from("fim_registrations")
-          .select("id, email, email_verified")
+          .select("id, email, email_verified, email_verification_expires_at, verification_attempts")
           .eq("email_verification_token", token)
           .single();
 
@@ -36,6 +36,29 @@ export default function VerifyEmail() {
           return;
         }
 
+        // Check if token has expired
+        if (registration.email_verification_expires_at) {
+          const expiresAt = new Date(registration.email_verification_expires_at);
+          if (expiresAt < new Date()) {
+            setStatus("error");
+            setMessage("Token verifikasi sudah kedaluwarsa. Silakan minta email verifikasi baru.");
+            return;
+          }
+        }
+
+        // Check verification attempts (rate limiting)
+        if (registration.verification_attempts && registration.verification_attempts >= 10) {
+          setStatus("error");
+          setMessage("Terlalu banyak percobaan verifikasi. Silakan minta email verifikasi baru.");
+          return;
+        }
+
+        // Increment verification attempts
+        await supabase
+          .from("fim_registrations")
+          .update({ verification_attempts: (registration.verification_attempts || 0) + 1 })
+          .eq("id", registration.id);
+
         // Check if already verified
         if (registration.email_verified) {
           setStatus("success");
@@ -43,13 +66,15 @@ export default function VerifyEmail() {
           return;
         }
 
-        // Update verification status
+        // Update verification status - clear token and expiration after use
         const { error: updateError } = await supabase
           .from("fim_registrations")
           .update({
             email_verified: true,
             email_verified_at: new Date().toISOString(),
             email_verification_token: null, // Clear token after use
+            email_verification_expires_at: null, // Clear expiration
+            verification_attempts: 0, // Reset attempts
           })
           .eq("id", registration.id);
 

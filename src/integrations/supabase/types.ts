@@ -527,6 +527,7 @@ export type Database = {
           auth_user_id: string | null
           created_at: string | null
           email: string
+          email_verification_expires_at: string | null
           email_verification_token: string | null
           email_verified: boolean | null
           email_verified_at: string | null
@@ -536,11 +537,13 @@ export type Database = {
           photo_url: string | null
           registration_status: string | null
           updated_at: string | null
+          verification_attempts: number | null
         }
         Insert: {
           auth_user_id?: string | null
           created_at?: string | null
           email: string
+          email_verification_expires_at?: string | null
           email_verification_token?: string | null
           email_verified?: boolean | null
           email_verified_at?: string | null
@@ -550,11 +553,13 @@ export type Database = {
           photo_url?: string | null
           registration_status?: string | null
           updated_at?: string | null
+          verification_attempts?: number | null
         }
         Update: {
           auth_user_id?: string | null
           created_at?: string | null
           email?: string
+          email_verification_expires_at?: string | null
           email_verification_token?: string | null
           email_verified?: boolean | null
           email_verified_at?: string | null
@@ -564,6 +569,7 @@ export type Database = {
           photo_url?: string | null
           registration_status?: string | null
           updated_at?: string | null
+          verification_attempts?: number | null
         }
         Relationships: []
       }
