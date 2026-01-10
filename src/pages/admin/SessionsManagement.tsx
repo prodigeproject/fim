@@ -114,18 +114,48 @@ export default function SessionsManagement() {
 
     registerSession();
 
-    // Update last activity periodically
-    const interval = setInterval(() => {
+    // Update last activity every minute and clean up expired sessions
+    const interval = setInterval(async () => {
       if (currentSessionId) {
-        supabase
+        await supabase
           .from("admin_sessions")
-          .update({ last_activity: new Date().toISOString() })
+          .update({ 
+            last_activity: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Extend 30 min
+          })
           .eq("id", currentSessionId);
       }
+      
+      // Clean up expired sessions (older than 30 minutes of inactivity)
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      await supabase
+        .from("admin_sessions")
+        .delete()
+        .lt("last_activity", thirtyMinutesAgo);
+        
     }, 60000); // Every minute
 
-    return () => clearInterval(interval);
+    // Cleanup on unmount - delete current session
+    return () => {
+      clearInterval(interval);
+    };
   }, [user, session, currentSessionId]);
+
+  // Delete session on logout/page unload
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if (currentSessionId) {
+        // Use sendBeacon for reliable cleanup on page close
+        navigator.sendBeacon?.(
+          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/admin_sessions?id=eq.${currentSessionId}`,
+          ''
+        );
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentSessionId]);
 
   // Fetch all sessions
   // - Super admin can see all sessions
