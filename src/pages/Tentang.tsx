@@ -1,9 +1,29 @@
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
-import { Target, Compass, User, Users, Briefcase, Building2 } from "lucide-react";
+import { Target, Compass, User, Users, Briefcase, Building2, Heart, Shield, Star, Handshake, Scale, UserCheck, MessageSquare, BookOpen, Brain, Clipboard, Network } from "lucide-react";
 
 const Tentang = () => {
+  const pilarKarakter = [
+    { icon: Heart, name: "Cinta Kasih", desc: "Mencintai sesama dan berbagi kebaikan" },
+    { icon: Shield, name: "Integritas", desc: "Konsisten dalam nilai dan tindakan" },
+    { icon: Star, name: "Kebersahajaan", desc: "Sederhana namun bermakna" },
+    { icon: Target, name: "Totalitas", desc: "Memberikan yang terbaik dalam segala hal" },
+    { icon: Handshake, name: "Solidaritas", desc: "Bersatu dan saling mendukung" },
+    { icon: Scale, name: "Keadilan", desc: "Menegakkan kebenaran dan kesetaraan" },
+    { icon: UserCheck, name: "Keteladanan", desc: "Menjadi contoh yang baik bagi sesama" },
+  ];
+
+  const pilarKepemimpinan = [
+    { icon: Users, name: "Mengenal Diri", desc: "Memahami kekuatan dan kelemahan diri" },
+    { icon: MessageSquare, name: "Komunikasi", desc: "Menyampaikan pesan dengan efektif" },
+    { icon: Heart, name: "Akhlak", desc: "Berperilaku mulia dalam setiap tindakan" },
+    { icon: BookOpen, name: "Kekuatan Belajar", desc: "Terus mengembangkan ilmu dan wawasan" },
+    { icon: Brain, name: "Proses Pengambilan Keputusan", desc: "Membuat keputusan yang bijak" },
+    { icon: Clipboard, name: "Manajerial", desc: "Mengelola sumber daya dengan efisien" },
+    { icon: Network, name: "Pengorganisasian", desc: "Membangun tim dan sistem yang solid" },
+  ];
+
   const sejarah = [
     { year: "2003", event: "Forum Indonesia Muda didirikan oleh sepasang suami istri Elmir Amien dan Tatty Elmir, yang disupport pakar leadership Buchori Nasution, dan rekan-rekannya sesama jurnalis di Jakarta News FM. Pelatihan pertama di Graha Pemuda Cibodas Jakarta." },
     { year: "2004", event: "FIM ke-2 kegiatan dipindahkan ke Wiladatika Jakarta, agar mudah diakses para mentor dan undangan." },
@@ -124,6 +144,54 @@ const Tentang = () => {
               </blockquote>
               <div className="w-16 h-1 bg-accent mx-auto mb-4" />
               <p className="text-muted-foreground font-semibold">Filosofi Kunang-Kunang FIM</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7 Pilar Section - Full content on Tentang page */}
+      <section className="py-16 bg-secondary">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Nilai & Pilar FIM</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Fondasi karakter dan kepemimpinan yang ditanamkan kepada setiap kader FIM</p>
+          
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
+            {/* 7 Pilar Karakter */}
+            <div>
+              <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Karakter FIM</h3>
+              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Fondasi karakter yang ditanamkan kepada setiap kader FIM</p>
+              <div className="space-y-3">
+                {pilarKarakter.map((item, index) => (
+                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground text-sm">{item.name}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 7 Pilar Kepemimpinan */}
+            <div>
+              <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Kepemimpinan FIM</h3>
+              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Prinsip kepemimpinan yang menjadi panduan alumni FIM</p>
+              <div className="space-y-3">
+                {pilarKepemimpinan.map((item, index) => (
+                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-5 w-5 text-supporting" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground text-sm">{item.name}</h4>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

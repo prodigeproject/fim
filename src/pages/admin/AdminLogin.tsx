@@ -11,13 +11,13 @@ import { SEO } from "@/components/SEO";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  identifier: z.string().min(1, "Email atau username wajib diisi"),
+  identifier: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
   password: z.string().min(6, "Password minimal 6 karakter"),
 });
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const { signIn, signInWithUsername, user, role, isLoading: authLoading } = useAdminAuth();
+  const { signIn, user, role, isLoading: authLoading } = useAdminAuth();
   
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -59,26 +59,20 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      // Check if identifier is email or username
-      const isEmail = identifier.includes("@");
-      let signInResult: any = null;
-
-      if (isEmail) {
-        signInResult = await signIn(identifier, password);
-      } else {
-        signInResult = await signInWithUsername(identifier, password);
-      }
+      // Sign in with email only
+      const signInResult = await signIn(identifier.trim(), password);
       
       if (signInResult.error) {
         setAttempts(prev => prev + 1);
         
         // Handle blocked status
-        if (signInResult.blocked) {
+        if ((signInResult as any).blocked) {
           setError("Terlalu banyak percobaan login. Coba lagi dalam 15 menit.");
-        } else if (signInResult.remainingAttempts !== undefined) {
-          setError(`${signInResult.error.message}. Tersisa ${signInResult.remainingAttempts} percobaan.`);
+        } else if ((signInResult as any).remainingAttempts !== undefined) {
+          setError(`Email atau password salah. Tersisa ${(signInResult as any).remainingAttempts} percobaan.`);
         } else {
-          setError(signInResult.error.message);
+          // Generic error message for security
+          setError("Email atau password salah. Silakan coba lagi.");
         }
         setIsLoading(false);
       }
@@ -148,15 +142,15 @@ export default function AdminLogin() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="identifier">Email atau Username</Label>
+                <Label htmlFor="identifier">Email</Label>
                 <Input
                   id="identifier"
-                  type="text"
-                  placeholder=""
+                  type="email"
+                  placeholder="email@example.com"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading || attempts >= 5}
-                  autoComplete="username"
+                  autoComplete="email"
                   required
                 />
               </div>

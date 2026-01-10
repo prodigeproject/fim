@@ -139,13 +139,13 @@ const Index = () => {
         title="Beranda" 
         description="Forum Indonesia Muda - Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang. Organisasi kaderisasi pemuda sejak 2003 dengan 4000+ alumni dari 61 regional."
       />
-      {/* Hero Section */}
+      {/* Hero Section - Optimized for mobile to show content peek below */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-95" />
         <div className="absolute top-20 right-10 w-32 h-32 bg-accent/20 rounded-full blur-3xl animate-glow" />
         <div className="absolute bottom-20 left-10 w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-glow" style={{ animationDelay: "1s" }} />
         
-        <div className="relative container mx-auto px-4 py-20 lg:py-32">
+        <div className="relative container mx-auto px-4 py-12 lg:py-28">
           <div className="flex flex-col items-center text-center">
             <img 
               src={logoFim} 
@@ -161,7 +161,7 @@ const Index = () => {
               yang menerangi masa depan bangsa.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <Link to="/program/pelatihan">
+              <Link to="/daftar">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
                   Bergabung Sekarang <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -252,47 +252,19 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 7 Pilar Section - 2 Columns */}
-      <section className="py-16 bg-secondary">
+      {/* Nilai FIM - Simplified teaser with CTA to Tentang */}
+      <section className="py-12 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* 7 Pilar Karakter */}
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Karakter FIM</h2>
-              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Fondasi karakter yang ditanamkan kepada setiap kader FIM</p>
-              <div className="space-y-3">
-                {pilarKarakter.map((item, index) => (
-                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <item.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 7 Pilar Kepemimpinan */}
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Kepemimpinan FIM</h2>
-              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Prinsip kepemimpinan yang menjadi panduan alumni FIM</p>
-              <div className="space-y-3">
-                {pilarKepemimpinan.map((item, index) => (
-                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <item.icon className="h-5 w-5 text-supporting" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">Nilai & Pilar FIM</h2>
+            <p className="text-muted-foreground mb-6">
+              FIM menanamkan <strong>7 Pilar Karakter</strong> dan <strong>7 Pilar Kepemimpinan</strong> sebagai fondasi setiap kader untuk menjadi pemimpin yang berakhlak mulia dan berdampak.
+            </p>
+            <Link to="/tentang">
+              <Button variant="outline">
+                Pelajari Nilai & Pilar FIM <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

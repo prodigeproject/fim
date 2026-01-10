@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Phone, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Mail, Lock, User, Phone, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff, X, Check } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 
@@ -55,6 +55,22 @@ const normalizePhoneNumber = (phone: string): string => {
   return cleanedPhone;
 };
 
+// Password strength checker
+const checkPasswordStrength = (password: string) => {
+  const checks = {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+  };
+  
+  const passedChecks = Object.values(checks).filter(Boolean).length;
+  const isValid = checks.minLength && checks.hasUppercase && checks.hasNumber && checks.hasSpecial;
+  
+  return { checks, passedChecks, isValid };
+};
+
 export default function RegistrationSignup() {
   const navigate = useNavigate();
   const { signUp, isLoading, user, registration } = useRegistrationAuth();
@@ -67,6 +83,8 @@ export default function RegistrationSignup() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -74,6 +92,8 @@ export default function RegistrationSignup() {
       navigate("/daftar/dashboard", { replace: true });
     }
   }, [user, registration, navigate]);
+
+  const passwordStrength = useMemo(() => checkPasswordStrength(formData.password), [formData.password]);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -106,8 +126,9 @@ export default function RegistrationSignup() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password minimal 6 karakter");
+    // Validate password strength
+    if (!passwordStrength.isValid) {
+      toast.error("Password harus memenuhi semua persyaratan keamanan");
       return;
     }
 
@@ -136,6 +157,13 @@ export default function RegistrationSignup() {
       navigate("/daftar/success");
     }
   };
+
+  const PasswordRequirement = ({ met, label }: { met: boolean; label: string }) => (
+    <div className={`flex items-center gap-1.5 text-xs ${met ? "text-green-600" : "text-muted-foreground"}`}>
+      {met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+      <span>{label}</span>
+    </div>
+  );
 
   return (
     <>
@@ -235,15 +263,36 @@ export default function RegistrationSignup() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => updateField("password", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       disabled={isSubmitting}
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
+                  {/* Password requirements */}
+                  <div className="mt-2 p-3 bg-muted/50 rounded-lg space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Persyaratan Password:</p>
+                    <PasswordRequirement met={passwordStrength.checks.minLength} label="Minimal 8 karakter" />
+                    <PasswordRequirement met={passwordStrength.checks.hasUppercase} label="Mengandung huruf kapital (A-Z)" />
+                    <PasswordRequirement met={passwordStrength.checks.hasLowercase} label="Mengandung huruf kecil (a-z)" />
+                    <PasswordRequirement met={passwordStrength.checks.hasNumber} label="Mengandung angka (0-9)" />
+                    <PasswordRequirement met={passwordStrength.checks.hasSpecial} label="Mengandung karakter khusus (!@#$%^&*)" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -252,13 +301,26 @@ export default function RegistrationSignup() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="confirmPassword"
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={formData.confirmPassword}
                       onChange={(e) => updateField("confirmPassword", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       disabled={isSubmitting}
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
                   </div>
                   {formData.password && formData.confirmPassword && (
                     <div className="flex items-center gap-1 text-xs">
@@ -268,7 +330,10 @@ export default function RegistrationSignup() {
                           <span className="text-green-500">Password cocok</span>
                         </>
                       ) : (
-                        <span className="text-destructive">Password tidak cocok</span>
+                        <>
+                          <AlertCircle className="h-3 w-3 text-destructive" />
+                          <span className="text-destructive">Password tidak cocok</span>
+                        </>
                       )}
                     </div>
                   )}
@@ -279,7 +344,7 @@ export default function RegistrationSignup() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !!phoneError}
+                  disabled={isSubmitting || !!phoneError || !passwordStrength.isValid}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
