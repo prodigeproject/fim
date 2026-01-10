@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+// No CORS headers - this function should only be called via Supabase Cron or service role
+// Removing wildcard CORS prevents unauthorized browser requests
 
 function escapeHtml(input: string) {
   return input
@@ -37,15 +34,50 @@ function buildEmailHtml(name: string | null, safeHtml: string) {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  // Verify authorization - only allow service_role or cron secret
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  // Check if this is a service_role call (from Supabase Cron or internal)
+  const isServiceRole = authHeader === `Bearer ${supabaseServiceKey}`;
+  
+  // For authenticated user requests, verify super_admin role
+  if (!isServiceRole) {
+    // Try to get user from auth header
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("Unauthorized access attempt to process-scheduled-broadcasts");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    // Verify super_admin role
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: isSuperAdmin, error: roleError } = await supabase.rpc(
+      "has_role",
+      { _user_id: user.id, _role: "super_admin" }
+    );
+    
+    if (roleError || !isSuperAdmin) {
+      console.error(`Forbidden: User ${user.id} attempted to trigger broadcasts without super_admin role`);
+      return new Response(JSON.stringify({ error: "Forbidden - Super admin access required" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Find pending broadcasts that are due
@@ -59,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Fetch pending broadcasts error:", fetchErr);
       return new Response(JSON.stringify({ error: "Fetch error" }), {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -155,13 +187,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ success: true, processed }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("process-scheduled-broadcasts error:", error);
     return new Response(
       JSON.stringify({ error: error?.message || "Terjadi kesalahan" }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };

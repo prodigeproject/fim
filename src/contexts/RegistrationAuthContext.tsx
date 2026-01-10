@@ -118,10 +118,11 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
 
-      // Generate verification token
+      // Generate verification token with 24-hour expiration
       const verificationToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      // Create registration record
+      // Create registration record with token expiration
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
@@ -132,6 +133,8 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           registration_status: "pending",
           email_verified: false,
           email_verification_token: verificationToken,
+          email_verification_expires_at: expiresAt,
+          verification_attempts: 0,
         })
         .select("*")
         .single();
