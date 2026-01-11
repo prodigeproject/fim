@@ -48,8 +48,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle, XCircle, RotateCcw } from 'lucide-react';
 
-type ArticleStatus = 'draft' | 'scheduled' | 'published' | 'archived';
+type ArticleStatus = 'draft' | 'scheduled' | 'published' | 'archived' | 'rejected';
 type ArticleCategory = 'pengumuman' | 'prestasi' | 'kegiatan' | 'sosial' | 'opini' | 'tips';
 type AuthorAffiliation = 'fim_pusat' | 'fim_club' | 'fim_regional';
 
@@ -225,6 +227,11 @@ export default function ArticleEditor() {
         status = 'draft';
       }
 
+      // If article was rejected, allow resubmitting as draft
+      if (article?.status === 'rejected' && needsApproval) {
+        status = 'draft';
+      }
+
       const articleData: Record<string, unknown> = {
         title: fd.title,
         slug: fd.slug,
@@ -238,6 +245,9 @@ export default function ArticleEditor() {
         status,
         scheduled_at: status === 'scheduled' && fd.scheduled_at ? fd.scheduled_at.toISOString() : null,
         needs_approval: needsApproval || false,
+        // Clear rejection/revision notes when resubmitting
+        rejection_reason: needsApproval ? null : undefined,
+        revision_notes: needsApproval ? null : undefined,
       };
 
       // Handle published_at - only set when first publishing
@@ -298,7 +308,7 @@ export default function ArticleEditor() {
         return { id: data.id, needsApproval };
       }
     },
-    onSuccess: (result, variables) => {
+    onSuccess: async (result, variables) => {
       const newStatus = variables.newStatus || formData.status;
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
@@ -307,6 +317,24 @@ export default function ArticleEditor() {
       queryClient.invalidateQueries({ queryKey: ['pending-articles'] });
       
       if (result.needsApproval) {
+        // Create notification for all super admins
+        const { data: superAdmins } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'super_admin');
+        
+        if (superAdmins?.length) {
+          const notifications = superAdmins.map(admin => ({
+            user_id: admin.user_id,
+            title: 'Artikel Menunggu Persetujuan',
+            message: `"${formData.title}" oleh ${profile?.full_name || profile?.username} perlu direview.`,
+            type: 'warning',
+            link: '/admin/approvals',
+          }));
+          
+          await supabase.from('admin_notifications').insert(notifications);
+        }
+        
         toast.success('Artikel dikirim untuk persetujuan Super Admin');
         navigate('/admin/articles');
       } else if (newStatus === 'published') {
@@ -402,13 +430,14 @@ export default function ArticleEditor() {
   }, []);
 
   const statusBadge = useMemo(() => {
-    const statusConfig = {
-      draft: { label: 'Draft', variant: 'secondary' as const },
-      scheduled: { label: 'Terjadwal', variant: 'outline' as const },
-      published: { label: 'Dipublikasikan', variant: 'default' as const },
-      archived: { label: 'Diarsipkan', variant: 'destructive' as const },
+    const statusConfig: Record<ArticleStatus, { label: string; variant: 'secondary' | 'outline' | 'default' | 'destructive' }> = {
+      draft: { label: 'Draft', variant: 'secondary' },
+      scheduled: { label: 'Terjadwal', variant: 'outline' },
+      published: { label: 'Dipublikasikan', variant: 'default' },
+      archived: { label: 'Diarsipkan', variant: 'secondary' },
+      rejected: { label: 'Ditolak', variant: 'destructive' },
     };
-    const config = statusConfig[formData.status];
+    const config = statusConfig[formData.status] || statusConfig.draft;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   }, [formData.status]);
 
@@ -564,6 +593,31 @@ export default function ArticleEditor() {
       </div>
 
       <Separator />
+
+      {/* Show rejection/revision alert if applicable */}
+      {article?.status === 'rejected' && article?.rejection_reason && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>Artikel Ditolak</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="font-medium">Alasan penolakan:</p>
+            <p className="mt-1">{article.rejection_reason}</p>
+            <p className="mt-3 text-sm">Silakan edit artikel dan kirim ulang untuk persetujuan.</p>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {article?.revision_notes && (
+        <Alert className="border-yellow-500 bg-yellow-50 text-yellow-900 dark:border-yellow-600 dark:bg-yellow-950 dark:text-yellow-100">
+          <RotateCcw className="h-4 w-4" />
+          <AlertTitle>Revisi Diminta</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="font-medium">Catatan revisi:</p>
+            <p className="mt-1">{article.revision_notes}</p>
+            <p className="mt-3 text-sm">Silakan revisi artikel dan kirim ulang untuk persetujuan.</p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isPreview ? (
         <div className="bg-muted/30 rounded-lg p-8">

@@ -115,7 +115,7 @@ export default function ArticlesManagement() {
       if (statusFilter !== "all") {
         query = query.eq(
           "status",
-          statusFilter as "draft" | "scheduled" | "published" | "archived"
+          statusFilter as "draft" | "scheduled" | "published" | "archived" | "rejected"
         );
       }
       if (categoryFilter !== "all") {

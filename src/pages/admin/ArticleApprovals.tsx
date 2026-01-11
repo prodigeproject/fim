@@ -138,6 +138,15 @@ export default function ArticleApprovals() {
         .eq("id", article.author_id)
         .single();
 
+      // Create in-app notification for author
+      await supabase.from("admin_notifications").insert({
+        user_id: article.author_id,
+        title: "Artikel Disetujui",
+        message: `Artikel "${article.title}" telah disetujui dan dipublikasikan.`,
+        type: "success",
+        link: `/blog/${article.slug}`,
+      });
+
       if (authorProfile?.email) {
         // Send email notification
         try {
@@ -189,6 +198,15 @@ export default function ArticleApprovals() {
         p_resource_type: "article",
         p_resource_id: articleId,
         p_details: { reason },
+      });
+
+      // Create in-app notification for author
+      await supabase.from("admin_notifications").insert({
+        user_id: article.author_id,
+        title: "Artikel Ditolak",
+        message: `Artikel "${article.title}" ditolak. Alasan: ${reason}`,
+        type: "error",
+        link: `/admin/articles/edit/${articleId}`,
       });
 
       // Get author email for notification
@@ -255,6 +273,15 @@ export default function ArticleApprovals() {
         p_resource_type: "article",
         p_resource_id: articleId,
         p_details: { notes },
+      });
+
+      // Create in-app notification for author
+      await supabase.from("admin_notifications").insert({
+        user_id: article.author_id,
+        title: "Revisi Artikel Diminta",
+        message: `Artikel "${article.title}" perlu direvisi. Catatan: ${notes}`,
+        type: "warning",
+        link: `/admin/articles/edit/${articleId}`,
       });
 
       // Get author email for notification
