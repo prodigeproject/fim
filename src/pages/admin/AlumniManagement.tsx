@@ -43,7 +43,11 @@ import {
   Video, 
   GraduationCap,
   Loader2,
-  User
+  User,
+  ArrowUpAZ,
+  ArrowDownZA,
+  CalendarArrowUp,
+  CalendarArrowDown
 } from "lucide-react";
 import { ImageUploader, uploadImageToStorage } from "@/components/admin/ImageUploader";
 
@@ -61,6 +65,7 @@ interface AlumniStory {
   story: string | null;
   is_active: boolean;
   sort_order: number;
+  created_at?: string | null;
 }
 
 interface AlumniOther {
@@ -71,6 +76,7 @@ interface AlumniOther {
   photo_url: string | null;
   is_active: boolean;
   sort_order: number;
+  created_at?: string | null;
 }
 
 interface VideoTestimonial {
@@ -88,6 +94,8 @@ export default function AlumniManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<"name" | "created_at">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   
   // Dialog states
   const [storyDialog, setStoryDialog] = useState(false);
@@ -318,12 +326,30 @@ export default function AlumniManagement() {
   const filteredStories = stories?.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.batch.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (sortField === "name") {
+      const comparison = a.name.localeCompare(b.name, 'id');
+      return sortOrder === "asc" ? comparison : -comparison;
+    } else {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
+  });
 
   const filteredOther = otherAlumni?.filter(a => 
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     a.batch.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (sortField === "name") {
+      const comparison = a.name.localeCompare(b.name, 'id');
+      return sortOrder === "asc" ? comparison : -comparison;
+    } else {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -334,14 +360,48 @@ export default function AlumniManagement() {
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Cari alumni..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex items-center gap-2 max-w-lg">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Cari alumni..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            if (sortField === "name") {
+              setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+            } else {
+              setSortField("name");
+              setSortOrder("asc");
+            }
+          }}
+          title={sortField === "name" ? (sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z") : "Urutkan berdasarkan nama"}
+          className={sortField === "name" ? "bg-primary/10" : ""}
+        >
+          {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            if (sortField === "created_at") {
+              setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+            } else {
+              setSortField("created_at");
+              setSortOrder("desc");
+            }
+          }}
+          title={sortField === "created_at" ? (sortOrder === "asc" ? "Terlama" : "Terbaru") : "Urutkan berdasarkan tanggal"}
+          className={sortField === "created_at" ? "bg-primary/10" : ""}
+        >
+          {sortOrder === "asc" ? <CalendarArrowUp className="h-4 w-4" /> : <CalendarArrowDown className="h-4 w-4" />}
+        </Button>
       </div>
 
       <Tabs defaultValue="stories">

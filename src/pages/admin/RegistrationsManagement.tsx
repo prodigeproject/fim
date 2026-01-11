@@ -73,6 +73,10 @@ import {
   Download,
   CheckSquare,
   Square,
+  ArrowUpAZ,
+  ArrowDownZA,
+  CalendarArrowUp,
+  CalendarArrowDown,
 } from "lucide-react";
 
 interface Registration {
@@ -122,6 +126,8 @@ export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<"name" | "created_at">("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [reviewerNote, setReviewerNote] = useState("");
@@ -142,12 +148,11 @@ export default function RegistrationsManagement() {
 
   // Fetch all registrations
   const { data: registrations, isLoading } = useQuery({
-    queryKey: ["fim-registrations", searchQuery, statusFilter],
+    queryKey: ["fim-registrations", searchQuery, statusFilter, sortField, sortOrder],
     queryFn: async () => {
       let query = supabase
         .from("fim_registrations")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (searchQuery) {
         query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
@@ -159,7 +164,20 @@ export default function RegistrationsManagement() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Registration[];
+      
+      // Sort client-side for flexibility
+      const sorted = (data as Registration[]).sort((a, b) => {
+        if (sortField === "name") {
+          const comparison = a.full_name.localeCompare(b.full_name, 'id');
+          return sortOrder === "asc" ? comparison : -comparison;
+        } else {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        }
+      });
+      
+      return sorted;
     },
   });
 
@@ -800,6 +818,38 @@ Tim Forum Indonesia Muda
                 className="pl-10"
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                if (sortField === "name") {
+                  setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+                } else {
+                  setSortField("name");
+                  setSortOrder("asc");
+                }
+              }}
+              title={sortField === "name" ? (sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z") : "Urutkan berdasarkan nama"}
+              className={sortField === "name" ? "bg-primary/10" : ""}
+            >
+              {sortOrder === "asc" && sortField === "name" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                if (sortField === "created_at") {
+                  setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+                } else {
+                  setSortField("created_at");
+                  setSortOrder("desc");
+                }
+              }}
+              title={sortField === "created_at" ? (sortOrder === "asc" ? "Terlama" : "Terbaru") : "Urutkan berdasarkan tanggal"}
+              className={sortField === "created_at" ? "bg-primary/10" : ""}
+            >
+              {sortOrder === "asc" ? <CalendarArrowUp className="h-4 w-4" /> : <CalendarArrowDown className="h-4 w-4" />}
+            </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter Status" />

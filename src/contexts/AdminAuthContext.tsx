@@ -203,9 +203,16 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     if (user) {
+      // Log audit
       await supabase.rpc("log_audit_event", {
         p_action: "logout",
       });
+      
+      // Delete all active sessions for this user
+      await supabase
+        .from("admin_sessions")
+        .delete()
+        .eq("user_id", user.id);
     }
     await supabase.auth.signOut();
     setUser(null);

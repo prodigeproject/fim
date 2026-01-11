@@ -160,9 +160,16 @@ export default function SessionsManagement() {
   // Fetch all sessions
   // - Super admin can see all sessions
   // - Admin/Moderator can only see their own sessions
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions, isLoading, refetch } = useQuery({
     queryKey: ["admin-sessions", isSuperAdmin, role],
     queryFn: async () => {
+      // First clean up expired sessions (older than 30 minutes of inactivity)
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      await supabase
+        .from("admin_sessions")
+        .delete()
+        .lt("last_activity", thirtyMinutesAgo);
+        
       let query = supabase
         .from("admin_sessions")
         .select("*")
@@ -194,8 +201,33 @@ export default function SessionsManagement() {
       })) as AdminSession[];
     },
     enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time feel
   });
+
+  // Real-time subscription for session changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('admin-sessions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'admin_sessions',
+        },
+        () => {
+          // Refetch sessions on any change
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, refetch]);
 
   // Terminate session mutation
   const terminateMutation = useMutation({

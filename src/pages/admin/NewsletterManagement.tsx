@@ -100,6 +100,7 @@ export default function NewsletterManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<"email" | "subscribed_at">("subscribed_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [isSubscriberDialogOpen, setIsSubscriberDialogOpen] = useState(false);
@@ -525,8 +526,14 @@ export default function NewsletterManagement() {
     const search = searchTerm.toLowerCase();
     return s.email.toLowerCase().includes(search) || (s.name && s.name.toLowerCase().includes(search));
   }).sort((a, b) => {
-    const comparison = a.email.localeCompare(b.email, 'id');
-    return sortOrder === "asc" ? comparison : -comparison;
+    if (sortField === "email") {
+      const comparison = a.email.localeCompare(b.email, 'id');
+      return sortOrder === "asc" ? comparison : -comparison;
+    } else {
+      const dateA = new Date(a.subscribed_at).getTime();
+      const dateB = new Date(b.subscribed_at).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
   });
 
   const stats = {
