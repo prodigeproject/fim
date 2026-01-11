@@ -14,12 +14,10 @@ import {
   Eye,
   Clock,
   Share2,
-  Facebook,
-  Twitter,
-  Linkedin,
   Link as LinkIcon,
   ChevronRight
 } from "lucide-react";
+import { SiWhatsapp, SiFacebook, SiTelegram, SiInstagram, SiX } from "react-icons/si";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,8 +125,18 @@ export default function BlogDetail() {
     window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article?.title || "")}`, "_blank");
   };
 
-  const shareToLinkedIn = () => {
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank");
+  const shareToWhatsApp = () => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${article?.title} - ${shareUrl}`)}`, "_blank");
+  };
+
+  const shareToTelegram = () => {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article?.title || "")}`, "_blank");
+  };
+
+  const shareToInstagram = () => {
+    // Instagram doesn't have a direct share URL, so we copy the link and show a message
+    navigator.clipboard.writeText(shareUrl);
+    toast.success("Link disalin! Buka Instagram dan paste di story/post Anda.");
   };
 
   if (isLoading) {
@@ -284,18 +292,24 @@ export default function BlogDetail() {
                     <Share2 className="h-5 w-5 text-muted-foreground" />
                     <span className="font-medium">Bagikan artikel ini</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={shareToFacebook}>
-                      <Facebook className="h-4 w-4" />
+                  <div className="flex items-center gap-1.5">
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareToWhatsApp} title="WhatsApp">
+                      <SiWhatsapp className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={shareToTwitter}>
-                      <Twitter className="h-4 w-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareToTelegram} title="Telegram">
+                      <SiTelegram className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={shareToLinkedIn}>
-                      <Linkedin className="h-4 w-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareToInstagram} title="Instagram">
+                      <SiInstagram className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={copyLink}>
-                      <LinkIcon className="h-4 w-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareToFacebook} title="Facebook">
+                      <SiFacebook className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={shareToTwitter} title="X/Twitter">
+                      <SiX className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={copyLink} title="Salin Link">
+                      <LinkIcon className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
