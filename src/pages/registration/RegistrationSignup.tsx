@@ -6,54 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Phone, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff, X, Check } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff, X, Check } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
-
-// Indonesian phone number validation
-const validateIndonesianPhone = (phone: string): { valid: boolean; message: string } => {
-  // Remove all non-digit characters
-  const cleanedPhone = phone.replace(/\D/g, "");
-  
-  // Check if it starts with 08 or 628
-  if (cleanedPhone.startsWith("08")) {
-    if (cleanedPhone.length >= 10 && cleanedPhone.length <= 13) {
-      return { valid: true, message: "" };
-    }
-    return { valid: false, message: "Nomor telepon harus 10-13 digit" };
-  }
-  
-  if (cleanedPhone.startsWith("628")) {
-    if (cleanedPhone.length >= 11 && cleanedPhone.length <= 14) {
-      return { valid: true, message: "" };
-    }
-    return { valid: false, message: "Nomor telepon harus 11-14 digit" };
-  }
-  
-  if (cleanedPhone.startsWith("8")) {
-    if (cleanedPhone.length >= 9 && cleanedPhone.length <= 12) {
-      return { valid: true, message: "" };
-    }
-    return { valid: false, message: "Nomor telepon harus 9-12 digit" };
-  }
-  
-  return { valid: false, message: "Nomor telepon harus dimulai dengan 08, 628, atau 8" };
-};
-
-// Format phone number for storage (normalize to 08xx format)
-const normalizePhoneNumber = (phone: string): string => {
-  const cleanedPhone = phone.replace(/\D/g, "");
-  
-  if (cleanedPhone.startsWith("628")) {
-    return "0" + cleanedPhone.substring(2);
-  }
-  
-  if (cleanedPhone.startsWith("8")) {
-    return "0" + cleanedPhone;
-  }
-  
-  return cleanedPhone;
-};
+import PhoneInput from "@/components/PhoneInput";
 
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -78,6 +34,7 @@ export default function RegistrationSignup() {
     fullName: "",
     email: "",
     phone: "",
+    phoneCountryCode: "+62",
     password: "",
     confirmPassword: "",
   });
@@ -97,15 +54,16 @@ export default function RegistrationSignup() {
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Validate phone on change
-    if (field === "phone") {
-      if (value) {
-        const validation = validateIndonesianPhone(value);
-        setPhoneError(validation.valid ? "" : validation.message);
-      } else {
-        setPhoneError("");
-      }
+  };
+
+  const handlePhoneChange = (phone: string, countryCode: string) => {
+    setFormData(prev => ({ ...prev, phone, phoneCountryCode: countryCode }));
+    // Validate phone - at least 6 digits
+    const cleanedPhone = phone.replace(/\D/g, "");
+    if (cleanedPhone.length > 0 && cleanedPhone.length < 6) {
+      setPhoneError("Nomor telepon minimal 6 digit");
+    } else {
+      setPhoneError("");
     }
   };
 
@@ -118,11 +76,11 @@ export default function RegistrationSignup() {
       return;
     }
 
-    // Validate phone number
-    const phoneValidation = validateIndonesianPhone(formData.phone);
-    if (!phoneValidation.valid) {
-      toast.error(phoneValidation.message);
-      setPhoneError(phoneValidation.message);
+    // Validate phone number - at least 6 digits
+    const cleanedPhone = formData.phone.replace(/\D/g, "");
+    if (cleanedPhone.length < 6) {
+      toast.error("Nomor telepon minimal 6 digit");
+      setPhoneError("Nomor telepon minimal 6 digit");
       return;
     }
 
@@ -139,14 +97,15 @@ export default function RegistrationSignup() {
 
     setIsSubmitting(true);
     
-    // Normalize phone number
-    const normalizedPhone = normalizePhoneNumber(formData.phone);
+    // Format phone number with country code
+    const phoneWithoutLeadingZero = cleanedPhone.startsWith("0") ? cleanedPhone.substring(1) : cleanedPhone;
+    const formattedPhone = `${formData.phoneCountryCode}${phoneWithoutLeadingZero}`;
     
     const { error } = await signUp(
       formData.email, 
       formData.password, 
       formData.fullName, 
-      normalizedPhone
+      formattedPhone
     );
 
     if (error) {
@@ -227,35 +186,14 @@ export default function RegistrationSignup() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Nomor Telepon *</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="08xxxxxxxxxx"
-                      value={formData.phone}
-                      onChange={(e) => updateField("phone", e.target.value)}
-                      className={`pl-10 ${phoneError ? "border-destructive" : ""}`}
-                      disabled={isSubmitting}
-                      required
-                    />
-                  </div>
-                  {phoneError ? (
-                    <div className="flex items-center gap-1 text-xs text-destructive">
-                      <AlertCircle className="h-3 w-3" />
-                      <span>{phoneError}</span>
-                    </div>
-                  ) : formData.phone && !phoneError ? (
-                    <div className="flex items-center gap-1 text-xs text-green-600">
-                      <CheckCircle className="h-3 w-3" />
-                      <span>Format nomor valid</span>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Format: 08xx, 628xx, atau 8xx</p>
-                  )}
-                </div>
+                <PhoneInput
+                  value={formData.phone}
+                  countryCode={formData.phoneCountryCode}
+                  onChange={handlePhoneChange}
+                  disabled={isSubmitting}
+                  required
+                  error={phoneError}
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password *</Label>

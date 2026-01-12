@@ -88,6 +88,11 @@ interface Registration {
   auth_user_id: string;
   created_at: string;
   updated_at: string;
+  selection_stage: string;
+  admin_selection_note: string | null;
+  interview_note: string | null;
+  interview_date: string | null;
+  final_result: string | null;
 }
 
 interface TrainingData {
@@ -126,11 +131,13 @@ export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<"name" | "created_at">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [reviewerNote, setReviewerNote] = useState("");
+  const [interviewDate, setInterviewDate] = useState("");
   
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -148,7 +155,7 @@ export default function RegistrationsManagement() {
 
   // Fetch all registrations
   const { data: registrations, isLoading } = useQuery({
-    queryKey: ["fim-registrations", searchQuery, statusFilter, sortField, sortOrder],
+    queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, sortField, sortOrder],
     queryFn: async () => {
       let query = supabase
         .from("fim_registrations")
@@ -160,6 +167,10 @@ export default function RegistrationsManagement() {
 
       if (statusFilter !== "all") {
         query = query.eq("registration_status", statusFilter);
+      }
+
+      if (stageFilter !== "all") {
+        query = query.eq("selection_stage", stageFilter);
       }
 
       const { data, error } = await query;
@@ -363,13 +374,85 @@ export default function RegistrationsManagement() {
     }
   };
 
+  const getStageBadge = (stage: string) => {
+    switch (stage) {
+      case "administrasi":
+        return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-700"><FileText className="h-3 w-3" />Administrasi</Badge>;
+      case "wawancara":
+        return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-700"><MessageSquare className="h-3 w-3" />Wawancara</Badge>;
+      case "pengumuman":
+        return <Badge variant="outline" className="gap-1 border-green-500 text-green-700"><CheckCircle2 className="h-3 w-3" />Pengumuman</Badge>;
+      default:
+        return <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" />-</Badge>;
+    }
+  };
+
   const stats = {
     total: registrations?.length || 0,
     pending: registrations?.filter(r => r.registration_status === "pending").length || 0,
     completed: registrations?.filter(r => r.registration_status === "completed").length || 0,
     approved: registrations?.filter(r => r.registration_status === "approved").length || 0,
     rejected: registrations?.filter(r => r.registration_status === "rejected").length || 0,
+    stageAdministrasi: registrations?.filter(r => r.selection_stage === "administrasi").length || 0,
+    stageWawancara: registrations?.filter(r => r.selection_stage === "wawancara").length || 0,
+    stagePengumuman: registrations?.filter(r => r.selection_stage === "pengumuman").length || 0,
   };
+
+  // Selection stage mutation
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ id, stage, note, interviewDate }: { id: string; stage: string; note?: string; interviewDate?: string }) => {
+      const updates: any = { selection_stage: stage };
+      
+      if (stage === "administrasi" && note) {
+        updates.admin_selection_note = note;
+      } else if (stage === "wawancara") {
+        updates.admin_selection_note = note;
+        if (interviewDate) updates.interview_date = interviewDate;
+      } else if (stage === "pengumuman" && note) {
+        updates.interview_note = note;
+      }
+
+      const { error } = await supabase
+        .from("fim_registrations")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      const stageText = variables.stage === "administrasi" ? "Administrasi" : variables.stage === "wawancara" ? "Wawancara" : "Pengumuman";
+      toast.success(`Tahap seleksi diubah ke ${stageText}`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setReviewerNote("");
+      setInterviewDate("");
+    },
+    onError: () => {
+      toast.error("Gagal memperbarui tahap seleksi");
+    },
+  });
+
+  // Final result mutation
+  const updateFinalResultMutation = useMutation({
+    mutationFn: async ({ id, result, note }: { id: string; result: "lolos" | "tidak_lolos"; note?: string }) => {
+      const { error } = await supabase
+        .from("fim_registrations")
+        .update({ 
+          final_result: result,
+          registration_status: result === "lolos" ? "approved" : "rejected",
+          interview_note: note
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      const resultText = variables.result === "lolos" ? "Lolos" : "Tidak Lolos";
+      toast.success(`Hasil akhir: ${resultText}`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setReviewerNote("");
+    },
+    onError: () => {
+      toast.error("Gagal memperbarui hasil akhir");
+    },
+  });
 
   // Email preview helper
   const generateEmailPreview = (action: "approve" | "reject", name: string, note: string) => {
@@ -851,7 +934,7 @@ Tim Forum Indonesia Muda
               {sortOrder === "asc" ? <CalendarArrowUp className="h-4 w-4" /> : <CalendarArrowDown className="h-4 w-4" />}
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Filter Status" />
               </SelectTrigger>
               <SelectContent>
@@ -860,6 +943,17 @@ Tim Forum Indonesia Muda
                 <SelectItem value="completed">Selesai</SelectItem>
                 <SelectItem value="approved">Disetujui</SelectItem>
                 <SelectItem value="rejected">Ditolak</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={stageFilter} onValueChange={setStageFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filter Tahap" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tahap</SelectItem>
+                <SelectItem value="administrasi">Administrasi</SelectItem>
+                <SelectItem value="wawancara">Wawancara</SelectItem>
+                <SelectItem value="pengumuman">Pengumuman</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -876,9 +970,10 @@ Tim Forum Indonesia Muda
                   </TableHead>
                   <TableHead>Nama</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Telepon</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Tahap Seleksi</TableHead>
                   <TableHead>Tanggal Daftar</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -906,8 +1001,8 @@ Tim Forum Indonesia Muda
                         </TableCell>
                         <TableCell className="font-medium">{reg.full_name}</TableCell>
                         <TableCell>{reg.email}</TableCell>
-                        <TableCell>{reg.phone || "-"}</TableCell>
                         <TableCell>{getStatusBadge(reg.registration_status)}</TableCell>
+                        <TableCell>{getStageBadge(reg.selection_stage || 'administrasi')}</TableCell>
                         <TableCell>
                           {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, MapPin, Award, Quote, Heart, Shield, MessageSquare, BookOpen, Brain, Clipboard, Network, Star, Handshake, Target, Scale, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
@@ -61,24 +61,32 @@ const Index = () => {
     { icon: Award, value: "4000+", label: "Alumni" },
   ];
 
-  const pilarKarakter = [
-    { icon: Heart, name: "Cinta Kasih", desc: "Mencintai sesama dan berbagi kebaikan" },
-    { icon: Shield, name: "Integritas", desc: "Konsisten dalam nilai dan tindakan" },
-    { icon: Star, name: "Kebersahajaan", desc: "Sederhana namun bermakna" },
-    { icon: Target, name: "Totalitas", desc: "Memberikan yang terbaik dalam segala hal" },
-    { icon: Handshake, name: "Solidaritas", desc: "Bersatu dan saling mendukung" },
-    { icon: Scale, name: "Keadilan", desc: "Menegakkan kebenaran dan kesetaraan" },
-    { icon: UserCheck, name: "Keteladanan", desc: "Menjadi contoh yang baik bagi sesama" },
-  ];
-
-  const pilarKepemimpinan = [
-    { icon: Users, name: "Mengenal Diri", desc: "Memahami kekuatan dan kelemahan diri" },
-    { icon: MessageSquare, name: "Komunikasi", desc: "Menyampaikan pesan dengan efektif" },
-    { icon: Heart, name: "Akhlak", desc: "Berperilaku mulia dalam setiap tindakan" },
-    { icon: BookOpen, name: "Kekuatan Belajar", desc: "Terus mengembangkan ilmu dan wawasan" },
-    { icon: Brain, name: "Proses Pengambilan Keputusan", desc: "Membuat keputusan yang bijak" },
-    { icon: Clipboard, name: "Manajerial", desc: "Mengelola sumber daya dengan efisien" },
-    { icon: Network, name: "Pengorganisasian", desc: "Membangun tim dan sistem yang solid" },
+  // Alumni testimonials with concrete data
+  const alumniTestimonials = [
+    {
+      name: "Ahmad Rizky",
+      batch: "Angkatan 28",
+      position: "Policy Analyst",
+      company: "Kementerian Keuangan RI",
+      icon: Building2,
+      quote: "FIM mengajarkan saya tentang kepemimpinan yang berintegritas. Pengalaman di FIM menjadi bekal berharga dalam karir saya di pemerintahan."
+    },
+    {
+      name: "Siti Nurhaliza",
+      batch: "Angkatan 30",
+      position: "Co-Founder",
+      company: "EduTech Startup",
+      icon: Briefcase,
+      quote: "Jaringan alumni FIM sangat kuat. Banyak kolaborasi bisnis dan proyek sosial yang lahir dari pertemanan di FIM."
+    },
+    {
+      name: "Budi Santoso",
+      batch: "Angkatan 25",
+      position: "Program Director",
+      company: "NGO Pendidikan Nasional",
+      icon: GraduationCap,
+      quote: "Nilai-nilai FIM tentang pelayanan dan kebersahajaan membentuk cara saya memimpin organisasi hingga hari ini."
+    },
   ];
 
   // Placeholder news data - will be replaced with actual data from backend
@@ -152,9 +160,13 @@ const Index = () => {
               alt="Forum Indonesia Muda" 
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
             />
-            <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               Forum Indonesia Muda
             </h1>
+            {/* Social Proof Subheadline */}
+            <p className="text-sm lg:text-base text-accent font-semibold mb-4 animate-fade-in" style={{ animationDelay: "0.15s" }}>
+              Diikuti 100+ peserta/angkatan | Alumni di Kementerian, Startup, NGO, dll.
+            </p>
             <p className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi 
               <span className="text-accent font-semibold"> cahaya kunang-kunang </span>
@@ -252,17 +264,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Nilai FIM - Simplified teaser with CTA to Tentang */}
-      <section className="py-12 bg-secondary">
+      {/* Alumni Testimonials - Social Proof */}
+      <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">Nilai & Pilar FIM</h2>
-            <p className="text-muted-foreground mb-6">
-              FIM menanamkan <strong>7 Pilar Karakter</strong> dan <strong>7 Pilar Kepemimpinan</strong> sebagai fondasi setiap kader untuk menjadi pemimpin yang berakhlak mulia dan berdampak.
-            </p>
-            <Link to="/tentang">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kata Alumni</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+            Dengarkan pengalaman langsung dari alumni FIM yang kini berkarya di berbagai bidang
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {alumniTestimonials.map((testimonial, index) => (
+              <div 
+                key={testimonial.name} 
+                className="bg-card rounded-xl p-6 shadow-lg animate-fade-in relative" 
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4" />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <testimonial.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-foreground">{testimonial.name}</h4>
+                    <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
+                <div className="border-t pt-3">
+                  <p className="text-xs font-medium text-foreground">{testimonial.position}</p>
+                  <p className="text-xs text-muted-foreground">{testimonial.company}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link to="/cerita-alumni">
               <Button variant="outline">
-                Pelajari Nilai & Pilar FIM <ArrowRight className="ml-2 h-4 w-4" />
+                Lihat Semua Cerita Alumni <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>

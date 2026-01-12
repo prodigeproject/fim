@@ -524,6 +524,7 @@ export type Database = {
       }
       fim_registrations: {
         Row: {
+          admin_selection_note: string | null
           auth_user_id: string | null
           created_at: string | null
           email: string
@@ -531,15 +532,21 @@ export type Database = {
           email_verification_token: string | null
           email_verified: boolean | null
           email_verified_at: string | null
+          final_result: string | null
           full_name: string
           id: string
+          interview_date: string | null
+          interview_note: string | null
           phone: string | null
+          phone_country_code: string | null
           photo_url: string | null
           registration_status: string | null
+          selection_stage: string | null
           updated_at: string | null
           verification_attempts: number | null
         }
         Insert: {
+          admin_selection_note?: string | null
           auth_user_id?: string | null
           created_at?: string | null
           email: string
@@ -547,15 +554,21 @@ export type Database = {
           email_verification_token?: string | null
           email_verified?: boolean | null
           email_verified_at?: string | null
+          final_result?: string | null
           full_name: string
           id?: string
+          interview_date?: string | null
+          interview_note?: string | null
           phone?: string | null
+          phone_country_code?: string | null
           photo_url?: string | null
           registration_status?: string | null
+          selection_stage?: string | null
           updated_at?: string | null
           verification_attempts?: number | null
         }
         Update: {
+          admin_selection_note?: string | null
           auth_user_id?: string | null
           created_at?: string | null
           email?: string
@@ -563,11 +576,16 @@ export type Database = {
           email_verification_token?: string | null
           email_verified?: boolean | null
           email_verified_at?: string | null
+          final_result?: string | null
           full_name?: string
           id?: string
+          interview_date?: string | null
+          interview_note?: string | null
           phone?: string | null
+          phone_country_code?: string | null
           photo_url?: string | null
           registration_status?: string | null
+          selection_stage?: string | null
           updated_at?: string | null
           verification_attempts?: number | null
         }
