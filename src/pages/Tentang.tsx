@@ -39,11 +39,7 @@ const Tentang = () => {
   const strukturYayasan = [
     { name: "Elmir Amien", position: "Founder / Ketua Dewan Pembina" },
     { name: "Tatty Elmir", position: "Founder / Anggota Dewan Pembina" },
-    { name: "Maghleb Elmir", position: "Ketua Dewan Pengawas" },
-    { name: "JetC Elmir", position: "Anggota Dewan Pengawas" },
     { name: "Mandira Bienna Elmir", position: "Ketua Pengurus Yayasan" },
-    { name: "Ivan Ahda", position: "Sekretaris Pengurus Yayasan" },
-    { name: "Ferly Ferdyant", position: "Bendahara Pengurus Yayasan" },
   ];
 
   const bph = [

@@ -25,12 +25,6 @@ const Pelatihan = () => {
     { icon: Award, value: "100+", label: "Proyek Sosial/Tahun" },
   ];
 
-  const recentTimeline = [
-    { date: "Desember", event: "Pelaksanaan pelatihan intensif di Jakarta", status: "ongoing" },
-    { date: "November", event: "Seleksi dilakukan oleh pengurus FIM", status: "completed" },
-    { date: "Oktober", event: "Pendaftaran FIM 27: Kebijakan Publik dibuka", status: "completed" },
-    { date: "Juli-Agustus", event: "Persiapan", status: "completed" },
-  ];
 
   const dokumentasi = [
     { type: "image", title: "Leadership Camp 2025", thumbnail: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800&h=600&fit=crop" },
@@ -137,31 +131,6 @@ const Pelatihan = () => {
                       {tahap.activities.map((activity) => <span key={activity} className="px-3 py-1 bg-muted text-muted-foreground text-sm rounded-lg">{activity}</span>)}
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Timeline */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Timeline FIM 27: Kebijakan Publik</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Jadwal dan update kegiatan pelatihan FIM terbaru</p>
-          <div className="max-w-3xl mx-auto">
-            {recentTimeline.map((item, index) => (
-              <div key={item.event} className="flex gap-4 mb-6 last:mb-0 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="flex flex-col items-center">
-                  <div className={`w-4 h-4 rounded-full flex-shrink-0 ${item.status === "ongoing" ? "bg-supporting animate-pulse" : "bg-primary"}`} />
-                  {index < recentTimeline.length - 1 && <div className="w-0.5 flex-1 bg-border mt-2" />}
-                </div>
-                <div className="flex-1 pb-4">
-                  <span className={`text-sm font-medium ${item.status === "ongoing" ? "text-supporting" : "text-muted-foreground"}`}>
-                    {item.date}
-                    {item.status === "ongoing" && <span className="ml-2 px-2 py-0.5 bg-supporting/20 text-supporting text-xs rounded-full">Sedang Berlangsung</span>}
-                  </span>
-                  <p className="text-foreground mt-1">{item.event}</p>
                 </div>
               </div>
             ))}

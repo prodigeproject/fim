@@ -104,6 +104,14 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
+      // Fetch current open batch
+      const { data: batchData } = await supabase
+        .from("registration_settings")
+        .select("id")
+        .eq("is_registration_open", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
       // Sign up with Auth but don't auto-sign in
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -122,7 +130,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       const verificationToken = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      // Create registration record with token expiration
+      // Create registration record with token expiration and batch_id
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
@@ -135,6 +143,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           email_verification_token: verificationToken,
           email_verification_expires_at: expiresAt,
           verification_attempts: 0,
+          batch_id: batchData?.id || null,
         })
         .select("*")
         .single();
