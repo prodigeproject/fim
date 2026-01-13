@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import FeaturedVideoSection from "@/components/FeaturedVideoSection";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -187,6 +188,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Video Section */}
+      <FeaturedVideoSection />
 
       {/* Banner Carousel */}
       <section className="py-8 bg-background">

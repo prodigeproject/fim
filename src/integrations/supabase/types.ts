@@ -432,6 +432,42 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          sort_order: number
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          youtube_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          youtube_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          youtube_id?: string
+        }
+        Relationships: []
+      }
       fim_clubs: {
         Row: {
           activities: string[] | null
@@ -526,6 +562,7 @@ export type Database = {
         Row: {
           admin_selection_note: string | null
           auth_user_id: string | null
+          batch_id: string | null
           created_at: string | null
           email: string
           email_verification_expires_at: string | null
@@ -548,6 +585,7 @@ export type Database = {
         Insert: {
           admin_selection_note?: string | null
           auth_user_id?: string | null
+          batch_id?: string | null
           created_at?: string | null
           email: string
           email_verification_expires_at?: string | null
@@ -570,6 +608,7 @@ export type Database = {
         Update: {
           admin_selection_note?: string | null
           auth_user_id?: string | null
+          batch_id?: string | null
           created_at?: string | null
           email?: string
           email_verification_expires_at?: string | null
@@ -589,7 +628,15 @@ export type Database = {
           updated_at?: string | null
           verification_attempts?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fim_registrations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "registration_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fim_training_registrations: {
         Row: {
@@ -875,6 +922,51 @@ export type Database = {
           must_change_password?: boolean | null
           updated_at?: string | null
           username?: string
+        }
+        Relationships: []
+      }
+      registration_settings: {
+        Row: {
+          batch_name: string
+          batch_number: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          is_registration_open: boolean
+          max_participants: number | null
+          registration_end_date: string | null
+          registration_start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_name: string
+          batch_number: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_registration_open?: boolean
+          max_participants?: number | null
+          registration_end_date?: string | null
+          registration_start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_name?: string
+          batch_number?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_registration_open?: boolean
+          max_participants?: number | null
+          registration_end_date?: string | null
+          registration_start_date?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

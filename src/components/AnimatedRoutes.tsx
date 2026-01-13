@@ -48,6 +48,7 @@ import RegistrationsManagement from "@/pages/admin/RegistrationsManagement";
 import RegistrationStatsDashboard from "@/pages/admin/RegistrationStatsDashboard";
 import LoginMonitoringDashboard from "@/pages/admin/LoginMonitoringDashboard";
 import RolesManagement from "@/pages/admin/RolesManagement";
+import RegistrationSettingsManagement from "@/pages/admin/RegistrationSettingsManagement";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -58,6 +59,8 @@ import RegistrationForgotPassword from "@/pages/registration/RegistrationForgotP
 import RegistrationResetPassword from "@/pages/registration/RegistrationResetPassword";
 import RegistrationProfile from "@/pages/registration/RegistrationProfile";
 import VerifyEmail from "@/pages/registration/VerifyEmail";
+import RegistrationClosed from "@/pages/registration/RegistrationClosed";
+import RegistrationGate from "@/components/RegistrationGate";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -84,8 +87,9 @@ const AnimatedRoutes = () => {
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
         {/* Registration routes */}
-        <Route path="/daftar" element={<RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider>} />
-        <Route path="/daftar/signup" element={<RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider>} />
+        <Route path="/daftar" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
+        <Route path="/daftar/signup" element={<RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate>} />
+        <Route path="/daftar/closed" element={<RegistrationClosed />} />
         <Route path="/daftar/success" element={<RegistrationSuccess />} />
         <Route path="/daftar/verify" element={<VerifyEmail />} />
         <Route path="/daftar/forgot-password" element={<RegistrationForgotPassword />} />
@@ -123,6 +127,7 @@ const AnimatedRoutes = () => {
                 <Route path="audit-logs" element={<RequireAdmin><AuditLogs /></RequireAdmin>} />
                 <Route path="security-dashboard" element={<RequireAdmin><SecurityDashboard /></RequireAdmin>} />
                 <Route path="registrations" element={<RequireAdmin><RegistrationsManagement /></RequireAdmin>} />
+                <Route path="registration-settings" element={<RequireAdmin><RegistrationSettingsManagement /></RequireAdmin>} />
                 <Route path="registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
                 
                 {/* Super Admin only routes */}

@@ -76,6 +76,7 @@ const navItems: NavItem[] = [
     badgeKey: "newRegistrations",
     children: [
       { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
+      { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings },
       { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3 },
     ]
   },
