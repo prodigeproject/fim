@@ -7,11 +7,18 @@ interface Registration {
   email: string;
   full_name: string;
   phone: string | null;
+  phone_country_code: string | null;
   registration_status: string;
   auth_user_id: string;
   created_at: string;
   updated_at: string;
   email_verified?: boolean;
+  selection_stage: string | null;
+  final_result: string | null;
+  interview_date: string | null;
+  interview_note: string | null;
+  admin_selection_note: string | null;
+  batch_id: string | null;
 }
 
 interface RegistrationAuthContextType {
