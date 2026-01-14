@@ -456,65 +456,227 @@ export default function AnalyticsDashboard() {
     }
   };
 
-  // Export to PDF with charts
+  // Export to PDF with improved layout and charts data
   const exportToPDF = async () => {
-    if (!reportRef.current || !stats) return;
+    if (!stats) return;
     setIsExportingPDF(true);
 
     try {
       const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
       const now = new Date();
       const monthYear = format(now, "MMMM yyyy", { locale: id });
       
-      // Title
-      pdf.setFontSize(20);
-      pdf.text(`Laporan Analytics - ${monthYear}`, 20, 20);
-      pdf.setFontSize(10);
-      pdf.text(`Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: id })}`, 20, 28);
-      
-      // Summary stats
-      pdf.setFontSize(14);
-      pdf.text("Ringkasan Statistik", 20, 45);
-      pdf.setFontSize(11);
-      pdf.text(`Total Views: ${stats.totalViews.toLocaleString()}`, 25, 55);
-      pdf.text(`Total Artikel: ${stats.totalArticles}`, 25, 62);
-      pdf.text(`Artikel Published: ${stats.publishedArticles}`, 25, 69);
-      pdf.text(`Rata-rata Views/Artikel: ${stats.avgViewsPerArticle}`, 25, 76);
-      
+      // Helper function for drawing boxes
+      const drawStatBox = (x: number, y: number, width: number, height: number, label: string, value: string, color: [number, number, number] = [30, 64, 175]) => {
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.roundedRect(x, y, width, height, 3, 3, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(8);
+        pdf.text(label, x + width / 2, y + 8, { align: 'center' });
+        pdf.setFontSize(16);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(value, x + width / 2, y + 20, { align: 'center' });
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(0, 0, 0);
+      };
+
+      // Header with background
+      pdf.setFillColor(30, 64, 175);
+      pdf.rect(0, 0, pageWidth, 45, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("LAPORAN ANALYTICS", pageWidth / 2, 20, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Forum Indonesia Muda - ${monthYear}`, pageWidth / 2, 30, { align: 'center' });
+      pdf.setFontSize(9);
+      pdf.text(`Generated: ${format(now, "dd MMMM yyyy HH:mm", { locale: id })}`, pageWidth / 2, 38, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+
+      // Stats boxes row
+      const boxWidth = (pageWidth - margin * 2 - 15) / 4;
+      const boxY = 55;
+      drawStatBox(margin, boxY, boxWidth, 28, "TOTAL VIEWS", stats.totalViews.toLocaleString(), [30, 64, 175]);
+      drawStatBox(margin + boxWidth + 5, boxY, boxWidth, 28, "TOTAL ARTIKEL", stats.totalArticles.toString(), [16, 185, 129]);
+      drawStatBox(margin + (boxWidth + 5) * 2, boxY, boxWidth, 28, "PUBLISHED", stats.publishedArticles.toString(), [245, 158, 11]);
+      drawStatBox(margin + (boxWidth + 5) * 3, boxY, boxWidth, 28, "AVG VIEWS", stats.avgViewsPerArticle.toString(), [139, 92, 246]);
+
       // Newsletter stats
       if (newsletterStats) {
-        pdf.text(`Total Subscriber: ${newsletterStats.totalSubscribers}`, 25, 86);
-        pdf.text(`Subscriber Aktif: ${newsletterStats.activeSubscribers}`, 25, 93);
-        pdf.text(`Delivery Rate: ${newsletterStats.deliveryRate}%`, 25, 100);
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("Newsletter Statistics", margin, 100);
+        pdf.setFont("helvetica", "normal");
+        
+        const nlBoxWidth = (pageWidth - margin * 2 - 10) / 3;
+        drawStatBox(margin, 105, nlBoxWidth, 25, "SUBSCRIBERS", newsletterStats.activeSubscribers.toString(), [59, 130, 246]);
+        drawStatBox(margin + nlBoxWidth + 5, 105, nlBoxWidth, 25, "NEW (30d)", newsletterStats.newSubscribers30d.toString(), [34, 197, 94]);
+        drawStatBox(margin + (nlBoxWidth + 5) * 2, 105, nlBoxWidth, 25, "DELIVERY RATE", `${newsletterStats.deliveryRate}%`, [168, 85, 247]);
       }
       
-      // Top articles
+      // Top 10 Articles section
+      let yPos = 145;
       pdf.setFontSize(14);
-      pdf.text("Top 10 Artikel", 20, 115);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Top 10 Artikel (Views)", margin, yPos);
+      yPos += 10;
+      
       pdf.setFontSize(9);
       topArticles.slice(0, 10).forEach((article, i) => {
-        const y = 125 + (i * 6);
-        if (y < 280) {
-          pdf.text(`${i + 1}. ${article.fullTitle.substring(0, 50)}... - ${article.views.toLocaleString()} views`, 25, y);
+        if (yPos > pageHeight - 30) {
+          pdf.addPage();
+          yPos = margin;
         }
+        // Draw rank badge
+        pdf.setFillColor(30, 64, 175);
+        pdf.circle(margin + 4, yPos - 1, 4, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(7);
+        pdf.text(`${i + 1}`, margin + 4, yPos + 1, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
+        
+        pdf.setFontSize(9);
+        pdf.setFont("helvetica", "normal");
+        const titleWidth = pageWidth - margin * 2 - 60;
+        const truncatedTitle = article.fullTitle.length > 60 ? article.fullTitle.substring(0, 60) + "..." : article.fullTitle;
+        pdf.text(truncatedTitle, margin + 12, yPos);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${article.views.toLocaleString()} views`, pageWidth - margin, yPos, { align: 'right' });
+        pdf.setFont("helvetica", "normal");
+        yPos += 8;
       });
-      
-      // Views by category
+
+      // Views by category (Page 2)
       pdf.addPage();
-      pdf.setFontSize(14);
-      pdf.text("Views per Kategori", 20, 20);
-      pdf.setFontSize(11);
-      viewsByCategory.forEach((cat, i) => {
-        pdf.text(`${cat.name}: ${cat.views.toLocaleString()} views`, 25, 30 + (i * 8));
-      });
+      yPos = margin;
       
-      // Trending topics
-      pdf.setFontSize(14);
-      pdf.text("Trending Topics", 20, 90);
-      pdf.setFontSize(10);
-      trendingTopics.slice(0, 10).forEach((topic, i) => {
-        pdf.text(`#${topic.tag} - ${topic.views.toLocaleString()} views (${topic.count} artikel)`, 25, 100 + (i * 7));
+      pdf.setFillColor(30, 64, 175);
+      pdf.rect(0, 0, pageWidth, 35, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Views per Kategori", pageWidth / 2, 20, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+      yPos = 50;
+
+      // Draw category bars
+      const maxViews = Math.max(...viewsByCategory.map(c => c.views), 1);
+      const barMaxWidth = pageWidth - margin * 2 - 80;
+      const colors: [number, number, number][] = [
+        [30, 64, 175], [16, 185, 129], [245, 158, 11], [239, 68, 68], [139, 92, 246], [6, 182, 212]
+      ];
+      
+      viewsByCategory.forEach((cat, i) => {
+        const barWidth = (cat.views / maxViews) * barMaxWidth;
+        const color = colors[i % colors.length];
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.text(cat.name, margin, yPos);
+        
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.roundedRect(margin + 45, yPos - 5, barWidth, 8, 2, 2, 'F');
+        
+        pdf.setFontSize(9);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${cat.views.toLocaleString()}`, margin + 50 + barWidth, yPos);
+        pdf.setFont("helvetica", "normal");
+        
+        yPos += 15;
       });
+
+      // Trending topics
+      yPos += 15;
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Trending Topics", margin, yPos);
+      yPos += 10;
+      
+      pdf.setFontSize(9);
+      trendingTopics.slice(0, 10).forEach((topic, i) => {
+        if (yPos > pageHeight - 20) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        pdf.setFillColor(colors[i % colors.length][0], colors[i % colors.length][1], colors[i % colors.length][2]);
+        const tagWidth = pdf.getTextWidth(`#${topic.tag}`) + 6;
+        pdf.roundedRect(margin, yPos - 4, tagWidth, 7, 2, 2, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(`#${topic.tag}`, margin + 3, yPos);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`${topic.views.toLocaleString()} views (${topic.count} artikel)`, margin + tagWidth + 5, yPos);
+        yPos += 10;
+      });
+
+      // Monthly views (Page 3)
+      pdf.addPage();
+      pdf.setFillColor(30, 64, 175);
+      pdf.rect(0, 0, pageWidth, 35, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Views Bulanan (12 Bulan Terakhir)", pageWidth / 2, 20, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+      
+      yPos = 50;
+      const maxMonthlyViews = Math.max(...monthlyViews.map(m => m.views), 1);
+      const monthBarMaxWidth = pageWidth - margin * 2 - 100;
+      
+      monthlyViews.forEach((month, i) => {
+        const barWidth = (month.views / maxMonthlyViews) * monthBarMaxWidth;
+        const color = colors[i % colors.length];
+        
+        pdf.setFontSize(9);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(month.fullMonth, margin, yPos);
+        
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.roundedRect(margin + 55, yPos - 4, Math.max(barWidth, 2), 6, 1, 1, 'F');
+        
+        pdf.setFontSize(8);
+        pdf.text(`${month.views.toLocaleString()} views / ${month.articles} artikel`, margin + 60 + barWidth, yPos);
+        
+        yPos += 10;
+      });
+
+      // Engagement rate section
+      yPos += 15;
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Top Engagement Rate (Views/Hari)", margin, yPos);
+      yPos += 10;
+      
+      pdf.setFontSize(9);
+      engagementData.slice(0, 8).forEach((item, i) => {
+        if (yPos > pageHeight - 20) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`${i + 1}. ${item.title}`, margin, yPos);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${item.engagement} views/hari`, pageWidth - margin, yPos, { align: 'right' });
+        yPos += 8;
+      });
+
+      // Footer on all pages
+      const pageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(
+          `Forum Indonesia Muda - Halaman ${i} dari ${pageCount}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+      }
 
       const filename = `laporan-analytics-${format(now, "yyyy-MM")}.pdf`;
       pdf.save(filename);

@@ -85,10 +85,15 @@ export default function ArticlesManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [authorFilter, setAuthorFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<string>("");
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortField, setSortField] = useState<"title" | "created_at" | "view_count">("created_at");
 
   // Fetch articles
   const { data: articles, isLoading } = useQuery({
@@ -276,14 +281,80 @@ export default function ArticlesManagement() {
     },
   });
 
-  // Filter and sort articles by search term
+  // Filter and sort articles by search term, author, tags, and date
   const filteredArticles = articles?.filter((article: any) => {
-    if (!searchTerm) return true;
-    return article.title.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search term filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const titleMatch = article.title.toLowerCase().includes(searchLower);
+      const tagsMatch = article.tags?.some((tag: string) => 
+        tag.toLowerCase().includes(searchLower)
+      );
+      if (!titleMatch && !tagsMatch) return false;
+    }
+    
+    // Author filter
+    if (authorFilter !== "all" && article.author_id !== authorFilter) {
+      return false;
+    }
+    
+    // Tag filter
+    if (tagFilter) {
+      const tagLower = tagFilter.toLowerCase();
+      const hasTag = article.tags?.some((tag: string) => 
+        tag.toLowerCase().includes(tagLower)
+      );
+      if (!hasTag) return false;
+    }
+    
+    // Date range filter
+    if (dateFrom) {
+      const articleDate = new Date(article.created_at);
+      const fromDate = new Date(dateFrom);
+      if (articleDate < fromDate) return false;
+    }
+    if (dateTo) {
+      const articleDate = new Date(article.created_at);
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      if (articleDate > toDate) return false;
+    }
+    
+    return true;
   }).sort((a: any, b: any) => {
-    const comparison = a.title.localeCompare(b.title, 'id');
-    return sortOrder === "asc" ? comparison : -comparison;
+    if (sortField === "title") {
+      const comparison = a.title.localeCompare(b.title, 'id');
+      return sortOrder === "asc" ? comparison : -comparison;
+    } else if (sortField === "view_count") {
+      const viewA = a.view_count || 0;
+      const viewB = b.view_count || 0;
+      return sortOrder === "asc" ? viewA - viewB : viewB - viewA;
+    } else {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    }
   });
+
+  // Get unique authors from articles
+  const uniqueAuthors = articles ? [...new Set(articles.map((a: any) => a.author_id))] : [];
+
+  // Get unique tags from articles
+  const uniqueTags = articles ? [...new Set(articles.flatMap((a: any) => a.tags || []))] : [];
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setAuthorFilter("all");
+    setTagFilter("");
+    setDateFrom("");
+    setDateTo("");
+  };
+
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || categoryFilter !== "all" || 
+    authorFilter !== "all" || tagFilter || dateFrom || dateTo;
 
   // Check if user can edit article
   const canEdit = (article: any) => {
@@ -337,27 +408,19 @@ export default function ArticlesManagement() {
 
       <Card>
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {/* Filters Row 1 - Search and Primary Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cari artikel..."
+                placeholder="Cari judul atau tag artikel..."
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
-              title={sortOrder === "asc" ? "Urutkan Z-A" : "Urutkan A-Z"}
-            >
-              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
-            </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -370,7 +433,7 @@ export default function ArticlesManagement() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Kategori" />
               </SelectTrigger>
               <SelectContent>
@@ -383,6 +446,91 @@ export default function ArticlesManagement() {
                 <SelectItem value="tips">Tips</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filters Row 2 - Advanced Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <Select value={authorFilter} onValueChange={setAuthorFilter}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Penulis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Penulis</SelectItem>
+                {uniqueAuthors.map((authorId: string) => (
+                  <SelectItem key={authorId} value={authorId}>
+                    {authorProfiles?.[authorId]?.full_name || authorProfiles?.[authorId]?.username || authorId.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative flex-1 sm:max-w-48">
+              <Input
+                placeholder="Filter tag..."
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                list="tag-suggestions"
+              />
+              <datalist id="tag-suggestions">
+                {uniqueTags.slice(0, 20).map((tag: string) => (
+                  <option key={tag} value={tag} />
+                ))}
+              </datalist>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="date"
+                placeholder="Dari"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full sm:w-36"
+              />
+              <span className="text-muted-foreground">-</span>
+              <Input
+                type="date"
+                placeholder="Sampai"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full sm:w-36"
+              />
+            </div>
+          </div>
+
+          {/* Filters Row 3 - Sort and Clear */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="text-sm text-muted-foreground">Urutkan:</span>
+            <Select value={sortField} onValueChange={(v) => setSortField(v as any)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_at">Tanggal</SelectItem>
+                <SelectItem value="title">Judul</SelectItem>
+                <SelectItem value="view_count">Views</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            >
+              {sortOrder === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownZA className="h-4 w-4" />}
+            </Button>
+            
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Reset Filter
+              </Button>
+            )}
+            
+            <div className="ml-auto text-sm text-muted-foreground">
+              {filteredArticles?.length || 0} dari {articles?.length || 0} artikel
+            </div>
           </div>
 
           {/* Bulk Actions Bar */}

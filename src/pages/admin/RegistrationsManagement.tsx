@@ -77,6 +77,8 @@ import {
   ArrowDownZA,
   CalendarArrowUp,
   CalendarArrowDown,
+  CalendarPlus,
+  Send,
 } from "lucide-react";
 
 interface Registration {
@@ -152,6 +154,15 @@ export default function RegistrationsManagement() {
     registration: Registration;
     note: string;
   } | null>(null);
+
+  // Interview scheduling state
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [scheduleData, setScheduleData] = useState<{
+    registration: Registration | null;
+    date: string;
+    time: string;
+    note: string;
+  }>({ registration: null, date: "", time: "", note: "" });
 
   // Fetch all registrations
   const { data: registrations, isLoading } = useQuery({
@@ -398,9 +409,16 @@ export default function RegistrationsManagement() {
     stagePengumuman: registrations?.filter(r => r.selection_stage === "pengumuman").length || 0,
   };
 
-  // Selection stage mutation
+  // Selection stage mutation with email notification
   const updateStageMutation = useMutation({
-    mutationFn: async ({ id, stage, note, interviewDate }: { id: string; stage: string; note?: string; interviewDate?: string }) => {
+    mutationFn: async ({ id, stage, note, interviewDate, email, name }: { 
+      id: string; 
+      stage: string; 
+      note?: string; 
+      interviewDate?: string;
+      email: string;
+      name: string;
+    }) => {
       const updates: any = { selection_stage: stage };
       
       if (stage === "administrasi" && note) {
@@ -417,13 +435,29 @@ export default function RegistrationsManagement() {
         .update(updates)
         .eq("id", id);
       if (error) throw error;
+
+      // Send email notification for stage change
+      try {
+        await supabase.functions.invoke("notify-selection-stage", {
+          body: {
+            registrantEmail: email,
+            registrantName: name,
+            stage: stage,
+            interviewDate: interviewDate || undefined,
+            note: note || undefined,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send stage notification email:", emailError);
+      }
     },
     onSuccess: (_, variables) => {
       const stageText = variables.stage === "administrasi" ? "Administrasi" : variables.stage === "wawancara" ? "Wawancara" : "Pengumuman";
-      toast.success(`Tahap seleksi diubah ke ${stageText}`);
+      toast.success(`Tahap seleksi diubah ke ${stageText}. Email notifikasi telah dikirim.`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
       setInterviewDate("");
+      setIsScheduleDialogOpen(false);
     },
     onError: () => {
       toast.error("Gagal memperbarui tahap seleksi");
@@ -1330,6 +1364,24 @@ Tim Forum Indonesia Muda
                   Export PDF
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (selectedRegistration) {
+                      setScheduleData({
+                        registration: selectedRegistration,
+                        date: "",
+                        time: "",
+                        note: ""
+                      });
+                      setIsScheduleDialogOpen(true);
+                    }
+                  }}
+                  disabled={selectedRegistration.selection_stage === "pengumuman"}
+                >
+                  <CalendarPlus className="h-4 w-4 mr-2" />
+                  Jadwalkan Wawancara
+                </Button>
+                <Button
                   variant="default"
                   className="bg-green-600 hover:bg-green-700"
                   onClick={handleApproveWithPreview}
@@ -1463,6 +1515,110 @@ Tim Forum Indonesia Muda
                 <XCircle className="h-4 w-4 mr-2" />
               )}
               {bulkAction === "approve" ? "Setujui Semua" : "Tolak Semua"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Interview Schedule Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5" />
+              Jadwalkan Wawancara
+            </DialogTitle>
+            <DialogDescription>
+              {scheduleData.registration && (
+                <>Jadwalkan wawancara untuk <strong>{scheduleData.registration.full_name}</strong></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="schedule-date">Tanggal</Label>
+                <Input
+                  id="schedule-date"
+                  type="date"
+                  value={scheduleData.date}
+                  onChange={(e) => setScheduleData(prev => ({ ...prev, date: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="schedule-time">Waktu</Label>
+                <Input
+                  id="schedule-time"
+                  type="time"
+                  value={scheduleData.time}
+                  onChange={(e) => setScheduleData(prev => ({ ...prev, time: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="schedule-note">Catatan (opsional)</Label>
+              <Textarea
+                id="schedule-note"
+                placeholder="Lokasi, link meeting, atau catatan lainnya..."
+                value={scheduleData.note}
+                onChange={(e) => setScheduleData(prev => ({ ...prev, note: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            {scheduleData.date && scheduleData.time && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Preview jadwal yang akan dikirim:</p>
+                <p className="font-medium">
+                  {new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })} pukul {scheduleData.time} WIB
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                if (!scheduleData.registration || !scheduleData.date || !scheduleData.time) {
+                  toast.error("Mohon lengkapi tanggal dan waktu wawancara");
+                  return;
+                }
+                
+                const formattedDate = new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                }) + ` pukul ${scheduleData.time} WIB`;
+
+                updateStageMutation.mutate({
+                  id: scheduleData.registration.id,
+                  stage: "wawancara",
+                  note: scheduleData.note,
+                  interviewDate: formattedDate,
+                  email: scheduleData.registration.email,
+                  name: scheduleData.registration.full_name,
+                });
+              }}
+              disabled={updateStageMutation.isPending || !scheduleData.date || !scheduleData.time}
+            >
+              {updateStageMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Kirim Undangan
             </Button>
           </DialogFooter>
         </DialogContent>
