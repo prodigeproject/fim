@@ -145,81 +145,74 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* 7 Pilar Section - Full content on Tentang page */}
+      {/* 7 Pilar + Perjalanan Kami - Side by Side Layout */}
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Nilai & Pilar FIM</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Fondasi karakter dan kepemimpinan yang ditanamkan kepada setiap kader FIM</p>
-          
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
-            {/* 7 Pilar Karakter */}
+          <div className="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
+            {/* Left Column: 7 Pilar */}
             <div>
-              <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Karakter FIM</h3>
-              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Fondasi karakter yang ditanamkan kepada setiap kader FIM</p>
-              <div className="space-y-3">
-                {pilarKarakter.map((item, index) => (
-                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <item.icon className="h-5 w-5 text-primary" />
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Nilai & Pilar FIM</h2>
+              <p className="text-muted-foreground mb-6 text-sm">Fondasi karakter dan kepemimpinan</p>
+              
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* 7 Pilar Karakter - Compact */}
+                <div>
+                  <h4 className="font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-primary" /> Pilar Karakter
+                  </h4>
+                  <div className="space-y-2">
+                    {pilarKarakter.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2 bg-card rounded-md px-3 py-2 shadow-sm">
+                        <item.icon className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-xs font-medium text-foreground">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* 7 Pilar Kepemimpinan - Compact */}
+                <div>
+                  <h4 className="font-bold text-foreground text-sm mb-3 flex items-center gap-2">
+                    <Star className="h-4 w-4 text-supporting" /> Pilar Kepemimpinan
+                  </h4>
+                  <div className="space-y-2">
+                    {pilarKepemimpinan.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2 bg-card rounded-md px-3 py-2 shadow-sm">
+                        <item.icon className="h-4 w-4 text-supporting flex-shrink-0" />
+                        <span className="text-xs font-medium text-foreground">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Perjalanan Kami (Timeline) */}
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Perjalanan Kami</h2>
+              <p className="text-muted-foreground mb-6 text-sm">Sejarah Forum Indonesia Muda</p>
+              
+              <div className="relative max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
+                {sejarah.map((item, index) => (
+                  <div
+                    key={item.year}
+                    className="flex gap-3 mb-4 last:mb-0"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        {item.year}
+                      </div>
+                      {index < sejarah.length - 1 && (
+                        <div className="w-0.5 flex-1 bg-primary/30 mt-1" />
+                      )}
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground text-sm">{item.name}</h4>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    <div className="flex-1 bg-card rounded-lg p-3 shadow-sm">
+                      <p className="text-foreground text-xs leading-relaxed">{item.event}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* 7 Pilar Kepemimpinan */}
-            <div>
-              <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 text-center lg:text-left">7 Pilar Kepemimpinan FIM</h3>
-              <p className="text-muted-foreground text-center lg:text-left mb-6 text-sm">Prinsip kepemimpinan yang menjadi panduan alumni FIM</p>
-              <div className="space-y-3">
-                {pilarKepemimpinan.map((item, index) => (
-                  <div key={item.name} className="bg-card rounded-lg p-4 shadow-md hover:shadow-lg transition-all flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="w-10 h-10 bg-supporting/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <item.icon className="h-5 w-5 text-supporting" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground text-sm">{item.name}</h4>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Sejarah Timeline */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12">
-            Perjalanan Kami
-          </h2>
-          
-          <div className="max-w-3xl mx-auto">
-            {sejarah.map((item, index) => (
-              <div
-                key={item.year}
-                className="flex gap-6 mb-8 last:mb-0 animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg flex-shrink-0">
-                    {item.year}
-                  </div>
-                  {index < sejarah.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-primary/30 mt-2" />
-                  )}
-                </div>
-                <div className="flex-1 bg-card rounded-xl p-6 shadow-md">
-                  <p className="text-foreground text-sm leading-relaxed">{item.event}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
