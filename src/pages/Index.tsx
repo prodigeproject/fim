@@ -407,29 +407,55 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Partners Section - Dynamic from Database */}
-      <section className="py-16 bg-background">
+      {/* Mitra Kami Section - Infinite Scroll Animation */}
+      <section className="py-12 bg-background overflow-hidden">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Mitra Kami</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Kolaborator yang telah bekerjasama dengan FIM</p>
-          <div className="flex flex-wrap justify-center items-center gap-6 max-w-5xl mx-auto">
-            {/* Use database partners if available, otherwise use static logos */}
-            {(partners?.length ? partners : partnerLogos.map((logo, i) => ({ id: i, logo_url: logo, name: `Partner ${i + 1}`, website_url: null }))).map((partner: any, index: number) => (
-              <a 
-                key={partner.id || index} 
-                href={partner.website_url || "#"} 
-                target={partner.website_url ? "_blank" : undefined}
-                rel={partner.website_url ? "noopener noreferrer" : undefined}
-                className="bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-center animate-fade-in" 
-                style={{ animationDelay: `${index * 0.02}s` }}
-              >
-                <img 
-                  src={typeof partner === 'string' ? partner : partner.logo_url} 
-                  alt={typeof partner === 'string' ? `Partner ${index + 1}` : partner.name} 
-                  className="h-12 w-auto max-w-[100px] object-contain"
-                />
-              </a>
-            ))}
+          <h2 className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">Mitra Kami</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">Kolaborator yang telah bekerjasama dengan FIM</p>
+        </div>
+        <div className="relative">
+          {/* Gradient masks */}
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10" />
+          
+          <div className="flex animate-scroll-x hover:pause-animation">
+            {/* Use database partners if available, otherwise fallback to static logos */}
+            {partners?.length ? (
+              <>
+                {[...partners, ...partners, ...partners].map((partner, index) => (
+                  <a 
+                    key={`${partner.id}-${index}`} 
+                    href={partner.website_url || "#"} 
+                    target={partner.website_url ? "_blank" : undefined}
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 mx-4 md:mx-6 group"
+                    title={partner.name}
+                  >
+                    <div className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3 group-hover:shadow-md transition-all">
+                      <img 
+                        src={partner.logo_url} 
+                        alt={partner.name} 
+                        className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" 
+                      />
+                    </div>
+                  </a>
+                ))}
+              </>
+            ) : (
+              <>
+                {[...partnerLogos, ...partnerLogos, ...partnerLogos].map((logo, index) => (
+                  <div key={index} className="flex-shrink-0 mx-4 md:mx-6">
+                    <div className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3">
+                      <img 
+                        src={logo} 
+                        alt={`Partner ${(index % partnerLogos.length) + 1}`} 
+                        className="max-h-full max-w-full object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all" 
+                      />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </section>
