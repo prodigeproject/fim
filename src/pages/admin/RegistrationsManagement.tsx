@@ -146,6 +146,9 @@ export default function RegistrationsManagement() {
   const [bulkAction, setBulkAction] = useState<"approve" | "reject" | null>(null);
   const [bulkNote, setBulkNote] = useState("");
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [isBulkStageDialogOpen, setIsBulkStageDialogOpen] = useState(false);
+  const [bulkStageDate, setBulkStageDate] = useState("");
+  const [bulkStageTime, setBulkStageTime] = useState("");
   
   // Email preview state
   const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
@@ -310,6 +313,66 @@ export default function RegistrationsManagement() {
     },
     onError: () => {
       toast.error("Gagal memperbarui status");
+    },
+  });
+
+  // Bulk stage update mutation
+  const bulkStageMutation = useMutation({
+    mutationFn: async ({ ids, stage, note, interviewDate }: { 
+      ids: string[]; 
+      stage: string; 
+      note?: string;
+      interviewDate?: string;
+    }) => {
+      // Get registration details for email
+      const { data: regs } = await supabase
+        .from("fim_registrations")
+        .select("id, email, full_name")
+        .in("id", ids);
+
+      const updates: any = { selection_stage: stage };
+      if (note) updates.admin_selection_note = note;
+      if (interviewDate && stage === "wawancara") updates.interview_date = interviewDate;
+
+      // Update all stages
+      const { error } = await supabase
+        .from("fim_registrations")
+        .update(updates)
+        .in("id", ids);
+      
+      if (error) throw error;
+
+      // Send emails for each registration
+      if (regs && stage === "wawancara") {
+        for (const reg of regs) {
+          try {
+            await supabase.functions.invoke("notify-selection-stage", {
+              body: {
+                registrantEmail: reg.email,
+                registrantName: reg.full_name,
+                stage: stage,
+                interviewDate: interviewDate || undefined,
+                note: note || undefined,
+              },
+            });
+          } catch (emailError) {
+            console.error(`Failed to send email to ${reg.email}:`, emailError);
+          }
+        }
+      }
+
+      return ids.length;
+    },
+    onSuccess: (count, variables) => {
+      const stageText = variables.stage === "wawancara" ? "Wawancara" : "Administrasi";
+      toast.success(`${count} pendaftaran dipindahkan ke tahap ${stageText}`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setSelectedIds(new Set());
+      setBulkNote("");
+      setIsBulkStageDialogOpen(false);
+    },
+    onError: () => {
+      toast.error("Gagal memperbarui tahap seleksi");
     },
   });
 
@@ -916,7 +979,15 @@ Tim Forum Indonesia Muda
               <span className="font-medium">
                 {selectedIds.size} pendaftaran dipilih
               </span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="default"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setIsBulkStageDialogOpen(true)}
+                >
+                  <CalendarPlus className="h-4 w-4 mr-2" />
+                  Lolos ke Wawancara
+                </Button>
                 <Button
                   variant="default"
                   className="bg-green-600 hover:bg-green-700"
@@ -1754,6 +1825,112 @@ Tim Forum Indonesia Muda
                 <Send className="h-4 w-4 mr-2" />
               )}
               Kirim Undangan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Stage Update Dialog */}
+      <Dialog open={isBulkStageDialogOpen} onOpenChange={setIsBulkStageDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5" />
+              Lolos ke Tahap Wawancara
+            </DialogTitle>
+            <DialogDescription>
+              {selectedIds.size} pendaftaran akan dipindahkan ke tahap wawancara dan akan mendapat undangan
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bulk-schedule-date">Tanggal Wawancara</Label>
+                <Input
+                  id="bulk-schedule-date"
+                  type="date"
+                  value={bulkStageDate}
+                  onChange={(e) => setBulkStageDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bulk-schedule-time">Waktu</Label>
+                <Input
+                  id="bulk-schedule-time"
+                  type="time"
+                  value={bulkStageTime}
+                  onChange={(e) => setBulkStageTime(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bulk-schedule-note">Catatan (opsional)</Label>
+              <Textarea
+                id="bulk-schedule-note"
+                placeholder="Lokasi, link meeting, atau catatan lainnya..."
+                value={bulkNote}
+                onChange={(e) => setBulkNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {bulkStageDate && bulkStageTime && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Preview jadwal yang akan dikirim:</p>
+                <p className="font-medium">
+                  {new Date(`${bulkStageDate}T${bulkStageTime}`).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })} pukul {bulkStageTime} WIB
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsBulkStageDialogOpen(false);
+              setBulkStageDate("");
+              setBulkStageTime("");
+              setBulkNote("");
+            }}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                if (!bulkStageDate || !bulkStageTime) {
+                  toast.error("Mohon lengkapi tanggal dan waktu wawancara");
+                  return;
+                }
+                
+                const formattedDate = new Date(`${bulkStageDate}T${bulkStageTime}`).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                }) + ` pukul ${bulkStageTime} WIB`;
+
+                bulkStageMutation.mutate({
+                  ids: Array.from(selectedIds),
+                  stage: "wawancara",
+                  note: bulkNote,
+                  interviewDate: formattedDate,
+                });
+              }}
+              disabled={bulkStageMutation.isPending || !bulkStageDate || !bulkStageTime}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {bulkStageMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Kirim {selectedIds.size} Undangan
             </Button>
           </DialogFooter>
         </DialogContent>
