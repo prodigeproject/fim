@@ -802,6 +802,39 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_logos: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url: string
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       prd_changelog: {
         Row: {
           changes: Json | null

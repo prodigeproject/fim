@@ -18,10 +18,20 @@ import {
   User,
   Mail,
   Phone,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  MessageSquare
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
+
+const SELECTION_STAGES = [
+  { key: "administrasi", label: "Seleksi Administrasi", icon: FileText },
+  { key: "wawancara", label: "Seleksi Wawancara", icon: MessageSquare },
+  { key: "pengumuman", label: "Pengumuman", icon: CheckCircle2 },
+];
 
 export default function RegistrationDashboard() {
   const navigate = useNavigate();
@@ -74,31 +84,68 @@ export default function RegistrationDashboard() {
     return null;
   }
 
-  const statusConfig = {
-    pending: { 
-      label: "Menunggu", 
-      variant: "secondary" as const,
-      icon: Clock,
-      description: "Silakan lengkapi data pelatihan untuk melanjutkan"
-    },
-    incomplete: { 
-      label: "Belum Lengkap", 
-      variant: "outline" as const,
-      icon: AlertCircle,
-      description: "Data pelatihan belum lengkap"
-    },
-    completed: { 
-      label: "Selesai", 
-      variant: "default" as const,
-      icon: CheckCircle,
-      description: "Pendaftaran Anda telah selesai"
-    },
+  const completionPercentage = trainingData?.completion_percentage || 0;
+  const currentStage = registration.selection_stage || "administrasi";
+  const currentStageIndex = SELECTION_STAGES.findIndex(s => s.key === currentStage);
+  const finalResult = registration.final_result;
+  
+  // Calculate progress percentage based on stage
+  const getStageProgress = () => {
+    if (finalResult === "lolos") return 100;
+    if (finalResult === "tidak_lolos") return currentStageIndex * 33.33;
+    if (currentStage === "administrasi") return 10;
+    if (currentStage === "wawancara") return 50;
+    if (currentStage === "pengumuman") return 85;
+    return 0;
   };
 
-  const status = statusConfig[registration.registration_status as keyof typeof statusConfig] || statusConfig.pending;
-  const StatusIcon = status.icon;
+  const getStatusInfo = () => {
+    if (finalResult === "lolos") {
+      return {
+        label: "Diterima",
+        color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+        icon: CheckCircle2,
+        description: "Selamat! Anda telah diterima sebagai peserta Forum Indonesia Muda"
+      };
+    }
+    if (finalResult === "tidak_lolos") {
+      return {
+        label: "Tidak Lolos",
+        color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+        icon: XCircle,
+        description: "Maaf, Anda belum lolos seleksi pada periode ini"
+      };
+    }
+    if (currentStage === "pengumuman") {
+      return {
+        label: "Menunggu Pengumuman",
+        color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+        icon: Clock,
+        description: "Hasil seleksi sedang dalam proses pengumuman"
+      };
+    }
+    if (currentStage === "wawancara") {
+      return {
+        label: "Tahap Wawancara",
+        color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+        icon: MessageSquare,
+        description: registration.interview_date 
+          ? `Jadwal wawancara: ${new Date(registration.interview_date).toLocaleDateString("id-ID", { dateStyle: "full" })}`
+          : "Menunggu jadwal wawancara"
+      };
+    }
+    return {
+      label: "Seleksi Administrasi",
+      color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      icon: FileText,
+      description: trainingData?.is_submitted 
+        ? "Data Anda sedang dalam proses review" 
+        : "Silakan lengkapi data pelatihan untuk melanjutkan"
+    };
+  };
 
-  const completionPercentage = trainingData?.completion_percentage || 0;
+  const statusInfo = getStatusInfo();
+  const StatusIcon = statusInfo.icon;
 
   return (
     <>
@@ -144,12 +191,12 @@ export default function RegistrationDashboard() {
                     Selamat datang, {registration.full_name}!
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    {status.description}
+                    {statusInfo.description}
                   </CardDescription>
                 </div>
-                <Badge variant={status.variant} className="gap-1">
+                <Badge className={`gap-1 ${statusInfo.color}`}>
                   <StatusIcon className="h-3 w-3" />
-                  {status.label}
+                  {statusInfo.label}
                 </Badge>
               </div>
             </CardHeader>
@@ -166,44 +213,158 @@ export default function RegistrationDashboard() {
                 {registration.phone && (
                   <div className="flex items-center gap-3 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{registration.phone}</span>
+                    <span>{registration.phone_country_code || "+62"}{registration.phone}</span>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Progress Card */}
+          {/* Selection Progress Card */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Data Pelatihan FIM
+                <CheckCircle2 className="h-5 w-5" />
+                Status Seleksi
               </CardTitle>
               <CardDescription>
-                Lengkapi semua data yang diperlukan untuk pendaftaran pelatihan
+                Pantau perkembangan proses seleksi Anda secara real-time
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Progress Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress Pengisian</span>
-                  <span className="font-medium">{completionPercentage}%</span>
+                  <span className="text-muted-foreground">Progress Seleksi</span>
+                  <span className="font-medium">{Math.round(getStageProgress())}%</span>
                 </div>
-                <Progress value={completionPercentage} className="h-2" />
+                <Progress 
+                  value={getStageProgress()} 
+                  className="h-3"
+                />
               </div>
 
-              {trainingData?.is_submitted ? (
-                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">Data telah dikirim</span>
-                  </div>
-                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                    Terima kasih telah melengkapi pendaftaran. Tim kami akan menghubungi Anda.
-                  </p>
+              {/* Stage Steps */}
+              <div className="relative">
+                <div className="flex justify-between">
+                  {SELECTION_STAGES.map((stage, index) => {
+                    const isPassed = index < currentStageIndex || (index === currentStageIndex && finalResult === "lolos");
+                    const isCurrent = index === currentStageIndex && !finalResult;
+                    const isFailed = index === currentStageIndex && finalResult === "tidak_lolos";
+                    const StageIcon = stage.icon;
+                    
+                    return (
+                      <div key={stage.key} className="flex flex-col items-center text-center flex-1">
+                        <div 
+                          className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
+                            isPassed 
+                              ? "bg-green-500 border-green-500 text-white" 
+                              : isFailed
+                              ? "bg-red-500 border-red-500 text-white"
+                              : isCurrent
+                              ? "bg-primary border-primary text-primary-foreground animate-pulse"
+                              : "bg-muted border-muted-foreground/30 text-muted-foreground"
+                          }`}
+                        >
+                          {isPassed ? (
+                            <CheckCircle className="h-6 w-6" />
+                          ) : isFailed ? (
+                            <XCircle className="h-6 w-6" />
+                          ) : (
+                            <StageIcon className="h-6 w-6" />
+                          )}
+                        </div>
+                        <p className={`mt-2 text-xs font-medium ${
+                          isPassed || isCurrent ? "text-foreground" : "text-muted-foreground"
+                        }`}>
+                          {stage.label}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
+                
+                {/* Progress Line */}
+                <div className="absolute top-6 left-0 right-0 h-0.5 bg-muted -z-10">
+                  <div 
+                    className="h-full bg-green-500 transition-all duration-500"
+                    style={{ width: `${Math.min(100, (currentStageIndex / (SELECTION_STAGES.length - 1)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Interview Date if available */}
+              {registration.interview_date && currentStage === "wawancara" && !finalResult && (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex items-center gap-4">
+                  <Calendar className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Jadwal Wawancara</p>
+                    <p className="text-lg font-bold text-primary">
+                      {new Date(registration.interview_date).toLocaleDateString("id-ID", { 
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Final Result Message */}
+              {finalResult && (
+                <div className={`rounded-lg p-4 ${
+                  finalResult === "lolos" 
+                    ? "bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800" 
+                    : "bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {finalResult === "lolos" ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-600" />
+                    )}
+                    <span className={`font-medium ${
+                      finalResult === "lolos" ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
+                    }`}>
+                      {finalResult === "lolos" 
+                        ? "Selamat! Anda diterima sebagai peserta FIM" 
+                        : "Maaf, Anda belum lolos pada periode ini"}
+                    </span>
+                  </div>
+                  {finalResult === "lolos" && (
+                    <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                      Tim FIM akan segera menghubungi Anda untuk informasi lebih lanjut.
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Progress Card - Only show if not submitted */}
+          {!trainingData?.is_submitted && !finalResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Data Pelatihan FIM
+                </CardTitle>
+                <CardDescription>
+                  Lengkapi semua data yang diperlukan untuk pendaftaran pelatihan
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Progress Pengisian</span>
+                    <span className="font-medium">{completionPercentage}%</span>
+                  </div>
+                  <Progress value={completionPercentage} className="h-2" />
+                </div>
+
                 <Button 
                   className="w-full" 
                   onClick={() => navigate("/daftar/pelatihan")}
@@ -211,15 +372,32 @@ export default function RegistrationDashboard() {
                   {trainingData ? "Lanjutkan Pengisian" : "Mulai Isi Data"}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
-              )}
 
-              {trainingData?.last_saved_at && !trainingData.is_submitted && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Terakhir disimpan: {new Date(trainingData.last_saved_at).toLocaleString("id-ID")}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                {trainingData?.last_saved_at && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Terakhir disimpan: {new Date(trainingData.last_saved_at).toLocaleString("id-ID")}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Submitted Info */}
+          {trainingData?.is_submitted && !finalResult && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Data telah dikirim</span>
+                  </div>
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                    Terima kasih! Data Anda sedang dalam proses review oleh tim FIM.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Info Card */}
           <Card>
@@ -227,18 +405,10 @@ export default function RegistrationDashboard() {
               <CardTitle className="text-lg">Informasi Penting</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                • Data Anda akan tersimpan otomatis setiap beberapa saat saat mengisi formulir.
-              </p>
-              <p>
-                • Pastikan semua data yang diisi sudah benar sebelum mengirim.
-              </p>
-              <p>
-                • Setelah mengirim, data tidak dapat diubah kembali.
-              </p>
-              <p>
-                • Jika ada pertanyaan, silakan hubungi tim FIM melalui email.
-              </p>
+              <p>• Status seleksi akan diperbarui secara otomatis.</p>
+              <p>• Anda akan menerima notifikasi email setiap ada perubahan status.</p>
+              <p>• Pastikan untuk memeriksa email Anda secara berkala.</p>
+              <p>• Jika ada pertanyaan, silakan hubungi tim FIM melalui email.</p>
             </CardContent>
           </Card>
         </main>
