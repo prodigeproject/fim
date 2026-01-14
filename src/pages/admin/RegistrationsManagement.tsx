@@ -466,22 +466,47 @@ export default function RegistrationsManagement() {
 
   // Final result mutation
   const updateFinalResultMutation = useMutation({
-    mutationFn: async ({ id, result, note }: { id: string; result: "lolos" | "tidak_lolos"; note?: string }) => {
+    mutationFn: async ({ id, result, note, email, name }: { 
+      id: string; 
+      result: "lolos" | "tidak_lolos"; 
+      note?: string;
+      email?: string;
+      name?: string;
+    }) => {
       const { error } = await supabase
         .from("fim_registrations")
         .update({ 
           final_result: result,
+          selection_stage: "pengumuman",
           registration_status: result === "lolos" ? "approved" : "rejected",
           interview_note: note
         })
         .eq("id", id);
       if (error) throw error;
+
+      // Send email notification for final result
+      if (email && name) {
+        try {
+          await supabase.functions.invoke("notify-selection-stage", {
+            body: {
+              registrantEmail: email,
+              registrantName: name,
+              stage: "pengumuman",
+              finalResult: result,
+              note: note || undefined,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send final result notification:", emailError);
+        }
+      }
     },
     onSuccess: (_, variables) => {
-      const resultText = variables.result === "lolos" ? "Lolos" : "Tidak Lolos";
+      const resultText = variables.result === "lolos" ? "Lolos (Diterima)" : "Tidak Lolos";
       toast.success(`Hasil akhir: ${resultText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
+      setIsDetailOpen(false);
     },
     onError: () => {
       toast.error("Gagal memperbarui hasil akhir");
@@ -1343,69 +1368,179 @@ Tim Forum Indonesia Muda
 
               <Separator />
 
+              {/* Selection Stage Info */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Tahap Seleksi Saat Ini</h4>
+                  {getStageBadge(selectedRegistration.selection_stage || 'administrasi')}
+                </div>
+                {selectedRegistration.interview_date && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Jadwal Wawancara: </span>
+                    <span className="font-medium">{selectedRegistration.interview_date}</span>
+                  </div>
+                )}
+                {selectedRegistration.admin_selection_note && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Catatan Admin: </span>
+                    <span>{selectedRegistration.admin_selection_note}</span>
+                  </div>
+                )}
+                {selectedRegistration.final_result && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Hasil Akhir: </span>
+                    <span className={`font-semibold ${selectedRegistration.final_result === 'lolos' ? 'text-green-600' : 'text-red-600'}`}>
+                      {selectedRegistration.final_result === 'lolos' ? 'LOLOS' : 'TIDAK LOLOS'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Reviewer Section */}
               <div className="space-y-4">
                 <h4 className="font-semibold">Catatan Reviewer</h4>
                 <Textarea
-                  placeholder="Tulis catatan untuk pendaftar ini (wajib diisi jika menolak)..."
+                  placeholder="Tulis catatan untuk pendaftar ini..."
                   value={reviewerNote}
                   onChange={(e) => setReviewerNote(e.target.value)}
                   rows={3}
                 />
               </div>
 
-              <SheetFooter className="flex flex-wrap gap-2 sm:justify-start">
-                <Button
-                  variant="outline"
-                  onClick={handleExportPDF}
-                  disabled={!trainingData}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (selectedRegistration) {
-                      setScheduleData({
-                        registration: selectedRegistration,
-                        date: "",
-                        time: "",
-                        note: ""
-                      });
-                      setIsScheduleDialogOpen(true);
-                    }
-                  }}
-                  disabled={selectedRegistration.selection_stage === "pengumuman"}
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  Jadwalkan Wawancara
-                </Button>
-                <Button
-                  variant="default"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={handleApproveWithPreview}
-                  disabled={updateStatusMutation.isPending || selectedRegistration.registration_status === "approved"}
-                >
-                  {updateStatusMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                  )}
-                  Setujui
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleRejectWithPreview}
-                  disabled={updateStatusMutation.isPending || selectedRegistration.registration_status === "rejected"}
-                >
-                  {updateStatusMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <XCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Tolak
-                </Button>
+              {/* Action Buttons based on Selection Stage */}
+              <SheetFooter className="flex flex-col gap-4 sm:flex-col">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleExportPDF}
+                    disabled={!trainingData}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
+                </div>
+
+                {/* Administrasi Stage Actions */}
+                {selectedRegistration.selection_stage === "administrasi" && !selectedRegistration.final_result && (
+                  <div className="space-y-2 w-full">
+                    <Label className="text-sm font-medium">Review Seleksi Administrasi:</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700 flex-1"
+                        onClick={() => {
+                          setScheduleData({
+                            registration: selectedRegistration,
+                            date: "",
+                            time: "",
+                            note: reviewerNote
+                          });
+                          setIsScheduleDialogOpen(true);
+                        }}
+                        disabled={updateStageMutation.isPending}
+                      >
+                        {updateStageMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                        )}
+                        Lolos Administrasi
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => {
+                          if (!reviewerNote.trim()) {
+                            toast.error("Mohon isi catatan alasan tidak lolos");
+                            return;
+                          }
+                          updateFinalResultMutation.mutate({
+                            id: selectedRegistration.id,
+                            result: "tidak_lolos",
+                            note: reviewerNote,
+                            email: selectedRegistration.email,
+                            name: selectedRegistration.full_name
+                          });
+                        }}
+                        disabled={updateFinalResultMutation.isPending}
+                      >
+                        {updateFinalResultMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Tidak Lolos Administrasi
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wawancara Stage Actions */}
+                {selectedRegistration.selection_stage === "wawancara" && !selectedRegistration.final_result && (
+                  <div className="space-y-2 w-full">
+                    <Label className="text-sm font-medium">Review Setelah Wawancara:</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700 flex-1"
+                        onClick={() => {
+                          updateFinalResultMutation.mutate({
+                            id: selectedRegistration.id,
+                            result: "lolos",
+                            note: reviewerNote,
+                            email: selectedRegistration.email,
+                            name: selectedRegistration.full_name
+                          });
+                        }}
+                        disabled={updateFinalResultMutation.isPending}
+                      >
+                        {updateFinalResultMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                        )}
+                        Lolos Wawancara (Diterima)
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => {
+                          if (!reviewerNote.trim()) {
+                            toast.error("Mohon isi catatan alasan tidak lolos");
+                            return;
+                          }
+                          updateFinalResultMutation.mutate({
+                            id: selectedRegistration.id,
+                            result: "tidak_lolos",
+                            note: reviewerNote,
+                            email: selectedRegistration.email,
+                            name: selectedRegistration.full_name
+                          });
+                        }}
+                        disabled={updateFinalResultMutation.isPending}
+                      >
+                        {updateFinalResultMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Tidak Lolos Wawancara
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pengumuman Stage - Final Result Already Set */}
+                {selectedRegistration.final_result && (
+                  <div className="w-full p-4 rounded-lg bg-muted text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Pendaftar ini sudah memiliki hasil akhir: 
+                      <span className={`ml-1 font-semibold ${selectedRegistration.final_result === 'lolos' ? 'text-green-600' : 'text-red-600'}`}>
+                        {selectedRegistration.final_result === 'lolos' ? 'LOLOS' : 'TIDAK LOLOS'}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </SheetFooter>
             </div>
           )}

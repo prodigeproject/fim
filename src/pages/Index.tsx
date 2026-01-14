@@ -200,14 +200,9 @@ const Index = () => {
               yang menerangi masa depan bangsa.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <Link to="/daftar">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                  Bergabung Sekarang <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
               <Link to="/tentang">
-                <Button size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20">
-                  Pelajari Lebih Lanjut
+                <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
+                  Pelajari Lebih Lanjut <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -435,7 +430,11 @@ const Index = () => {
                       <img 
                         src={partner.logo_url} 
                         alt={partner.name} 
+                        loading="lazy"
                         className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     </div>
                   </a>
@@ -449,6 +448,7 @@ const Index = () => {
                       <img 
                         src={logo} 
                         alt={`Partner ${(index % partnerLogos.length) + 1}`} 
+                        loading="lazy"
                         className="max-h-full max-w-full object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all" 
                       />
                     </div>
