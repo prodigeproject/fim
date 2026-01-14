@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap } from "lucide-react";
+import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
@@ -55,6 +55,35 @@ const Index = () => {
     },
   });
 
+  // Fetch latest articles for Kabar Terkini
+  const { data: latestArticles } = useQuery({
+    queryKey: ["homepage-articles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("articles")
+        .select("id, title, slug, excerpt, featured_image_url, published_at, category")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch partner logos from database
+  const { data: partners } = useQuery({
+    queryKey: ["homepage-partners"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("partner_logos")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const stats = [
     { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
     { icon: Users, value: "> 34", label: "Angkatan" },
@@ -90,28 +119,25 @@ const Index = () => {
     },
   ];
 
-  // Placeholder news data - will be replaced with actual data from backend
-  const kabarTerkini = [
+  // Program unggulan data
+  const programUnggulan = [
     {
-      id: 1,
-      title: "FIM Batch 34 Sukses Dilaksanakan",
-      excerpt: "Lebih dari 200 peserta dari seluruh Indonesia mengikuti program kaderisasi FIM angkatan ke-34.",
-      date: "20 Desember 2025",
-      image: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop",
+      title: "Pelatihan",
+      description: "Program kaderisasi kepemimpinan intensif dengan kurikulum 7 pilar karakter dan 7 pilar kepemimpinan.",
+      icon: GraduationCap,
+      link: "/program/pelatihan",
     },
     {
-      id: 2,
-      title: "Kolaborasi FIM dengan Nalar Institute",
-      excerpt: "FIM menjalin kerjasama dengan Nalar Institute untuk pelatihan kebijakan publik.",
-      date: "15 Desember 2025",
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop",
+      title: "Mentoring",
+      description: "Bimbingan langsung dari alumni FIM yang telah berkarir di berbagai bidang.",
+      icon: Users,
+      link: "/program/program-unggulan",
     },
     {
-      id: 3,
-      title: "Alumni FIM Raih Penghargaan Nasional",
-      excerpt: "Beberapa alumni FIM mendapatkan penghargaan dari berbagai lembaga atas kontribusinya.",
-      date: "10 Desember 2025",
-      image: "https://images.unsplash.com/photo-1559223607-180d0c79a8db?w=400&h=250&fit=crop",
+      title: "Series Discussion",
+      description: "Diskusi rutin membahas isu-isu aktual bersama pakar dan praktisi.",
+      icon: MessageSquare,
+      link: "/program/program-unggulan",
     },
   ];
 
@@ -310,24 +336,68 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Kabar Terkini (News) Section - Replaced Programs */}
+      {/* Program Unggulan Section */}
       <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Program Unggulan</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Program pengembangan kepemimpinan dan karakter untuk generasi muda Indonesia</p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {programUnggulan.map((program, index) => (
+              <Link key={program.title} to={program.link} className="group">
+                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in h-full" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <program.icon className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">{program.title}</h3>
+                  <p className="text-sm text-muted-foreground">{program.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link to="/program/program-unggulan">
+              <Button variant="outline">Lihat Semua Program <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Kabar Terkini (News) Section - Integrated with Articles */}
+      <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar Terkini</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita dan informasi terbaru dari Forum Indonesia Muda</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {kabarTerkini.map((news, index) => (
-              <Link key={news.id} to="/blog" className="group">
+            {latestArticles?.length ? latestArticles.map((article, index) => (
+              <Link key={article.id} to={`/blog/${article.slug}`} className="group">
                 <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <img src={news.image} alt={news.title} className="w-full h-40 object-cover" />
+                  <img 
+                    src={article.featured_image_url || "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop"} 
+                    alt={article.title} 
+                    className="w-full h-40 object-cover" 
+                  />
                   <div className="p-5">
-                    <span className="text-xs text-muted-foreground">{news.date}</span>
-                    <h3 className="font-bold text-foreground mb-2 mt-1 group-hover:text-primary transition-colors line-clamp-2">{news.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{news.excerpt}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {article.published_at ? new Date(article.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}
+                    </span>
+                    <h3 className="font-bold text-foreground mb-2 mt-1 group-hover:text-primary transition-colors line-clamp-2">{article.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{article.excerpt || ""}</p>
                   </div>
                 </div>
               </Link>
-            ))}
+            )) : (
+              // Placeholder if no articles yet
+              [1, 2, 3].map((_, index) => (
+                <div key={index} className="bg-card rounded-xl overflow-hidden shadow-lg animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="w-full h-40 bg-muted" />
+                  <div className="p-5">
+                    <div className="h-3 w-20 bg-muted rounded mb-2" />
+                    <div className="h-5 w-full bg-muted rounded mb-2" />
+                    <div className="h-4 w-3/4 bg-muted rounded" />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           <div className="text-center mt-8">
             <Link to="/blog">
@@ -337,20 +407,28 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Partners Section - Logo Only */}
-      <section className="py-16 bg-secondary">
+      {/* Partners Section - Dynamic from Database */}
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Mitra Kami</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Kolaborator yang telah bekerjasama dengan FIM</p>
           <div className="flex flex-wrap justify-center items-center gap-6 max-w-5xl mx-auto">
-            {partnerLogos.map((logo, index) => (
-              <div key={index} className="bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-center animate-fade-in" style={{ animationDelay: `${index * 0.02}s` }}>
+            {/* Use database partners if available, otherwise use static logos */}
+            {(partners?.length ? partners : partnerLogos.map((logo, i) => ({ id: i, logo_url: logo, name: `Partner ${i + 1}`, website_url: null }))).map((partner: any, index: number) => (
+              <a 
+                key={partner.id || index} 
+                href={partner.website_url || "#"} 
+                target={partner.website_url ? "_blank" : undefined}
+                rel={partner.website_url ? "noopener noreferrer" : undefined}
+                className="bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-center animate-fade-in" 
+                style={{ animationDelay: `${index * 0.02}s` }}
+              >
                 <img 
-                  src={logo} 
-                  alt={`Partner ${index + 1}`} 
+                  src={typeof partner === 'string' ? partner : partner.logo_url} 
+                  alt={typeof partner === 'string' ? `Partner ${index + 1}` : partner.name} 
                   className="h-12 w-auto max-w-[100px] object-contain"
                 />
-              </div>
+              </a>
             ))}
           </div>
         </div>

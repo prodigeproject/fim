@@ -27,6 +27,8 @@ import {
   ClipboardList,
   UserCircle,
   ShieldAlert,
+  Video,
+  Handshake,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
@@ -69,6 +71,8 @@ const navItems: NavItem[] = [
   { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
   { name: "Regional", href: "/admin/regionals", icon: MapPin },
   { name: "Alumni", href: "/admin/alumni", icon: Users },
+  { name: "Video Featured", href: "/admin/featured-videos", icon: Video },
+  { name: "Mitra", href: "/admin/partners", icon: Handshake },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 

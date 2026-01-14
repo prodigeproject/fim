@@ -2,16 +2,18 @@ import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Mail, Instagram } from "lucide-react";
-import { useState } from "react";
+import { Users, Mail, Instagram, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
 const FimClub = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: clubs, isLoading } = useQuery({
     queryKey: ["public-fim-clubs"],
@@ -30,9 +32,26 @@ const FimClub = () => {
     ? ["Semua", ...Array.from(new Set(clubs.map((club) => club.category)))]
     : ["Semua"];
 
-  const filteredClubs = selectedCategory === "Semua" 
-    ? clubs 
-    : clubs?.filter((club) => club.category === selectedCategory);
+  // Filter clubs by category and search query
+  const filteredClubs = useMemo(() => {
+    let result = clubs || [];
+    
+    if (selectedCategory !== "Semua") {
+      result = result.filter((club) => club.category === selectedCategory);
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((club) => 
+        club.name.toLowerCase().includes(query) ||
+        club.description?.toLowerCase().includes(query) ||
+        club.category.toLowerCase().includes(query) ||
+        club.activities?.some((a: string) => a.toLowerCase().includes(query))
+      );
+    }
+    
+    return result;
+  }, [clubs, selectedCategory, searchQuery]);
 
   return (
     <Layout>
@@ -59,6 +78,20 @@ const FimClub = () => {
 
       <section className="py-6 bg-background border-b border-border">
         <div className="container mx-auto px-4">
+          {/* Search Bar */}
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari FIM Club..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          
+          {/* Category Filter */}
           <div className="flex flex-wrap justify-center gap-2">
             {categories.map((category) => (
               <button 
