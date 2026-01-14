@@ -55,18 +55,41 @@ const Index = () => {
     },
   });
 
-  // Fetch latest articles for Kabar Terkini
-  const { data: latestArticles } = useQuery({
-    queryKey: ["homepage-articles"],
+  // Fetch pinned articles for Kabar FIM (prioritize pinned, then latest)
+  const { data: featuredArticles } = useQuery({
+    queryKey: ["homepage-pinned-articles"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try to get pinned articles
+      const { data: pinned, error: pinnedError } = await supabase
         .from("articles")
-        .select("id, title, slug, excerpt, featured_image_url, published_at, category")
+        .select("id, title, slug, excerpt, featured_image_url, published_at, category, is_pinned")
         .eq("status", "published")
-        .order("published_at", { ascending: false })
+        .eq("is_pinned", true)
+        .order("pinned_at", { ascending: false })
         .limit(3);
-      if (error) throw error;
-      return data;
+      
+      if (pinnedError) throw pinnedError;
+      
+      // If we have 3 pinned articles, use them
+      if (pinned && pinned.length >= 3) {
+        return pinned.slice(0, 3);
+      }
+      
+      // Otherwise, fill with latest articles
+      const needed = 3 - (pinned?.length || 0);
+      const pinnedIds = pinned?.map(a => a.id) || [];
+      
+      const { data: latest, error: latestError } = await supabase
+        .from("articles")
+        .select("id, title, slug, excerpt, featured_image_url, published_at, category, is_pinned")
+        .eq("status", "published")
+        .not("id", "in", `(${pinnedIds.length ? pinnedIds.join(",") : "00000000-0000-0000-0000-000000000000"})`)
+        .order("published_at", { ascending: false })
+        .limit(needed);
+      
+      if (latestError) throw latestError;
+      
+      return [...(pinned || []), ...(latest || [])].slice(0, 3);
     },
   });
 
@@ -357,15 +380,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Kabar Terkini (News) Section - Integrated with Articles */}
+      {/* Kabar FIM Section - Pinned Articles */}
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar Terkini</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita dan informasi terbaru dari Forum Indonesia Muda</p>
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar FIM</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita pilihan dan informasi penting dari Forum Indonesia Muda</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {latestArticles?.length ? latestArticles.map((article, index) => (
+            {featuredArticles?.length ? featuredArticles.map((article, index) => (
               <Link key={article.id} to={`/blog/${article.slug}`} className="group">
-                <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative" style={{ animationDelay: `${index * 0.1}s` }}>
+                  {article.is_pinned && (
+                    <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">
+                      Pilihan
+                    </div>
+                  )}
                   <img 
                     src={article.featured_image_url || "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop"} 
                     alt={article.title} 
