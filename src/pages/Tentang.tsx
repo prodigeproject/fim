@@ -145,41 +145,41 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* 7 Pilar + Perjalanan Kami - Side by Side Layout */}
-      <section className="py-16 bg-secondary">
+      {/* 7 Pilar + Perjalanan Kami - Compact Side by Side Layout */}
+      <section className="py-10 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
-            {/* Left Column: 7 Pilar */}
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Nilai & Pilar FIM</h2>
-              <p className="text-muted-foreground mb-6 text-sm">Fondasi karakter dan kepemimpinan</p>
+          <div className="grid lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start">
+            {/* Left Column: 7 Pilar - Takes 2 columns */}
+            <div className="lg:col-span-2">
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Nilai & Pilar FIM</h2>
+              <p className="text-muted-foreground mb-4 text-xs">Fondasi karakter dan kepemimpinan</p>
               
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {/* 7 Pilar Karakter - Compact */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* 7 Pilar Karakter - Ultra Compact */}
                 <div>
-                  <h4 className="font-bold text-foreground text-sm mb-3 flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-primary" /> Pilar Karakter
+                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1">
+                    <Heart className="h-3 w-3 text-primary" /> Karakter
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {pilarKarakter.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2 bg-card rounded-md px-3 py-2 shadow-sm">
-                        <item.icon className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-xs font-medium text-foreground">{item.name}</span>
+                      <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
+                        <item.icon className="h-3 w-3 text-primary flex-shrink-0" />
+                        <span className="text-[10px] font-medium text-foreground leading-tight">{item.name}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 
-                {/* 7 Pilar Kepemimpinan - Compact */}
+                {/* 7 Pilar Kepemimpinan - Ultra Compact */}
                 <div>
-                  <h4 className="font-bold text-foreground text-sm mb-3 flex items-center gap-2">
-                    <Star className="h-4 w-4 text-supporting" /> Pilar Kepemimpinan
+                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1">
+                    <Star className="h-3 w-3 text-supporting" /> Kepemimpinan
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {pilarKepemimpinan.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2 bg-card rounded-md px-3 py-2 shadow-sm">
-                        <item.icon className="h-4 w-4 text-supporting flex-shrink-0" />
-                        <span className="text-xs font-medium text-foreground">{item.name}</span>
+                      <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
+                        <item.icon className="h-3 w-3 text-supporting flex-shrink-0" />
+                        <span className="text-[10px] font-medium text-foreground leading-tight">{item.name}</span>
                       </div>
                     ))}
                   </div>
@@ -187,28 +187,16 @@ const Tentang = () => {
               </div>
             </div>
 
-            {/* Right Column: Perjalanan Kami (Timeline) */}
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">Perjalanan Kami</h2>
-              <p className="text-muted-foreground mb-6 text-sm">Sejarah Forum Indonesia Muda</p>
+            {/* Right Column: Perjalanan Kami (Timeline) - Takes 3 columns */}
+            <div className="lg:col-span-3">
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Perjalanan Kami</h2>
+              <p className="text-muted-foreground mb-4 text-xs">Sejarah Forum Indonesia Muda</p>
               
-              <div className="relative max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
-                {sejarah.map((item, index) => (
-                  <div
-                    key={item.year}
-                    className="flex gap-3 mb-4 last:mb-0"
-                  >
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {item.year}
-                      </div>
-                      {index < sejarah.length - 1 && (
-                        <div className="w-0.5 flex-1 bg-primary/30 mt-1" />
-                      )}
-                    </div>
-                    <div className="flex-1 bg-card rounded-lg p-3 shadow-sm">
-                      <p className="text-foreground text-xs leading-relaxed">{item.event}</p>
-                    </div>
+              <div className="grid grid-cols-3 gap-2">
+                {sejarah.map((item) => (
+                  <div key={item.year} className="bg-card rounded-lg p-2 shadow-sm border-l-2 border-primary">
+                    <div className="font-bold text-primary text-sm mb-0.5">{item.year}</div>
+                    <p className="text-foreground text-[10px] leading-tight line-clamp-4">{item.event}</p>
                   </div>
                 ))}
               </div>

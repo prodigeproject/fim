@@ -121,6 +121,25 @@
   .bg-gradient-hero {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(355 100% 35%) 100%);
   }
+
+  /* Infinite scroll animation for partner logos */
+  .animate-scroll-x {
+    animation: scroll-x 30s linear infinite;
+  }
+
+  .animate-scroll-x:hover,
+  .animate-scroll-x.pause-animation {
+    animation-play-state: paused;
+  }
+
+  @keyframes scroll-x {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-33.333%);
+    }
+  }
 }
 
 /* Print Styles */
