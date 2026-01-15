@@ -40,6 +40,7 @@ import {
   Clock
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { WordCountTextarea } from "@/components/WordCountTextarea";
 import logoFim from "@/assets/logo-fim.png";
 
 interface OrganizationalExperience {
@@ -691,91 +692,78 @@ export default function TrainingRegistration() {
                       rows={2}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="why_join_fim">Mengapa Anda ingin bergabung dengan FIM? *</Label>
-                    <Textarea
-                      id="why_join_fim"
-                      value={formData.why_join_fim}
-                      onChange={(e) => updateField("why_join_fim", e.target.value)}
-                      placeholder="Jelaskan alasan Anda"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="motivation">
-                      Jelaskan motivasi Anda mengikuti pelatihan FIM * (minimal 200 kata)
-                    </Label>
-                    <Textarea
-                      id="motivation"
-                      value={formData.motivation}
-                      onChange={(e) => updateField("motivation", e.target.value)}
-                      placeholder="Jelaskan motivasi Anda secara detail..."
-                      rows={6}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Jumlah kata: {formData.motivation.split(/\s+/).filter(w => w).length}
-                    </p>
-                  </div>
+                  <WordCountTextarea
+                    id="why_join_fim"
+                    label="Mengapa Anda ingin bergabung dengan FIM?"
+                    value={formData.why_join_fim}
+                    onChange={(value) => updateField("why_join_fim", value)}
+                    placeholder="Jelaskan alasan Anda"
+                    minWords={50}
+                    rows={4}
+                    required
+                  />
+                  <WordCountTextarea
+                    id="motivation"
+                    label="Jelaskan motivasi Anda mengikuti pelatihan FIM"
+                    value={formData.motivation}
+                    onChange={(value) => updateField("motivation", value)}
+                    placeholder="Jelaskan motivasi Anda secara detail..."
+                    minWords={200}
+                    rows={8}
+                    required
+                  />
                 </div>
               )}
 
               {/* Step 5: Kepedulian Sosial */}
               {currentStep === 5 && (
                 <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="social_issue_concern">
-                      Isu sosial apa yang paling Anda pedulikan dan mengapa? *
-                    </Label>
-                    <Textarea
-                      id="social_issue_concern"
-                      value={formData.social_issue_concern}
-                      onChange={(e) => updateField("social_issue_concern", e.target.value)}
-                      placeholder="Jelaskan isu sosial yang Anda pedulikan..."
-                      rows={5}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="social_contribution_experience">
-                      Ceritakan pengalaman kontribusi sosial yang pernah Anda lakukan *
-                    </Label>
-                    <Textarea
-                      id="social_contribution_experience"
-                      value={formData.social_contribution_experience}
-                      onChange={(e) => updateField("social_contribution_experience", e.target.value)}
-                      placeholder="Jelaskan pengalaman kontribusi sosial Anda..."
-                      rows={5}
-                    />
-                  </div>
+                  <WordCountTextarea
+                    id="social_issue_concern"
+                    label="Isu sosial apa yang paling Anda pedulikan dan mengapa?"
+                    value={formData.social_issue_concern}
+                    onChange={(value) => updateField("social_issue_concern", value)}
+                    placeholder="Jelaskan isu sosial yang Anda pedulikan..."
+                    minWords={100}
+                    rows={6}
+                    required
+                  />
+                  <WordCountTextarea
+                    id="social_contribution_experience"
+                    label="Ceritakan pengalaman kontribusi sosial yang pernah Anda lakukan"
+                    value={formData.social_contribution_experience}
+                    onChange={(value) => updateField("social_contribution_experience", value)}
+                    placeholder="Jelaskan pengalaman kontribusi sosial Anda..."
+                    minWords={100}
+                    rows={6}
+                    required
+                  />
                 </div>
               )}
 
               {/* Step 6: Kontribusi Strategis */}
               {currentStep === 6 && (
                 <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="strategic_contribution_plan">
-                      Apa rencana kontribusi Anda untuk FIM dan masyarakat? *
-                    </Label>
-                    <Textarea
-                      id="strategic_contribution_plan"
-                      value={formData.strategic_contribution_plan}
-                      onChange={(e) => updateField("strategic_contribution_plan", e.target.value)}
-                      placeholder="Jelaskan rencana kontribusi Anda..."
-                      rows={5}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="impact_expected">
-                      Dampak apa yang Anda harapkan dari kontribusi tersebut? *
-                    </Label>
-                    <Textarea
-                      id="impact_expected"
-                      value={formData.impact_expected}
-                      onChange={(e) => updateField("impact_expected", e.target.value)}
-                      placeholder="Jelaskan dampak yang diharapkan..."
-                      rows={5}
-                    />
-                  </div>
+                  <WordCountTextarea
+                    id="strategic_contribution_plan"
+                    label="Apa rencana kontribusi Anda untuk FIM dan masyarakat?"
+                    value={formData.strategic_contribution_plan}
+                    onChange={(value) => updateField("strategic_contribution_plan", value)}
+                    placeholder="Jelaskan rencana kontribusi Anda..."
+                    minWords={100}
+                    rows={6}
+                    required
+                  />
+                  <WordCountTextarea
+                    id="impact_expected"
+                    label="Dampak apa yang Anda harapkan dari kontribusi tersebut?"
+                    value={formData.impact_expected}
+                    onChange={(value) => updateField("impact_expected", value)}
+                    placeholder="Jelaskan dampak yang diharapkan..."
+                    minWords={100}
+                    rows={6}
+                    required
+                  />
                 </div>
               )}
             </CardContent>
