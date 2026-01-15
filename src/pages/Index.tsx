@@ -211,17 +211,24 @@ const Index = () => {
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
             />
             <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Forum Indonesia Muda
+              Bangun Karakter & Kepemimpinan
+              <br />
+              <span className="text-accent">untuk Masa Depan Indonesia</span>
             </h1>
             {/* Social Proof Subheadline */}
             <p className="text-sm lg:text-base text-accent font-semibold mb-4 animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              Diikuti 100+ peserta/angkatan | Alumni di Kementerian, Startup, NGO, dll.
+              ✓ 4000+ Alumni di Kementerian, Startup, NGO | ✓ 34+ Angkatan Sejak 2003
             </p>
-            <p className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi 
-              <span className="text-accent font-semibold"> cahaya kunang-kunang </span>
-              yang menerangi masa depan bangsa.
+            <p className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              Raih kesempatan untuk mengembangkan diri melalui pelatihan kepemimpinan berbasis 
+              <span className="text-accent font-semibold"> 7 Pilar Karakter</span>. Bergabunglah dengan jaringan pemuda terbaik Indonesia.
             </p>
+            {/* Urgency Banner */}
+            <div className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 animate-fade-in inline-block" style={{ animationDelay: "0.25s" }}>
+              <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
+                <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Link to="/tentang">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
