@@ -129,11 +129,20 @@ interface TrainingData {
   updated_at: string;
 }
 
+interface Batch {
+  id: string;
+  batch_name: string;
+  batch_number: number;
+  registration_start_date: string | null;
+  registration_end_date: string | null;
+}
+
 export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stageFilter, setStageFilter] = useState<string>("all");
+  const [batchFilter, setBatchFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<"name" | "created_at">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
@@ -167,9 +176,23 @@ export default function RegistrationsManagement() {
     note: string;
   }>({ registration: null, date: "", time: "", note: "" });
 
-  // Fetch all registrations
+  // Fetch batches for filter
+  const { data: batches } = useQuery({
+    queryKey: ["registration-batches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("registration_settings")
+        .select("id, batch_name, batch_number, registration_start_date, registration_end_date")
+        .order("batch_number", { ascending: false });
+      
+      if (error) throw error;
+      return data as Batch[];
+    },
+  });
+
+  // Fetch all registrations with batch filter
   const { data: registrations, isLoading } = useQuery({
-    queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, sortField, sortOrder],
+    queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, batchFilter, sortField, sortOrder],
     queryFn: async () => {
       let query = supabase
         .from("fim_registrations")
@@ -185,6 +208,10 @@ export default function RegistrationsManagement() {
 
       if (stageFilter !== "all") {
         query = query.eq("selection_stage", stageFilter);
+      }
+
+      if (batchFilter !== "all") {
+        query = query.eq("batch_id", batchFilter);
       }
 
       const { data, error } = await query;
@@ -527,7 +554,7 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Final result mutation
+  // Final result mutation - fixed with proper error handling
   const updateFinalResultMutation = useMutation({
     mutationFn: async ({ id, result, note, email, name }: { 
       id: string; 
@@ -536,21 +563,39 @@ export default function RegistrationsManagement() {
       email?: string;
       name?: string;
     }) => {
-      const { error } = await supabase
+      console.log("Updating final result:", { id, result, note });
+      
+      // Build update object step by step to avoid any issues
+      const updateData: Record<string, any> = {
+        final_result: result,
+        selection_stage: "pengumuman",
+        registration_status: result === "lolos" ? "approved" : "rejected",
+        updated_at: new Date().toISOString()
+      };
+      
+      // Only add interview_note if there's a note
+      if (note && note.trim()) {
+        updateData.interview_note = note.trim();
+      }
+
+      const { data, error } = await supabase
         .from("fim_registrations")
-        .update({ 
-          final_result: result,
-          selection_stage: "pengumuman",
-          registration_status: result === "lolos" ? "approved" : "rejected",
-          interview_note: note
-        })
-        .eq("id", id);
-      if (error) throw error;
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Database error updating final result:", error);
+        throw new Error(error.message || "Database error");
+      }
+
+      console.log("Final result updated successfully:", data);
 
       // Send email notification for final result
       if (email && name) {
         try {
-          await supabase.functions.invoke("notify-selection-stage", {
+          const emailResponse = await supabase.functions.invoke("notify-selection-stage", {
             body: {
               registrantEmail: email,
               registrantName: name,
@@ -559,20 +604,30 @@ export default function RegistrationsManagement() {
               note: note || undefined,
             },
           });
+          
+          if (emailResponse.error) {
+            console.error("Email notification error:", emailResponse.error);
+          } else {
+            console.log("Email notification sent successfully");
+          }
         } catch (emailError) {
           console.error("Failed to send final result notification:", emailError);
+          // Don't throw - email failure shouldn't fail the whole operation
         }
       }
+      
+      return data;
     },
     onSuccess: (_, variables) => {
       const resultText = variables.result === "lolos" ? "Lolos (Diterima)" : "Tidak Lolos";
-      toast.success(`Hasil akhir: ${resultText}`);
+      toast.success(`Hasil akhir berhasil diperbarui: ${resultText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
       setIsDetailOpen(false);
     },
-    onError: () => {
-      toast.error("Gagal memperbarui hasil akhir");
+    onError: (error: any) => {
+      console.error("Mutation error:", error);
+      toast.error(`Gagal memperbarui hasil akhir: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -1084,6 +1139,19 @@ Tim Forum Indonesia Muda
                 <SelectItem value="administrasi">Administrasi</SelectItem>
                 <SelectItem value="wawancara">Wawancara</SelectItem>
                 <SelectItem value="pengumuman">Pengumuman</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter Batch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Batch</SelectItem>
+                {batches?.map((batch) => (
+                  <SelectItem key={batch.id} value={batch.id}>
+                    {batch.batch_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

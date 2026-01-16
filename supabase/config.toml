@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.send-verification-email]
 verify_jwt = false
+
+[functions.send-reminder-incomplete]
+verify_jwt = false
+
+[functions.notify-selection-stage]
+verify_jwt = false
+
+[functions.notify-first-login]
+verify_jwt = false
