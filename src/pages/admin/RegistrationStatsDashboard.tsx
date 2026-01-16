@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 import { 
   Users, 
   CheckCircle, 
@@ -25,7 +26,8 @@ import {
   Loader2,
   FileText,
   MessageSquare,
-  CheckCircle2
+  CheckCircle2,
+  FileSpreadsheet
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -299,6 +301,100 @@ export default function RegistrationStatsDashboard() {
     { label: "3 Bulan", from: subDays(new Date(), 89), to: new Date() },
   ];
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    try {
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+
+      // Sheet 1: Summary Statistics
+      const summaryData = [
+        ["Laporan Statistik Pendaftaran FIM"],
+        [`Periode: ${dateRange?.from ? format(dateRange.from, "dd MMM yyyy", { locale: id }) : "-"} - ${dateRange?.to ? format(dateRange.to, "dd MMM yyyy", { locale: id }) : "-"}`],
+        [`Batch: ${selectedBatch !== "all" ? batches?.find(b => b.id === selectedBatch)?.batch_name : "Semua Batch"}`],
+        [`Tahap: ${selectedStage !== "all" ? STAGE_LABELS[selectedStage as keyof typeof STAGE_LABELS] : "Semua Tahap"}`],
+        [],
+        ["RINGKASAN STATISTIK"],
+        ["Metrik", "Jumlah", "Persentase"],
+        ["Total Pendaftar", totalRegistrations, "100%"],
+        ["Menunggu Review", pendingCount, `${totalRegistrations > 0 ? Math.round((pendingCount / totalRegistrations) * 100) : 0}%`],
+        ["Diterima", approvedCount, `${totalRegistrations > 0 ? Math.round((approvedCount / totalRegistrations) * 100) : 0}%`],
+        ["Ditolak", rejectedCount, `${totalRegistrations > 0 ? Math.round((rejectedCount / totalRegistrations) * 100) : 0}%`],
+        [],
+        ["BREAKDOWN TAHAP SELEKSI"],
+        ["Tahap", "Jumlah"],
+        ["Administrasi", stageAdministrasi],
+        ["Wawancara", stageWawancara],
+        ["Pengumuman", stagePengumuman],
+        [],
+        ["HASIL AKHIR"],
+        ["Hasil", "Jumlah"],
+        ["Lolos", lolosCount],
+        ["Tidak Lolos", tidakLolosCount],
+        [],
+        ["PROGRESS FORMULIR"],
+        ["Metrik", "Nilai"],
+        ["Formulir Tersubmit", submittedTrainingCount],
+        ["Total Formulir", trainingData?.length || 0],
+        ["Rata-rata Kelengkapan", `${avgCompletion}%`],
+      ];
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Ringkasan");
+
+      // Sheet 2: Daily/Weekly Trend
+      if (trendData.length > 0) {
+        const trendSheet = XLSX.utils.json_to_sheet(trendData.map(d => ({
+          "Tanggal": d.date,
+          "Total": d.total,
+          "Menunggu": d.pending,
+          "Diterima": d.approved,
+          "Ditolak": d.rejected,
+        })));
+        XLSX.utils.book_append_sheet(workbook, trendSheet, "Trend Pendaftaran");
+      }
+
+      // Sheet 3: Batch Comparison
+      if (batchComparisonData.length > 0) {
+        const batchSheet = XLSX.utils.json_to_sheet(batchComparisonData.map(d => ({
+          "Batch": d.name,
+          "Total Pendaftar": d.total,
+          "Lolos": d.lolos,
+          "Tidak Lolos": d.tidakLolos,
+          "Tingkat Kelulusan": d.total > 0 ? `${Math.round((d.lolos / d.total) * 100)}%` : "0%",
+        })));
+        XLSX.utils.book_append_sheet(workbook, batchSheet, "Perbandingan Batch");
+      }
+
+      // Sheet 4: Training Completion Distribution
+      const completionSheet = XLSX.utils.json_to_sheet(trainingCompletionData.map(d => ({
+        "Range Kelengkapan": d.name,
+        "Jumlah": d.value,
+      })));
+      XLSX.utils.book_append_sheet(workbook, completionSheet, "Distribusi Kelengkapan");
+
+      // Sheet 5: Raw Data
+      if (filteredRegistrations && filteredRegistrations.length > 0) {
+        const rawSheet = XLSX.utils.json_to_sheet(filteredRegistrations.map(r => ({
+          "ID": r.id,
+          "Tanggal Daftar": format(new Date(r.created_at), "dd/MM/yyyy HH:mm"),
+          "Status": STATUS_LABELS[r.registration_status as keyof typeof STATUS_LABELS] || r.registration_status,
+          "Tahap Seleksi": r.selection_stage ? STAGE_LABELS[r.selection_stage as keyof typeof STAGE_LABELS] || r.selection_stage : "-",
+          "Hasil Akhir": r.final_result === "lolos" ? "Lolos" : r.final_result === "tidak_lolos" ? "Tidak Lolos" : "-",
+          "Batch ID": r.batch_id || "-",
+        })));
+        XLSX.utils.book_append_sheet(workbook, rawSheet, "Data Pendaftar");
+      }
+
+      // Save file
+      const fileName = `Statistik-Pendaftaran-FIM-${format(new Date(), "yyyyMMdd")}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      toast.success("Excel berhasil diunduh");
+    } catch (error) {
+      console.error("Export Excel error:", error);
+      toast.error("Gagal mengexport Excel");
+    }
+  };
+
   // Export to PDF
   const handleExportPDF = async () => {
     if (!chartRef.current) return;
@@ -422,6 +518,14 @@ export default function RegistrationStatsDashboard() {
               <FileDown className="h-4 w-4 mr-2" />
             )}
             Export PDF
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleExportExcel}
+            disabled={isExporting || isLoading}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export Excel
           </Button>
         </div>
       </div>
