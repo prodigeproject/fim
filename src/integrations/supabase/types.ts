@@ -432,6 +432,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          updated_at: string | null
+          updated_by: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          updated_at?: string | null
+          updated_by?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       featured_videos: {
         Row: {
           created_at: string
@@ -735,6 +777,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fim_training_registrations_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "fim_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_schedules: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          duration_minutes: number | null
+          id: string
+          location: string | null
+          meeting_link: string | null
+          notes: string | null
+          registration_id: string
+          reminder_sent: boolean | null
+          reminder_sent_at: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          meeting_link?: string | null
+          notes?: string | null
+          registration_id: string
+          reminder_sent?: boolean | null
+          reminder_sent_at?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          location?: string | null
+          meeting_link?: string | null
+          notes?: string | null
+          registration_id?: string
+          reminder_sent?: boolean | null
+          reminder_sent_at?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_schedules_registration_id_fkey"
             columns: ["registration_id"]
             isOneToOne: false
             referencedRelation: "fim_registrations"

@@ -51,6 +51,8 @@ import RolesManagement from "@/pages/admin/RolesManagement";
 import RegistrationSettingsManagement from "@/pages/admin/RegistrationSettingsManagement";
 import PartnersManagement from "@/pages/admin/PartnersManagement";
 import FeaturedVideosManagement from "@/pages/admin/FeaturedVideosManagement";
+import EmailTemplatesManagement from "@/pages/admin/EmailTemplatesManagement";
+import InterviewCalendar from "@/pages/admin/InterviewCalendar";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -133,6 +135,8 @@ const AnimatedRoutes = () => {
                 <Route path="registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
                 <Route path="partners" element={<RequireAdmin><PartnersManagement /></RequireAdmin>} />
                 <Route path="featured-videos" element={<RequireAdmin><FeaturedVideosManagement /></RequireAdmin>} />
+                <Route path="email-templates" element={<RequireAdmin><EmailTemplatesManagement /></RequireAdmin>} />
+                <Route path="interview-calendar" element={<RequireAdmin><InterviewCalendar /></RequireAdmin>} />
                 
                 {/* Super Admin only routes */}
                 <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
