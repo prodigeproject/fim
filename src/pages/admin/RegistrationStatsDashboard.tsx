@@ -87,8 +87,9 @@ const STATUS_COLORS = {
 
 const STAGE_COLORS = {
   administrasi: "#3b82f6",
+  lolos_administrasi: "#10b981",
   wawancara: "#f59e0b",
-  pengumuman: "#10b981",
+  pengumuman: "#8b5cf6",
 };
 
 const STATUS_LABELS = {
@@ -98,8 +99,9 @@ const STATUS_LABELS = {
   rejected: "Ditolak",
 };
 
-const STAGE_LABELS = {
+const STAGE_LABELS: Record<string, string> = {
   administrasi: "Administrasi",
+  lolos_administrasi: "Lolos Administrasi",
   wawancara: "Wawancara",
   pengumuman: "Pengumuman",
 };
@@ -184,6 +186,7 @@ export default function RegistrationStatsDashboard() {
 
   // Stage stats
   const stageAdministrasi = filteredRegistrations?.filter(r => r.selection_stage === "administrasi").length || 0;
+  const stageLolosAdministrasi = filteredRegistrations?.filter(r => r.selection_stage === "lolos_administrasi").length || 0;
   const stageWawancara = filteredRegistrations?.filter(r => r.selection_stage === "wawancara").length || 0;
   const stagePengumuman = filteredRegistrations?.filter(r => r.selection_stage === "pengumuman").length || 0;
   const lolosCount = filteredRegistrations?.filter(r => r.final_result === "lolos").length || 0;
@@ -258,29 +261,78 @@ export default function RegistrationStatsDashboard() {
   // Stage breakdown data
   const stageBreakdownData = [
     { name: STAGE_LABELS.administrasi, value: stageAdministrasi, color: STAGE_COLORS.administrasi },
+    { name: STAGE_LABELS.lolos_administrasi, value: stageLolosAdministrasi, color: STAGE_COLORS.lolos_administrasi },
     { name: STAGE_LABELS.wawancara, value: stageWawancara, color: STAGE_COLORS.wawancara },
     { name: STAGE_LABELS.pengumuman, value: stagePengumuman, color: STAGE_COLORS.pengumuman },
   ].filter(d => d.value > 0);
 
-  // Funnel data for conversion
+  // Funnel data for conversion - improved with actual step counts
   const funnelData = [
-    { name: "Total Pendaftar", value: totalRegistrations, fill: "#3b82f6" },
-    { name: "Formulir Tersubmit", value: submittedTrainingCount, fill: "#8b5cf6" },
-    { name: "Tahap Administrasi", value: stageAdministrasi + stageWawancara + stagePengumuman, fill: "#f59e0b" },
-    { name: "Tahap Wawancara", value: stageWawancara + stagePengumuman, fill: "#10b981" },
-    { name: "Lolos/Diterima", value: lolosCount, fill: "#22c55e" },
+    { name: "Total Pendaftar", value: totalRegistrations, fill: "#3b82f6", percent: 100 },
+    { name: "Formulir Tersubmit", value: submittedTrainingCount, fill: "#8b5cf6", percent: totalRegistrations > 0 ? Math.round((submittedTrainingCount / totalRegistrations) * 100) : 0 },
+    { name: "Lolos Administrasi", value: stageLolosAdministrasi + stageWawancara + stagePengumuman + lolosCount, fill: "#10b981", percent: totalRegistrations > 0 ? Math.round(((stageLolosAdministrasi + stageWawancara + stagePengumuman + lolosCount) / totalRegistrations) * 100) : 0 },
+    { name: "Tahap Wawancara", value: stageWawancara + stagePengumuman + lolosCount, fill: "#f59e0b", percent: totalRegistrations > 0 ? Math.round(((stageWawancara + stagePengumuman + lolosCount) / totalRegistrations) * 100) : 0 },
+    { name: "Diterima (Lolos)", value: lolosCount, fill: "#22c55e", percent: totalRegistrations > 0 ? Math.round((lolosCount / totalRegistrations) * 100) : 0 },
   ].filter(d => d.value > 0);
 
-  // Batch comparison data
+  // Batch comparison data with conversion rates
   const batchComparisonData = batches?.map(batch => {
     const batchRegs = registrations?.filter(r => r.batch_id === batch.id) || [];
+    const batchLolosAdmin = batchRegs.filter(r => 
+      r.selection_stage === "lolos_administrasi" || 
+      r.selection_stage === "wawancara" || 
+      r.selection_stage === "pengumuman" ||
+      r.final_result === "lolos"
+    ).length;
+    const batchWawancara = batchRegs.filter(r => 
+      r.selection_stage === "wawancara" || 
+      r.selection_stage === "pengumuman" ||
+      r.final_result === "lolos"
+    ).length;
+    const batchLolos = batchRegs.filter(r => r.final_result === "lolos").length;
+    const batchTidakLolos = batchRegs.filter(r => r.final_result === "tidak_lolos").length;
+    
     return {
       name: batch.batch_name,
       total: batchRegs.length,
-      lolos: batchRegs.filter(r => r.final_result === "lolos").length,
-      tidakLolos: batchRegs.filter(r => r.final_result === "tidak_lolos").length,
+      lolosAdmin: batchLolosAdmin,
+      wawancara: batchWawancara,
+      lolos: batchLolos,
+      tidakLolos: batchTidakLolos,
+      conversionRate: batchRegs.length > 0 ? Math.round((batchLolos / batchRegs.length) * 100) : 0,
     };
   }).filter(d => d.total > 0) || [];
+
+  // Funnel per batch data
+  const selectedBatchForFunnel = selectedBatch !== "all" ? selectedBatch : batches?.[0]?.id;
+  const batchFunnelData = selectedBatchForFunnel ? (() => {
+    const batchRegs = registrations?.filter(r => r.batch_id === selectedBatchForFunnel) || [];
+    const batchTraining = trainingData?.filter(t => {
+      const reg = batchRegs.find(r => r.id === t.registration_id);
+      return !!reg;
+    }) || [];
+    const submitted = batchTraining.filter(t => t.is_submitted).length;
+    const lolosAdmin = batchRegs.filter(r => 
+      r.selection_stage === "lolos_administrasi" || 
+      r.selection_stage === "wawancara" || 
+      r.selection_stage === "pengumuman" ||
+      r.final_result === "lolos"
+    ).length;
+    const wawancara = batchRegs.filter(r => 
+      r.selection_stage === "wawancara" || 
+      r.selection_stage === "pengumuman" ||
+      r.final_result === "lolos"
+    ).length;
+    const lolos = batchRegs.filter(r => r.final_result === "lolos").length;
+
+    return [
+      { name: "Total Pendaftar", value: batchRegs.length, fill: "#3b82f6", percent: 100 },
+      { name: "Formulir Tersubmit", value: submitted, fill: "#8b5cf6", percent: batchRegs.length > 0 ? Math.round((submitted / batchRegs.length) * 100) : 0 },
+      { name: "Lolos Administrasi", value: lolosAdmin, fill: "#10b981", percent: batchRegs.length > 0 ? Math.round((lolosAdmin / batchRegs.length) * 100) : 0 },
+      { name: "Tahap Wawancara", value: wawancara, fill: "#f59e0b", percent: batchRegs.length > 0 ? Math.round((wawancara / batchRegs.length) * 100) : 0 },
+      { name: "Diterima (Lolos)", value: lolos, fill: "#22c55e", percent: batchRegs.length > 0 ? Math.round((lolos / batchRegs.length) * 100) : 0 },
+    ].filter(d => d.value > 0);
+  })() : [];
 
   // Training completion data
   const trainingCompletionData = [
@@ -324,6 +376,7 @@ export default function RegistrationStatsDashboard() {
         ["BREAKDOWN TAHAP SELEKSI"],
         ["Tahap", "Jumlah"],
         ["Administrasi", stageAdministrasi],
+        ["Lolos Administrasi", stageLolosAdministrasi],
         ["Wawancara", stageWawancara],
         ["Pengumuman", stagePengumuman],
         [],
@@ -353,14 +406,16 @@ export default function RegistrationStatsDashboard() {
         XLSX.utils.book_append_sheet(workbook, trendSheet, "Trend Pendaftaran");
       }
 
-      // Sheet 3: Batch Comparison
+      // Sheet 3: Batch Comparison with Funnel
       if (batchComparisonData.length > 0) {
         const batchSheet = XLSX.utils.json_to_sheet(batchComparisonData.map(d => ({
           "Batch": d.name,
           "Total Pendaftar": d.total,
-          "Lolos": d.lolos,
+          "Lolos Administrasi": d.lolosAdmin,
+          "Tahap Wawancara": d.wawancara,
+          "Lolos (Diterima)": d.lolos,
           "Tidak Lolos": d.tidakLolos,
-          "Tingkat Kelulusan": d.total > 0 ? `${Math.round((d.lolos / d.total) * 100)}%` : "0%",
+          "Conversion Rate": `${d.conversionRate}%`,
         })));
         XLSX.utils.book_append_sheet(workbook, batchSheet, "Perbandingan Batch");
       }
@@ -434,6 +489,7 @@ export default function RegistrationStatsDashboard() {
         ["Diterima", approvedCount.toString()],
         ["Ditolak", rejectedCount.toString()],
         ["Tahap Administrasi", stageAdministrasi.toString()],
+        ["Lolos Administrasi", stageLolosAdministrasi.toString()],
         ["Tahap Wawancara", stageWawancara.toString()],
         ["Tahap Pengumuman", stagePengumuman.toString()],
         ["Hasil Lolos", lolosCount.toString()],
