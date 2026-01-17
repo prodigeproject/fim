@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.notify-first-login]
 verify_jwt = false
+
+[functions.send-interview-reminder]
+verify_jwt = false

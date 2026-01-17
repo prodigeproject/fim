@@ -479,6 +479,8 @@ export default function RegistrationsManagement() {
     switch (stage) {
       case "administrasi":
         return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-700"><FileText className="h-3 w-3" />Administrasi</Badge>;
+      case "lolos_administrasi":
+        return <Badge variant="outline" className="gap-1 border-emerald-500 text-emerald-700"><CheckCircle2 className="h-3 w-3" />Lolos Administrasi</Badge>;
       case "wawancara":
         return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-700"><MessageSquare className="h-3 w-3" />Wawancara</Badge>;
       case "pengumuman":
@@ -495,62 +497,96 @@ export default function RegistrationsManagement() {
     approved: registrations?.filter(r => r.registration_status === "approved").length || 0,
     rejected: registrations?.filter(r => r.registration_status === "rejected").length || 0,
     stageAdministrasi: registrations?.filter(r => r.selection_stage === "administrasi").length || 0,
+    stageLolosAdministrasi: registrations?.filter(r => r.selection_stage === "lolos_administrasi").length || 0,
     stageWawancara: registrations?.filter(r => r.selection_stage === "wawancara").length || 0,
     stagePengumuman: registrations?.filter(r => r.selection_stage === "pengumuman").length || 0,
   };
 
   // Selection stage mutation with email notification
   const updateStageMutation = useMutation({
-    mutationFn: async ({ id, stage, note, interviewDate, email, name }: { 
+    mutationFn: async ({ id, stage, note, interviewDate, email, name, sendEmail = true }: { 
       id: string; 
       stage: string; 
       note?: string; 
       interviewDate?: string;
       email: string;
       name: string;
+      sendEmail?: boolean;
     }) => {
-      const updates: any = { selection_stage: stage };
+      const updates: any = { 
+        selection_stage: stage,
+        updated_at: new Date().toISOString()
+      };
       
-      if (stage === "administrasi" && note) {
-        updates.admin_selection_note = note;
+      if (stage === "lolos_administrasi") {
+        // Lolos administrasi - move to waiting for interview scheduling
+        updates.selection_stage = "lolos_administrasi";
+        if (note) updates.admin_selection_note = note;
       } else if (stage === "wawancara") {
         updates.admin_selection_note = note;
         if (interviewDate) updates.interview_date = interviewDate;
       } else if (stage === "pengumuman" && note) {
         updates.interview_note = note;
+      } else if (note) {
+        updates.admin_selection_note = note;
       }
 
-      const { error } = await supabase
+      console.log("Updating stage:", { id, stage, updates });
+
+      const { data, error } = await supabase
         .from("fim_registrations")
         .update(updates)
-        .eq("id", id);
-      if (error) throw error;
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Database error updating stage:", error);
+        throw new Error(error.message || "Database error");
+      }
+
+      console.log("Stage updated successfully:", data);
 
       // Send email notification for stage change
-      try {
-        await supabase.functions.invoke("notify-selection-stage", {
-          body: {
-            registrantEmail: email,
-            registrantName: name,
-            stage: stage,
-            interviewDate: interviewDate || undefined,
-            note: note || undefined,
-          },
-        });
-      } catch (emailError) {
-        console.error("Failed to send stage notification email:", emailError);
+      if (sendEmail) {
+        try {
+          await supabase.functions.invoke("notify-selection-stage", {
+            body: {
+              registrantEmail: email,
+              registrantName: name,
+              stage: stage,
+              interviewDate: interviewDate || undefined,
+              note: note || undefined,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send stage notification email:", emailError);
+        }
       }
+
+      return data;
     },
     onSuccess: (_, variables) => {
-      const stageText = variables.stage === "administrasi" ? "Administrasi" : variables.stage === "wawancara" ? "Wawancara" : "Pengumuman";
-      toast.success(`Tahap seleksi diubah ke ${stageText}. Email notifikasi telah dikirim.`);
+      const stageLabels: Record<string, string> = {
+        administrasi: "Administrasi",
+        lolos_administrasi: "Lolos Administrasi",
+        wawancara: "Wawancara",
+        pengumuman: "Pengumuman"
+      };
+      const stageText = stageLabels[variables.stage] || variables.stage;
+      toast.success(`Tahap seleksi berhasil diubah ke ${stageText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
       setInterviewDate("");
       setIsScheduleDialogOpen(false);
+      // Update selected registration state
+      if (selectedRegistration?.id === variables.id) {
+        setSelectedRegistration(prev => prev ? { ...prev, selection_stage: variables.stage } : null);
+      }
     },
-    onError: () => {
-      toast.error("Gagal memperbarui tahap seleksi");
+    onError: (error: any) => {
+      console.error("Stage mutation error:", error);
+      toast.error(`Gagal memperbarui tahap seleksi: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -1568,13 +1604,14 @@ Tim Forum Indonesia Muda
                         variant="default"
                         className="bg-green-600 hover:bg-green-700 flex-1"
                         onClick={() => {
-                          setScheduleData({
-                            registration: selectedRegistration,
-                            date: "",
-                            time: "",
-                            note: reviewerNote
+                          updateStageMutation.mutate({
+                            id: selectedRegistration.id,
+                            stage: "lolos_administrasi",
+                            note: reviewerNote,
+                            email: selectedRegistration.email,
+                            name: selectedRegistration.full_name,
+                            sendEmail: true,
                           });
-                          setIsScheduleDialogOpen(true);
                         }}
                         disabled={updateStageMutation.isPending}
                       >
@@ -1609,6 +1646,37 @@ Tim Forum Indonesia Muda
                           <XCircle className="h-4 w-4 mr-2" />
                         )}
                         Tidak Lolos Administrasi
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lolos Administrasi - Waiting for Interview Scheduling */}
+                {selectedRegistration.selection_stage === "lolos_administrasi" && !selectedRegistration.final_result && (
+                  <div className="space-y-3 w-full">
+                    <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Pendaftar ini sudah <strong>Lolos Administrasi</strong>. Jadwalkan wawancara melalui menu Kalender Wawancara.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setScheduleData({
+                            registration: selectedRegistration,
+                            date: "",
+                            time: "",
+                            note: reviewerNote
+                          });
+                          setIsScheduleDialogOpen(true);
+                        }}
+                        disabled={updateStageMutation.isPending}
+                      >
+                        <CalendarPlus className="h-4 w-4 mr-2" />
+                        Jadwalkan Wawancara
                       </Button>
                     </div>
                   </div>
