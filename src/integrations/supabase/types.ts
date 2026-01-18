@@ -267,6 +267,35 @@ export type Database = {
           },
         ]
       }
+      article_view_tracking: {
+        Row: {
+          article_id: string
+          id: string
+          ip_address: string
+          last_viewed: string
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          ip_address: string
+          last_viewed?: string
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          ip_address?: string
+          last_viewed?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_view_tracking_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           approved_at: string | null
@@ -903,6 +932,27 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_subscription_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       partner_logos: {
         Row: {
           created_at: string | null
@@ -1364,6 +1414,8 @@ export type Database = {
           should_show_captcha: boolean
         }[]
       }
+      cleanup_old_subscription_attempts: { Args: never; Returns: undefined }
+      cleanup_old_view_tracking: { Args: never; Returns: undefined }
       get_next_article_version: {
         Args: { p_article_id: string }
         Returns: number

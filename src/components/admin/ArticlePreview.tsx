@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import DOMPurify from 'dompurify';
 
 interface ArticlePreviewProps {
   title: string;
@@ -88,7 +89,13 @@ export function ArticlePreview({
       {/* Content */}
       <div 
         className="prose prose-lg max-w-none my-8"
-        dangerouslySetInnerHTML={{ __html: content || '<p class="text-muted-foreground">Mulai menulis konten artikel...</p>' }}
+        dangerouslySetInnerHTML={{ 
+          __html: DOMPurify.sanitize(content || '<p class="text-muted-foreground">Mulai menulis konten artikel...</p>', {
+            ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
+            ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'style'],
+            ALLOW_DATA_ATTR: false
+          })
+        }}
       />
 
       {/* Tags */}

@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import DOMPurify from "dompurify";
 
 const categoryLabels: Record<string, string> = {
   pengumuman: "Pengumuman",
@@ -268,7 +269,13 @@ export default function BlogDetail() {
               {/* Article Content */}
               <div 
                 className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground/80 prose-a:text-primary prose-strong:text-foreground prose-img:rounded-lg"
-                dangerouslySetInnerHTML={{ __html: article.content }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(article.content, {
+                    ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'style'],
+                    ALLOW_DATA_ATTR: false
+                  })
+                }}
               />
 
               {/* Tags */}
