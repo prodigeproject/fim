@@ -272,7 +272,9 @@ export default function BlogDetail() {
                 dangerouslySetInnerHTML={{ 
                   __html: DOMPurify.sanitize(article.content, {
                     ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
-                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'style'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen'],
+                    ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)/i,
+                    FORBID_ATTR: ['style', 'onerror', 'onload'],
                     ALLOW_DATA_ATTR: false
                   })
                 }}
