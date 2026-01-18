@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -105,6 +105,7 @@ const actionLabels: Record<string, string> = {
 export default function AuditLogs() {
   const { isSuperAdmin } = useAdminAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -112,6 +113,28 @@ export default function AuditLogs() {
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "security">("all");
   const [isExporting, setIsExporting] = useState(false);
+
+  // Real-time updates for audit logs
+  useEffect(() => {
+    const channel = supabase
+      .channel("audit-logs-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "audit_logs",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Fetch audit logs with separate profile query
   const { data: logs, isLoading } = useQuery({

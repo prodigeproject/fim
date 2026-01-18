@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -94,6 +94,28 @@ export default function ArticlesManagement() {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [sortField, setSortField] = useState<"title" | "created_at" | "view_count">("created_at");
+
+  // Real-time updates for articles
+  useEffect(() => {
+    const channel = supabase
+      .channel("articles-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "articles",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-articles"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Fetch articles
   const { data: articles, isLoading } = useQuery({

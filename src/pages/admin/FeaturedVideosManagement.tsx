@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,6 +69,28 @@ export default function FeaturedVideosManagement() {
     thumbnail_url: "",
     is_active: true,
   });
+
+  // Real-time updates for featured videos
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-featured-videos-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "featured_videos",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-featured-videos"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["admin-featured-videos"],
