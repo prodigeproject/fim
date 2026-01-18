@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import JSZip from "jszip";
-import * as XLSX from "xlsx";
+import { generateExcelBuffer } from "@/lib/excelExport";
 import { 
   MermaidDiagram, 
   architectureDiagram, 
@@ -390,10 +390,7 @@ export default function TechnicalDocumentation() {
         }
 
         if (data && data.length > 0) {
-          const worksheet = XLSX.utils.json_to_sheet(data);
-          const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, table);
-          const xlsxBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+          const xlsxBuffer = await generateExcelBuffer(data as unknown as Record<string, unknown>[], table);
           dataFolder?.file(`${table}.xlsx`, xlsxBuffer);
         }
       }

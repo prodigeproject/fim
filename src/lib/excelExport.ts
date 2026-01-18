@@ -151,3 +151,38 @@ export async function exportAOAToExcel(
 export function getExcelFilename(prefix: string): string {
   return `${prefix}-${format(new Date(), "yyyy-MM-dd-HHmm")}.xlsx`;
 }
+
+/**
+ * Generate Excel buffer for use with ZIP files
+ */
+export async function generateExcelBuffer(
+  data: Record<string, unknown>[],
+  sheetName: string
+): Promise<ArrayBuffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "FIM Admin";
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet(sheetName.slice(0, 31));
+
+  if (data.length > 0) {
+    const keys = Object.keys(data[0]);
+    worksheet.columns = keys.map((key) => ({
+      header: key,
+      key: key,
+      width: Math.max(key.length, 15),
+    }));
+
+    // Add header row styling
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+
+    // Add data rows
+    for (const row of data) {
+      worksheet.addRow(row);
+    }
+  }
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer;
+}

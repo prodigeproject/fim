@@ -55,7 +55,7 @@ import {
   FileSpreadsheet,
   FileType,
 } from "lucide-react";
-import * as XLSX from "xlsx";
+import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import jsPDF from "jspdf";
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -462,10 +462,9 @@ export default function PRDDocumentation() {
   };
 
   // Export to XLSX for Documents
-  const exportDocsToXLSX = () => {
+  const exportDocsToXLSX = async () => {
     if (!documents?.length) return;
 
-    const now = new Date();
     const data = documents.map(doc => ({
       "Judul": doc.title,
       "Kategori": categoryLabels[doc.category] || doc.category,
@@ -478,25 +477,14 @@ export default function PRDDocumentation() {
       "Tanggal Update": format(new Date(doc.updated_at), "dd MMM yyyy", { locale: localeId }),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "PRD Documents");
-
-    // Auto-size columns
-    ws["!cols"] = [
-      { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, 
-      { wch: 40 }, { wch: 50 }, { wch: 15 }, { wch: 15 },
-    ];
-
-    XLSX.writeFile(wb, `prd-documents-${format(now, "yyyy-MM-dd")}.xlsx`);
+    await exportSingleSheet(data, "PRD Documents", getExcelFilename("prd-documents"));
     toast({ title: "Export XLSX berhasil" });
   };
 
   // Export Changelog to XLSX
-  const exportChangelogToXLSX = () => {
+  const exportChangelogToXLSX = async () => {
     if (!changelog?.length) return;
 
-    const now = new Date();
     const data = changelog.map(log => ({
       "Versi": log.version,
       "Judul": log.title,
@@ -506,15 +494,7 @@ export default function PRDDocumentation() {
       "Tanggal Dibuat": format(new Date(log.created_at), "dd MMM yyyy", { locale: localeId }),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Changelog");
-
-    ws["!cols"] = [
-      { wch: 10 }, { wch: 30 }, { wch: 40 }, { wch: 60 }, { wch: 15 }, { wch: 15 },
-    ];
-
-    XLSX.writeFile(wb, `prd-changelog-${format(now, "yyyy-MM-dd")}.xlsx`);
+    await exportSingleSheet(data, "Changelog", getExcelFilename("prd-changelog"));
     toast({ title: "Export Changelog XLSX berhasil" });
   };
 
