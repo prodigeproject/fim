@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
 import { diffWords } from "diff";
+import DOMPurify from "dompurify";
 import {
   Dialog,
   DialogContent,
@@ -516,7 +517,13 @@ export function ArticleVersionHistory({
                 <Separator />
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedVersion.content }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(selectedVersion.content, {
+                      ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'style'],
+                      ALLOW_DATA_ATTR: false
+                    })
+                  }}
                 />
               </div>
             )}

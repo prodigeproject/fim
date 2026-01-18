@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import DOMPurify from "dompurify";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -363,7 +364,13 @@ export default function EmailTemplatesManagement() {
             {selectedTemplate && (
               <div 
                 className="p-4"
-                dangerouslySetInnerHTML={{ __html: selectedTemplate.html_content }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(selectedTemplate.html_content, {
+                    ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'style', 'head', 'body', 'html', 'meta', 'title'],
+                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'style', 'charset', 'name', 'content'],
+                    ALLOW_DATA_ATTR: false
+                  })
+                }}
               />
             )}
           </ScrollArea>

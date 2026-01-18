@@ -24,6 +24,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get IP address for rate limiting
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               req.headers.get("cf-connecting-ip") ||
+               "unknown";
+
+    // Rate limiting: Check attempts in last hour
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count: attemptCount } = await supabase
+      .from("newsletter_subscription_attempts")
+      .select("*", { count: "exact", head: true })
+      .eq("ip_address", ip)
+      .gte("attempted_at", oneHourAgo);
+
+    if (attemptCount && attemptCount >= 5) {
+      console.log(`Rate limit exceeded for IP: ${ip}`);
+      return new Response(
+        JSON.stringify({ error: "Terlalu banyak percobaan. Coba lagi dalam 1 jam." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { email, name }: SubscribeRequest = await req.json();
 
     // Validate email
@@ -36,7 +58,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    console.log(`Processing newsletter subscription for: ${normalizedEmail}`);
+    console.log(`Processing newsletter subscription for: ${normalizedEmail} from IP: ${ip}`);
+
+    // Log the attempt for rate limiting
+    await supabase
+      .from("newsletter_subscription_attempts")
+      .insert({ ip_address: ip, email: normalizedEmail });
 
     // Check if already subscribed
     const { data: existing } = await supabase
