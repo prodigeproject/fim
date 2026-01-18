@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { jsPDF } from "jspdf";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -448,10 +448,7 @@ export default function RegistrationsManagement() {
         };
       }) || [];
 
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
-      XLSX.writeFile(workbook, `FIM-Registrations-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      await exportSingleSheet(exportData, "Registrations", getExcelFilename("FIM-Registrations"));
       
       toast.success("Data berhasil diexport");
     } catch (error) {

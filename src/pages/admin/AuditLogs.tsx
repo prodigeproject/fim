@@ -27,7 +27,7 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Shield, Search, LogIn, LogOut, FileText, UserPlus, UserX, Edit, Trash2, Send, Pin, Archive, Users, Settings, Mail, ArrowUpDown, Globe, Download, Loader2, FileSpreadsheet, ShieldX, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import * as XLSX from "xlsx";
+import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Comprehensive action icons mapping
@@ -243,21 +243,7 @@ export default function AuditLogs() {
         "IP Address": log.ip_address || "",
       }));
 
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Audit Log");
-
-      // Auto-size columns
-      const colWidths = [
-        { wch: 20 }, // Waktu
-        { wch: 25 }, // Pengguna
-        { wch: 20 }, // Aksi
-        { wch: 50 }, // Detail
-        { wch: 15 }, // IP Address
-      ];
-      ws["!cols"] = colWidths;
-
-      XLSX.writeFile(wb, `audit-log-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      await exportSingleSheet(data, "Audit Log", getExcelFilename("audit-log"));
       toast({ title: "Export XLSX berhasil" });
     } catch (error) {
       toast({ title: "Gagal export", variant: "destructive" });

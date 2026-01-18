@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import * as XLSX from "xlsx";
+import { exportToExcel, exportAOAToExcel, getExcelFilename } from "@/lib/excelExport";
 import { 
   Users, 
   CheckCircle, 
@@ -354,61 +354,54 @@ export default function RegistrationStatsDashboard() {
   ];
 
   // Export to Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
+      const sheets: { name: string; data: Record<string, unknown>[] }[] = [];
 
-      // Sheet 1: Summary Statistics
+      // Sheet 1: Summary Statistics (using simpler format)
       const summaryData = [
-        ["Laporan Statistik Pendaftaran FIM"],
-        [`Periode: ${dateRange?.from ? format(dateRange.from, "dd MMM yyyy", { locale: id }) : "-"} - ${dateRange?.to ? format(dateRange.to, "dd MMM yyyy", { locale: id }) : "-"}`],
-        [`Batch: ${selectedBatch !== "all" ? batches?.find(b => b.id === selectedBatch)?.batch_name : "Semua Batch"}`],
-        [`Tahap: ${selectedStage !== "all" ? STAGE_LABELS[selectedStage as keyof typeof STAGE_LABELS] : "Semua Tahap"}`],
-        [],
-        ["RINGKASAN STATISTIK"],
-        ["Metrik", "Jumlah", "Persentase"],
-        ["Total Pendaftar", totalRegistrations, "100%"],
-        ["Menunggu Review", pendingCount, `${totalRegistrations > 0 ? Math.round((pendingCount / totalRegistrations) * 100) : 0}%`],
-        ["Diterima", approvedCount, `${totalRegistrations > 0 ? Math.round((approvedCount / totalRegistrations) * 100) : 0}%`],
-        ["Ditolak", rejectedCount, `${totalRegistrations > 0 ? Math.round((rejectedCount / totalRegistrations) * 100) : 0}%`],
-        [],
-        ["BREAKDOWN TAHAP SELEKSI"],
-        ["Tahap", "Jumlah"],
-        ["Administrasi", stageAdministrasi],
-        ["Lolos Administrasi", stageLolosAdministrasi],
-        ["Wawancara", stageWawancara],
-        ["Pengumuman", stagePengumuman],
-        [],
-        ["HASIL AKHIR"],
-        ["Hasil", "Jumlah"],
-        ["Lolos", lolosCount],
-        ["Tidak Lolos", tidakLolosCount],
-        [],
-        ["PROGRESS FORMULIR"],
-        ["Metrik", "Nilai"],
-        ["Formulir Tersubmit", submittedTrainingCount],
-        ["Total Formulir", trainingData?.length || 0],
-        ["Rata-rata Kelengkapan", `${avgCompletion}%`],
+        { "Metrik": "Laporan Statistik Pendaftaran FIM", "Nilai": "" },
+        { "Metrik": `Periode: ${dateRange?.from ? format(dateRange.from, "dd MMM yyyy", { locale: id }) : "-"} - ${dateRange?.to ? format(dateRange.to, "dd MMM yyyy", { locale: id }) : "-"}`, "Nilai": "" },
+        { "Metrik": `Batch: ${selectedBatch !== "all" ? batches?.find(b => b.id === selectedBatch)?.batch_name : "Semua Batch"}`, "Nilai": "" },
+        { "Metrik": "", "Nilai": "" },
+        { "Metrik": "RINGKASAN STATISTIK", "Nilai": "" },
+        { "Metrik": "Total Pendaftar", "Nilai": totalRegistrations },
+        { "Metrik": "Menunggu Review", "Nilai": pendingCount },
+        { "Metrik": "Diterima", "Nilai": approvedCount },
+        { "Metrik": "Ditolak", "Nilai": rejectedCount },
+        { "Metrik": "", "Nilai": "" },
+        { "Metrik": "BREAKDOWN TAHAP SELEKSI", "Nilai": "" },
+        { "Metrik": "Administrasi", "Nilai": stageAdministrasi },
+        { "Metrik": "Lolos Administrasi", "Nilai": stageLolosAdministrasi },
+        { "Metrik": "Wawancara", "Nilai": stageWawancara },
+        { "Metrik": "Pengumuman", "Nilai": stagePengumuman },
+        { "Metrik": "", "Nilai": "" },
+        { "Metrik": "HASIL AKHIR", "Nilai": "" },
+        { "Metrik": "Lolos", "Nilai": lolosCount },
+        { "Metrik": "Tidak Lolos", "Nilai": tidakLolosCount },
+        { "Metrik": "", "Nilai": "" },
+        { "Metrik": "PROGRESS FORMULIR", "Nilai": "" },
+        { "Metrik": "Formulir Tersubmit", "Nilai": submittedTrainingCount },
+        { "Metrik": "Total Formulir", "Nilai": trainingData?.length || 0 },
+        { "Metrik": "Rata-rata Kelengkapan", "Nilai": `${avgCompletion}%` },
       ];
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, "Ringkasan");
+      sheets.push({ name: "Ringkasan", data: summaryData });
 
       // Sheet 2: Daily/Weekly Trend
       if (trendData.length > 0) {
-        const trendSheet = XLSX.utils.json_to_sheet(trendData.map(d => ({
+        const trendSheetData = trendData.map(d => ({
           "Tanggal": d.date,
           "Total": d.total,
           "Menunggu": d.pending,
           "Diterima": d.approved,
           "Ditolak": d.rejected,
-        })));
-        XLSX.utils.book_append_sheet(workbook, trendSheet, "Trend Pendaftaran");
+        }));
+        sheets.push({ name: "Trend Pendaftaran", data: trendSheetData });
       }
 
       // Sheet 3: Batch Comparison with Funnel
       if (batchComparisonData.length > 0) {
-        const batchSheet = XLSX.utils.json_to_sheet(batchComparisonData.map(d => ({
+        const batchSheetData = batchComparisonData.map(d => ({
           "Batch": d.name,
           "Total Pendaftar": d.total,
           "Lolos Administrasi": d.lolosAdmin,
@@ -416,33 +409,32 @@ export default function RegistrationStatsDashboard() {
           "Lolos (Diterima)": d.lolos,
           "Tidak Lolos": d.tidakLolos,
           "Conversion Rate": `${d.conversionRate}%`,
-        })));
-        XLSX.utils.book_append_sheet(workbook, batchSheet, "Perbandingan Batch");
+        }));
+        sheets.push({ name: "Perbandingan Batch", data: batchSheetData });
       }
 
       // Sheet 4: Training Completion Distribution
-      const completionSheet = XLSX.utils.json_to_sheet(trainingCompletionData.map(d => ({
+      const completionSheetData = trainingCompletionData.map(d => ({
         "Range Kelengkapan": d.name,
         "Jumlah": d.value,
-      })));
-      XLSX.utils.book_append_sheet(workbook, completionSheet, "Distribusi Kelengkapan");
+      }));
+      sheets.push({ name: "Distribusi Kelengkapan", data: completionSheetData });
 
       // Sheet 5: Raw Data
       if (filteredRegistrations && filteredRegistrations.length > 0) {
-        const rawSheet = XLSX.utils.json_to_sheet(filteredRegistrations.map(r => ({
+        const rawSheetData = filteredRegistrations.map(r => ({
           "ID": r.id,
           "Tanggal Daftar": format(new Date(r.created_at), "dd/MM/yyyy HH:mm"),
           "Status": STATUS_LABELS[r.registration_status as keyof typeof STATUS_LABELS] || r.registration_status,
           "Tahap Seleksi": r.selection_stage ? STAGE_LABELS[r.selection_stage as keyof typeof STAGE_LABELS] || r.selection_stage : "-",
           "Hasil Akhir": r.final_result === "lolos" ? "Lolos" : r.final_result === "tidak_lolos" ? "Tidak Lolos" : "-",
           "Batch ID": r.batch_id || "-",
-        })));
-        XLSX.utils.book_append_sheet(workbook, rawSheet, "Data Pendaftar");
+        }));
+        sheets.push({ name: "Data Pendaftar", data: rawSheetData });
       }
 
       // Save file
-      const fileName = `Statistik-Pendaftaran-FIM-${format(new Date(), "yyyyMMdd")}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
+      await exportToExcel(sheets, getExcelFilename("Statistik-Pendaftaran-FIM"));
       toast.success("Excel berhasil diunduh");
     } catch (error) {
       console.error("Export Excel error:", error);

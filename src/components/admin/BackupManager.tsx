@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Loader2, Archive, FileText, Users, MapPin, Clock } from "lucide-react";
-import * as XLSX from "xlsx";
+import { exportToExcel, exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { format } from "date-fns";
 
 type TableName = "articles" | "profiles" | "fim_clubs" | "fim_regionals" | "alumni_stories" | "alumni_other" | "newsletter_subscribers" | "audit_logs";
@@ -67,8 +67,8 @@ export function BackupManager() {
     setProgress(0);
     
     try {
-      const wb = XLSX.utils.book_new();
       const tables = backupItems.map(item => item.table);
+      const sheets: { name: string; data: Record<string, unknown>[] }[] = [];
       
       for (let i = 0; i < tables.length; i++) {
         const table = tables[i];
@@ -79,26 +79,14 @@ export function BackupManager() {
         try {
           const data = await exportSingleTable(table);
           if (data.length > 0) {
-            const ws = XLSX.utils.json_to_sheet(data);
-            
-            // Auto-size columns
-            const colWidths = Object.keys(data[0] || {}).map(key => ({
-              wch: Math.max(
-                key.length,
-                ...data.map(row => String(row[key] || "").slice(0, 50).length)
-              )
-            }));
-            ws["!cols"] = colWidths;
-            
-            XLSX.utils.book_append_sheet(wb, ws, item.name.slice(0, 31)); // Sheet name max 31 chars
+            sheets.push({ name: item.name.slice(0, 31), data });
           }
         } catch (err) {
           console.error(`Error exporting ${table}:`, err);
         }
       }
       
-      const now = new Date();
-      XLSX.writeFile(wb, `fim-backup-${format(now, "yyyy-MM-dd-HHmm")}.xlsx`);
+      await exportToExcel(sheets, getExcelFilename("fim-backup"));
       
       toast({
         title: "Backup berhasil",
@@ -134,22 +122,7 @@ export function BackupManager() {
         return;
       }
       
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
-      
-      // Auto-size columns
-      const colWidths = Object.keys(data[0] || {}).map(key => ({
-        wch: Math.max(
-          key.length,
-          ...data.map(row => String(row[key] || "").slice(0, 50).length)
-        )
-      }));
-      ws["!cols"] = colWidths;
-      
-      XLSX.utils.book_append_sheet(wb, ws, item.name);
-      
-      const now = new Date();
-      XLSX.writeFile(wb, `fim-${item.table}-${format(now, "yyyy-MM-dd")}.xlsx`);
+      await exportSingleSheet(data, item.name, getExcelFilename(`fim-${item.table}`));
       
       toast({
         title: "Export berhasil",
