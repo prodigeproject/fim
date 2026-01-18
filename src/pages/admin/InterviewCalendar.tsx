@@ -35,7 +35,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
+  Users,
+  Check,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -68,12 +71,24 @@ export default function InterviewCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<InterviewSchedule | null>(null);
+  const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
   
   const [scheduleForm, setScheduleForm] = useState({
     registration_id: "",
     scheduled_date: "",
     scheduled_time: "09:00",
+    duration_minutes: 30,
+    location: "",
+    meeting_link: "",
+    notes: "",
+  });
+
+  const [batchForm, setBatchForm] = useState({
+    scheduled_date: "",
+    start_time: "09:00",
+    interval_minutes: 45,
     duration_minutes: 30,
     location: "",
     meeting_link: "",
@@ -235,6 +250,91 @@ export default function InterviewCalendar() {
     },
   });
 
+  // Batch create schedules
+  const batchCreateMutation = useMutation({
+    mutationFn: async (data: typeof batchForm & { registration_ids: string[] }) => {
+      const schedules: Array<{
+        registration_id: string;
+        scheduled_date: string;
+        scheduled_time: string;
+        duration_minutes: number;
+        location: string | null;
+        meeting_link: string | null;
+        notes: string | null;
+      }> = [];
+
+      // Parse start time
+      const [startHour, startMin] = data.start_time.split(":").map(Number);
+      let currentMinutes = startHour * 60 + startMin;
+
+      // Create schedule for each selected registration
+      for (const regId of data.registration_ids) {
+        const hours = Math.floor(currentMinutes / 60);
+        const mins = currentMinutes % 60;
+        const timeStr = `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+
+        schedules.push({
+          registration_id: regId,
+          scheduled_date: data.scheduled_date,
+          scheduled_time: timeStr,
+          duration_minutes: data.duration_minutes,
+          location: data.location || null,
+          meeting_link: data.meeting_link || null,
+          notes: data.notes || null,
+        });
+
+        currentMinutes += data.interval_minutes;
+      }
+
+      const { data: result, error } = await supabase
+        .from("interview_schedules")
+        .insert(schedules)
+        .select();
+
+      if (error) throw error;
+
+      // Send notification emails
+      for (const schedule of schedules) {
+        const reg = registrations?.find(r => r.id === schedule.registration_id);
+        if (reg) {
+          try {
+            await supabase.functions.invoke("notify-selection-stage", {
+              body: {
+                registrantEmail: reg.email,
+                registrantName: reg.full_name,
+                stage: "wawancara",
+                interviewDate: `${schedule.scheduled_date} ${schedule.scheduled_time}`,
+                note: schedule.notes || undefined,
+              },
+            });
+          } catch (emailError) {
+            console.error("Failed to send email:", emailError);
+          }
+        }
+      }
+
+      return result;
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`${variables.registration_ids.length} jadwal wawancara berhasil dibuat`);
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      setIsBatchDialogOpen(false);
+      setSelectedRegistrations([]);
+      setBatchForm({
+        scheduled_date: "",
+        start_time: "09:00",
+        interval_minutes: 45,
+        duration_minutes: 30,
+        location: "",
+        meeting_link: "",
+        notes: "",
+      });
+    },
+    onError: () => {
+      toast.error("Gagal membuat jadwal wawancara batch");
+    },
+  });
+
   const resetForm = () => {
     setScheduleForm({
       registration_id: "",
@@ -273,9 +373,41 @@ export default function InterviewCalendar() {
     setIsScheduleDialogOpen(true);
   };
 
+  const openBatchDialog = () => {
+    if (selectedRegistrations.length === 0) {
+      toast.error("Pilih peserta terlebih dahulu");
+      return;
+    }
+    setBatchForm(prev => ({
+      ...prev,
+      scheduled_date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+    }));
+    setIsBatchDialogOpen(true);
+  };
+
   const openEditDialog = (schedule: InterviewSchedule) => {
     setSelectedSchedule(schedule);
     setIsEditDialogOpen(true);
+  };
+
+  const toggleRegistrationSelection = (regId: string) => {
+    setSelectedRegistrations(prev =>
+      prev.includes(regId)
+        ? prev.filter(id => id !== regId)
+        : [...prev, regId]
+    );
+  };
+
+  const selectAllRegistrations = () => {
+    if (!registrations) return;
+    // Filter out registrations that already have a schedule
+    const scheduledIds = new Set(schedules?.map(s => s.registration_id) || []);
+    const available = registrations.filter(r => !scheduledIds.has(r.id));
+    if (selectedRegistrations.length === available.length) {
+      setSelectedRegistrations([]);
+    } else {
+      setSelectedRegistrations(available.map(r => r.id));
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -293,6 +425,13 @@ export default function InterviewCalendar() {
     }
   };
 
+  // Get registrations that don't have a schedule yet
+  const availableRegistrations = useMemo(() => {
+    if (!registrations) return [];
+    const scheduledIds = new Set(schedules?.map(s => s.registration_id) || []);
+    return registrations.filter(r => !scheduledIds.has(r.id));
+  }, [registrations, schedules]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -305,7 +444,7 @@ export default function InterviewCalendar() {
             Kelola jadwal wawancara peserta FIM
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button 
             variant="outline" 
             onClick={() => queryClient.invalidateQueries({ queryKey: ["interview-schedules"] })}
@@ -313,12 +452,80 @@ export default function InterviewCalendar() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <Button 
+            variant="outline"
+            onClick={openBatchDialog}
+            disabled={selectedRegistrations.length === 0}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Jadwalkan Batch ({selectedRegistrations.length})
+          </Button>
           <Button onClick={openScheduleDialog} disabled={!selectedDate}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah Jadwal
           </Button>
         </div>
       </div>
+
+      {/* Batch Selection Panel */}
+      {availableRegistrations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Peserta Menunggu Jadwal ({availableRegistrations.length})
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllRegistrations}
+                >
+                  {selectedRegistrations.length === availableRegistrations.length ? (
+                    <>Batal Pilih Semua</>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Pilih Semua
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            <CardDescription>
+              Pilih peserta untuk menjadwalkan wawancara secara batch
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[180px]">
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {availableRegistrations.map((reg) => (
+                  <div
+                    key={reg.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      selectedRegistrations.includes(reg.id)
+                        ? "bg-primary/10 border-primary"
+                        : "hover:bg-muted"
+                    )}
+                    onClick={() => toggleRegistrationSelection(reg.id)}
+                  >
+                    <Checkbox
+                      checked={selectedRegistrations.includes(reg.id)}
+                      onCheckedChange={() => toggleRegistrationSelection(reg.id)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{reg.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{reg.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Calendar */}
@@ -703,6 +910,142 @@ export default function InterviewCalendar() {
             </Button>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Schedule Dialog */}
+      <Dialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Jadwalkan Wawancara Batch</DialogTitle>
+            <DialogDescription>
+              Jadwalkan wawancara untuk {selectedRegistrations.length} peserta sekaligus
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-muted">
+              <p className="text-sm font-medium mb-2">Peserta yang dipilih:</p>
+              <div className="flex flex-wrap gap-1">
+                {selectedRegistrations.slice(0, 5).map(regId => {
+                  const reg = registrations?.find(r => r.id === regId);
+                  return (
+                    <Badge key={regId} variant="secondary" className="text-xs">
+                      {reg?.full_name}
+                    </Badge>
+                  );
+                })}
+                {selectedRegistrations.length > 5 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{selectedRegistrations.length - 5} lainnya
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tanggal</Label>
+                <Input
+                  type="date"
+                  value={batchForm.scheduled_date}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Waktu Mulai</Label>
+                <Input
+                  type="time"
+                  value={batchForm.start_time}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, start_time: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Durasi per Wawancara (menit)</Label>
+                <Input
+                  type="number"
+                  value={batchForm.duration_minutes}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 30 }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Interval antar Wawancara (menit)</Label>
+                <Input
+                  type="number"
+                  value={batchForm.interval_minutes}
+                  onChange={(e) => setBatchForm(prev => ({ ...prev, interval_minutes: parseInt(e.target.value) || 45 }))}
+                />
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg border bg-blue-50 dark:bg-blue-950">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>Preview Jadwal:</strong>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {(() => {
+                  if (!batchForm.scheduled_date || !batchForm.start_time) return "Isi tanggal dan waktu mulai";
+                  const [startHour, startMin] = batchForm.start_time.split(":").map(Number);
+                  let currentMinutes = startHour * 60 + startMin;
+                  const lastIndex = selectedRegistrations.length - 1;
+                  const endMinutes = currentMinutes + (lastIndex * batchForm.interval_minutes) + batchForm.duration_minutes;
+                  const endHours = Math.floor(endMinutes / 60);
+                  const endMins = endMinutes % 60;
+                  return `${batchForm.start_time} - ${endHours.toString().padStart(2, "0")}:${endMins.toString().padStart(2, "0")} (${selectedRegistrations.length} sesi)`;
+                })()}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Lokasi (opsional)</Label>
+              <Input
+                value={batchForm.location}
+                onChange={(e) => setBatchForm(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Contoh: Ruang Meeting Lt. 2"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Link Meeting (opsional)</Label>
+              <Input
+                value={batchForm.meeting_link}
+                onChange={(e) => setBatchForm(prev => ({ ...prev, meeting_link: e.target.value }))}
+                placeholder="https://meet.google.com/..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Catatan (opsional)</Label>
+              <Textarea
+                value={batchForm.notes}
+                onChange={(e) => setBatchForm(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Catatan untuk semua wawancara..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBatchDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button 
+              onClick={() => batchCreateMutation.mutate({
+                ...batchForm,
+                registration_ids: selectedRegistrations,
+              })} 
+              disabled={!batchForm.scheduled_date || batchCreateMutation.isPending}
+            >
+              {batchCreateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Users className="h-4 w-4 mr-2" />
+              )}
+              Jadwalkan {selectedRegistrations.length} Wawancara
             </Button>
           </DialogFooter>
         </DialogContent>

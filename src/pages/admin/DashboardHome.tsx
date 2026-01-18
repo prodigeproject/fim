@@ -1,15 +1,89 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Eye, Clock, CheckCircle, Users, MapPin, Mail } from "lucide-react";
+import { FileText, Eye, Clock, CheckCircle, Users, MapPin, Mail, UserPlus } from "lucide-react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArticleStatsCharts } from "@/components/admin/ArticleStatsCharts";
 import { BackupManager } from "@/components/admin/BackupManager";
+import { toast } from "sonner";
+
 export default function DashboardHome() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { profile, isSuperAdmin } = useAdminAuth();
+
+  // Real-time subscription for new registrations (super admin only)
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    const channel = supabase
+      .channel("dashboard-registrations-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "fim_registrations",
+        },
+        (payload) => {
+          const newReg = payload.new as { full_name: string; email: string };
+          toast.info(`Pendaftaran baru: ${newReg.full_name}`, {
+            description: newReg.email,
+            action: {
+              label: "Lihat",
+              onClick: () => navigate("/admin/registrations"),
+            },
+            duration: 8000,
+            icon: <UserPlus className="h-4 w-4" />,
+          });
+          // Invalidate queries to refresh stats
+          queryClient.invalidateQueries({ queryKey: ["admin-registration-stats"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "fim_registrations",
+        },
+        (payload) => {
+          const updatedReg = payload.new as { 
+            full_name: string; 
+            registration_status: string;
+            selection_stage: string;
+          };
+          const oldReg = payload.old as { 
+            registration_status: string;
+            selection_stage: string;
+          };
+          
+          // Show notification if status or stage changed
+          if (updatedReg.registration_status !== oldReg.registration_status) {
+            toast.info(`Status pendaftaran berubah`, {
+              description: `${updatedReg.full_name}: ${oldReg.registration_status} → ${updatedReg.registration_status}`,
+              duration: 5000,
+            });
+          } else if (updatedReg.selection_stage !== oldReg.selection_stage) {
+            toast.info(`Tahap seleksi berubah`, {
+              description: `${updatedReg.full_name}: ${oldReg.selection_stage || '-'} → ${updatedReg.selection_stage || '-'}`,
+              duration: 5000,
+            });
+          }
+          
+          queryClient.invalidateQueries({ queryKey: ["admin-registration-stats"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isSuperAdmin, queryClient, navigate]);
 
   // Fetch article stats
   const { data: stats, isLoading: statsLoading } = useQuery({
