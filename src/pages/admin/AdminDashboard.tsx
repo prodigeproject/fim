@@ -347,7 +347,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <nav className="flex-1 p-2 space-y-0.5">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
           {filteredNavItems.map((item) => (
             <NavItemComponent key={item.href} item={item} />
           ))}

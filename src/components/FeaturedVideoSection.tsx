@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, ChevronLeft, ChevronRight, Pause } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { Play, ChevronLeft, ChevronRight, Pause, SkipForward } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 interface FeaturedVideo {
@@ -12,10 +12,22 @@ interface FeaturedVideo {
   description: string | null;
 }
 
+// YouTube Player API types
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 export default function FeaturedVideoSection() {
+  const queryClient = useQueryClient();
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(true);
+  const playerRef = useRef<any>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: videos, isLoading } = useQuery({
     queryKey: ["featured-videos"],
@@ -31,6 +43,84 @@ export default function FeaturedVideoSection() {
     },
   });
 
+  // Real-time updates for featured videos
+  useEffect(() => {
+    const channel = supabase
+      .channel("featured-videos-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "featured_videos",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["featured-videos"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Load YouTube IFrame API
+  useEffect(() => {
+    if (window.YT) return;
+
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+  }, []);
+
+  // Initialize YouTube player when playing
+  useEffect(() => {
+    if (!isPlaying || !videos?.length || !window.YT) return;
+
+    const currentVideo = videos[activeVideoIndex];
+    
+    // Wait for YT API to be ready
+    const initPlayer = () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+      }
+
+      playerRef.current = new window.YT.Player("youtube-player", {
+        videoId: currentVideo.youtube_id,
+        playerVars: {
+          autoplay: 1,
+          rel: 0,
+          modestbranding: 1,
+        },
+        events: {
+          onStateChange: (event: any) => {
+            // Video ended (state = 0)
+            if (event.data === 0 && autoplayEnabled && videos.length > 1) {
+              // Play next video in playlist
+              const nextIndex = (activeVideoIndex + 1) % videos.length;
+              setActiveVideoIndex(nextIndex);
+            }
+          },
+        },
+      });
+    };
+
+    if (window.YT.Player) {
+      initPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
+    };
+  }, [isPlaying, activeVideoIndex, videos, autoplayEnabled]);
+
   // Auto-rotate videos every 8 seconds when not playing
   useEffect(() => {
     if (!videos?.length || isPlaying || isPaused) return;
@@ -45,13 +135,13 @@ export default function FeaturedVideoSection() {
   const goToPrevious = useCallback(() => {
     if (!videos?.length) return;
     setActiveVideoIndex((prev) => (prev - 1 + videos.length) % videos.length);
-    setIsPlaying(false);
+    // Keep playing if already playing
   }, [videos?.length]);
 
   const goToNext = useCallback(() => {
     if (!videos?.length) return;
     setActiveVideoIndex((prev) => (prev + 1) % videos.length);
-    setIsPlaying(false);
+    // Keep playing if already playing
   }, [videos?.length]);
 
   if (isLoading || !videos?.length) return null;
@@ -81,14 +171,18 @@ export default function FeaturedVideoSection() {
             {/* Video Display - Takes 3 columns */}
             <div className="lg:col-span-3 relative group rounded-xl overflow-hidden shadow-xl bg-card">
               {isPlaying ? (
-                <div className="aspect-video">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${currentVideo.youtube_id}?autoplay=1&rel=0`}
-                    title={currentVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full"
-                  />
+                <div className="aspect-video relative" ref={playerContainerRef}>
+                  <div id="youtube-player" className="w-full h-full" />
+                  {/* Skip to next button when playing */}
+                  {videos.length > 1 && (
+                    <button
+                      onClick={goToNext}
+                      className="absolute bottom-4 right-4 px-3 py-2 bg-black/70 backdrop-blur rounded-lg flex items-center gap-2 text-white text-sm hover:bg-black/90 transition-colors z-10"
+                    >
+                      <SkipForward className="h-4 w-4" />
+                      Video Berikutnya
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div 
@@ -160,7 +254,12 @@ export default function FeaturedVideoSection() {
                 {videos.length > 1 && (
                   <div className="flex items-center gap-3 pt-3 border-t border-border">
                     <button
-                      onClick={() => setIsPaused(!isPaused)}
+                      onClick={() => {
+                        if (isPlaying) {
+                          setIsPlaying(false);
+                        }
+                        setIsPaused(!isPaused);
+                      }}
                       className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
                       title={isPaused ? "Lanjutkan" : "Pause"}
                     >
@@ -170,7 +269,10 @@ export default function FeaturedVideoSection() {
                       {videos.map((video, index) => (
                         <button
                           key={video.id}
-                          onClick={() => { setActiveVideoIndex(index); setIsPlaying(false); }}
+                          onClick={() => { 
+                            setActiveVideoIndex(index); 
+                            // If currently playing, continue playing the new video
+                          }}
                           className={`h-1.5 rounded-full transition-all duration-300 ${
                             index === activeVideoIndex 
                               ? "flex-1 bg-primary" 
@@ -182,6 +284,25 @@ export default function FeaturedVideoSection() {
                     <span className="text-xs text-muted-foreground">
                       {activeVideoIndex + 1}/{videos.length}
                     </span>
+                  </div>
+                )}
+
+                {/* Autoplay toggle */}
+                {videos.length > 1 && isPlaying && (
+                  <div className="flex items-center justify-between pt-3 border-t border-border mt-3">
+                    <span className="text-xs text-muted-foreground">Putar otomatis ke video berikutnya</span>
+                    <button
+                      onClick={() => setAutoplayEnabled(!autoplayEnabled)}
+                      className={`w-10 h-5 rounded-full transition-colors relative ${
+                        autoplayEnabled ? "bg-primary" : "bg-muted"
+                      }`}
+                    >
+                      <span 
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                          autoplayEnabled ? "left-5" : "left-0.5"
+                        }`} 
+                      />
+                    </button>
                   </div>
                 )}
               </div>

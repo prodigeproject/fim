@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -137,6 +137,39 @@ export default function NewsletterManagement() {
     setImportProgress(0);
     setImportResult(null);
   };
+
+  // Real-time updates for newsletter subscribers
+  useEffect(() => {
+    const channel = supabase
+      .channel("newsletter-subscribers-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "newsletter_subscribers",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["newsletter-subscribers"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "scheduled_broadcasts",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["scheduled-broadcasts"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: subscribers, isLoading } = useQuery({
     queryKey: ["newsletter-subscribers"],

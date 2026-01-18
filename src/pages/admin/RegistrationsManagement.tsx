@@ -190,6 +190,28 @@ export default function RegistrationsManagement() {
     },
   });
 
+  // Real-time updates for registrations
+  useEffect(() => {
+    const channel = supabase
+      .channel("registrations-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "fim_registrations",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   // Fetch all registrations with batch filter
   const { data: registrations, isLoading } = useQuery({
     queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, batchFilter, sortField, sortOrder],
