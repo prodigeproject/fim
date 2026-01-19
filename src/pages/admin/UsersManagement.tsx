@@ -23,6 +23,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy, ShieldAlert } from "lucide-react";
+import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy, ShieldAlert, Trash2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -69,6 +79,8 @@ export default function UsersManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedDynamicRoleId, setSelectedDynamicRoleId] = useState<string>("");
   const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
@@ -281,6 +293,63 @@ export default function UsersManagement() {
     },
   });
 
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete user's dynamic roles
+      await supabase
+        .from("user_dynamic_roles")
+        .delete()
+        .eq("user_id", userId);
+      
+      // Delete user's roles
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+      
+      // Delete admin sessions
+      await supabase
+        .from("admin_sessions")
+        .delete()
+        .eq("user_id", userId);
+      
+      // Delete profile
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+      
+      if (error) throw error;
+
+      // Log audit
+      await supabase.rpc("log_audit_event", {
+        p_action: "delete_user",
+        p_resource_type: "user",
+        p_resource_id: userId,
+      });
+
+      return userId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["user-dynamic-roles"] });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      toast({
+        title: "Pengguna berhasil dihapus",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal menghapus pengguna",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Assign dynamic role to user
   const assignDynamicRoleMutation = useMutation({
     mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
@@ -366,6 +435,11 @@ export default function UsersManagement() {
     setSelectedUserId(userId);
     setSelectedDynamicRoleId("");
     setIsRoleDialogOpen(true);
+  };
+
+  const openDeleteDialog = (userItem: any) => {
+    setUserToDelete(userItem);
+    setIsDeleteDialogOpen(true);
   };
 
   if (!isSuperAdmin) {
@@ -712,6 +786,16 @@ export default function UsersManagement() {
                                 <UserPlus className="h-4 w-4" />
                               )}
                             </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => openDeleteDialog(userItem)}
+                              title="Hapus pengguna"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -729,6 +813,38 @@ export default function UsersManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Hapus Pengguna
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus pengguna <strong>{userToDelete?.full_name || userToDelete?.username}</strong> ({userToDelete?.email})? 
+              <br /><br />
+              Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait termasuk role dan sesi login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => userToDelete && deleteUserMutation.mutate(userToDelete.id)}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Hapus Permanen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -12,7 +12,8 @@
     "blog": "Blog",
     "faq": "FAQ",
     "volunteer": "Join Volunteers",
-    "donate": "Donate"
+    "donate": "Donate",
+    "register": "Register"
   },
   "hero": {
     "title": "Forum Indonesia Muda",
@@ -21,7 +22,7 @@
     "learnMore": "Learn More"
   },
   "stats": {
-    "since": "Since",
+    "since": "Established Since",
     "batches": "Batches",
     "regions": "Regions",
     "alumni": "Alumni"
@@ -31,9 +32,22 @@
     "description": "Forum Indonesia Muda is a youth leadership organization established since 2003"
   },
   "programs": {
-    "title": "Our Programs",
+    "title": "Featured Programs",
     "training": "Training Program",
     "trainingDesc": "Annual leadership program to shape young Indonesian leaders"
+  },
+  "alumni": {
+    "title": "Alumni Testimonials",
+    "description": "Hear directly from FIM alumni who are now working in various fields",
+    "viewAll": "View All Alumni Stories"
+  },
+  "news": {
+    "title": "FIM News",
+    "viewAll": "View All News",
+    "readMore": "Read More"
+  },
+  "partners": {
+    "title": "Partners & Collaborators"
   },
   "footer": {
     "newsletter": "Newsletter",
@@ -54,5 +68,18 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "download": "Download"
   }
 }

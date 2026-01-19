@@ -12,7 +12,8 @@
     "blog": "Blog",
     "faq": "FAQ",
     "volunteer": "Gabung Relawan",
-    "donate": "Donasi"
+    "donate": "Donasi",
+    "register": "Daftar"
   },
   "hero": {
     "title": "Forum Indonesia Muda",
@@ -21,7 +22,7 @@
     "learnMore": "Pelajari Lebih Lanjut"
   },
   "stats": {
-    "since": "Sejak",
+    "since": "Berdiri Sejak",
     "batches": "Angkatan",
     "regions": "Regional",
     "alumni": "Alumni"
@@ -31,9 +32,22 @@
     "description": "Forum Indonesia Muda adalah organisasi kaderisasi pemuda yang telah berdiri sejak 2003"
   },
   "programs": {
-    "title": "Program Kami",
+    "title": "Program Unggulan",
     "training": "Program Pelatihan",
     "trainingDesc": "Program kaderisasi tahunan untuk membentuk pemimpin muda Indonesia"
+  },
+  "alumni": {
+    "title": "Kata Alumni",
+    "description": "Dengarkan pengalaman langsung dari alumni FIM yang kini berkarya di berbagai bidang",
+    "viewAll": "Lihat Semua Cerita Alumni"
+  },
+  "news": {
+    "title": "Kabar FIM",
+    "viewAll": "Lihat Semua Berita",
+    "readMore": "Baca Selengkapnya"
+  },
+  "partners": {
+    "title": "Mitra & Kolaborator"
   },
   "footer": {
     "newsletter": "Newsletter",
@@ -54,5 +68,18 @@
     "light": "Terang",
     "dark": "Gelap",
     "system": "Sistem"
+  },
+  "common": {
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba lagi",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "view": "Lihat",
+    "download": "Unduh"
   }
 }

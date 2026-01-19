@@ -645,10 +645,12 @@ export type Database = {
           id: string
           interview_date: string | null
           interview_note: string | null
+          note_visible_to_applicant: boolean | null
           phone: string | null
           phone_country_code: string | null
           photo_url: string | null
           registration_status: string | null
+          selection_passed: boolean | null
           selection_stage: string | null
           updated_at: string | null
           verification_attempts: number | null
@@ -668,10 +670,12 @@ export type Database = {
           id?: string
           interview_date?: string | null
           interview_note?: string | null
+          note_visible_to_applicant?: boolean | null
           phone?: string | null
           phone_country_code?: string | null
           photo_url?: string | null
           registration_status?: string | null
+          selection_passed?: boolean | null
           selection_stage?: string | null
           updated_at?: string | null
           verification_attempts?: number | null
@@ -691,10 +695,12 @@ export type Database = {
           id?: string
           interview_date?: string | null
           interview_note?: string | null
+          note_visible_to_applicant?: boolean | null
           phone?: string | null
           phone_country_code?: string | null
           photo_url?: string | null
           registration_status?: string | null
+          selection_passed?: boolean | null
           selection_stage?: string | null
           updated_at?: string | null
           verification_attempts?: number | null
