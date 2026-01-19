@@ -11,8 +11,8 @@ const corsHeaders = {
 interface SelectionStageRequest {
   registrantEmail: string;
   registrantName: string;
-  stage: "administrasi" | "wawancara" | "pengumuman";
-  passed: boolean;
+  stage: "administrasi" | "lolos_administrasi" | "wawancara" | "pengumuman";
+  passed?: boolean;
   interviewDate?: string;
   note?: string;
   finalResult?: "lolos" | "tidak_lolos";
@@ -43,11 +43,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     let subject = "";
     let content = "";
-    let statusColor = passed ? "#22c55e" : "#ef4444";
-    let statusEmoji = passed ? "✅" : "❌";
+    const isPassed = passed === true || stage === "lolos_administrasi";
+    let statusColor = isPassed ? "#22c55e" : "#ef4444";
+    let statusEmoji = isPassed ? "✅" : "❌";
 
-    if (stage === "administrasi") {
-      if (passed) {
+    if (stage === "administrasi" || stage === "lolos_administrasi") {
+      if (isPassed) {
         subject = "Selamat! Anda Lolos Seleksi Administrasi FIM";
         content = `
           <p>Selamat! Anda telah <strong style="color: #22c55e;">LOLOS SELEKSI ADMINISTRASI</strong> Forum Indonesia Muda.</p>
@@ -58,6 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #166534;">${interviewDate}</p>
           </div>
           ` : '<p>Tim kami akan segera menghubungi Anda untuk jadwal wawancara.</p>'}
+          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
         `;
       } else {
         subject = "Informasi Seleksi Administrasi FIM";
@@ -86,6 +88,8 @@ const handler = async (req: Request): Promise<Response> => {
     } else if (stage === "pengumuman") {
       if (finalResult === "lolos") {
         subject = "🎉 Selamat! Anda Diterima di Forum Indonesia Muda";
+        statusColor = "#22c55e";
+        statusEmoji = "🎉";
         content = `
           <p>Selamat! Anda telah resmi <strong style="color: #22c55e;">DITERIMA</strong> sebagai peserta Forum Indonesia Muda! 🎉</p>
           <p>Kami sangat senang menyambut Anda dalam komunitas kami.</p>
@@ -94,6 +98,8 @@ const handler = async (req: Request): Promise<Response> => {
         `;
       } else {
         subject = "Informasi Hasil Seleksi FIM";
+        statusColor = "#ef4444";
+        statusEmoji = "❌";
         content = `
           <p>Terima kasih telah mengikuti seluruh rangkaian seleksi Forum Indonesia Muda.</p>
           <p>Dengan berat hati, kami informasikan bahwa Anda <strong style="color: #ef4444;">belum dapat diterima</strong> pada periode ini.</p>
