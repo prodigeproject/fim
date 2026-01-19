@@ -175,6 +175,7 @@ export default function RegistrationsManagement() {
   // Delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [registrationToDelete, setRegistrationToDelete] = useState<Registration | null>(null);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   
   // Email preview state
   const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
@@ -481,6 +482,43 @@ export default function RegistrationsManagement() {
       setIsDeleteDialogOpen(false);
       setRegistrationToDelete(null);
       setIsDetailOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal menghapus data: ${error.message}`);
+    },
+  });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) {
+        // Delete training data first
+        await supabase
+          .from("fim_training_registrations")
+          .delete()
+          .eq("registration_id", id);
+        
+        // Delete interview schedules
+        await supabase
+          .from("interview_schedules")
+          .delete()
+          .eq("registration_id", id);
+        
+        // Delete registration
+        const { error } = await supabase
+          .from("fim_registrations")
+          .delete()
+          .eq("id", id);
+        
+        if (error) throw error;
+      }
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`${count} data pendaftar berhasil dihapus`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setSelectedIds(new Set());
+      setIsBulkDeleteDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(`Gagal menghapus data: ${error.message}`);
@@ -1169,6 +1207,14 @@ Tim Forum Indonesia Muda
                 </Button>
                 <Button
                   variant="outline"
+                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Hapus ({selectedIds.size})
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => setSelectedIds(new Set())}
                 >
                   Batal
@@ -1313,18 +1359,31 @@ Tim Forum Indonesia Muda
                           {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedRegistration(reg);
-                              setIsDetailOpen(true);
-                              setReviewerNote("");
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Detail
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRegistration(reg);
+                                setIsDetailOpen(true);
+                                setReviewerNote("");
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Detail
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                setRegistrationToDelete(reg);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -2181,6 +2240,37 @@ Tim Forum Indonesia Muda
                 <Trash2 className="h-4 w-4 mr-2" />
               )}
               Hapus Permanen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Hapus {selectedIds.size} Data Pendaftar
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus <strong>{selectedIds.size} data pendaftar</strong> yang dipilih? 
+              Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait termasuk formulir dan jadwal wawancara.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Hapus {selectedIds.size} Data
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
