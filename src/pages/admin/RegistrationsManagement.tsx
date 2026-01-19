@@ -163,11 +163,13 @@ export default function RegistrationsManagement() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [reviewerNote, setReviewerNote] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
+  const [noteVisibleToApplicant, setNoteVisibleToApplicant] = useState(false);
   
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<"approve" | "reject" | null>(null);
   const [bulkNote, setBulkNote] = useState("");
+  const [bulkNoteVisible, setBulkNoteVisible] = useState(false);
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [isBulkStageDialogOpen, setIsBulkStageDialogOpen] = useState(false);
   const [bulkStageDate, setBulkStageDate] = useState("");
@@ -626,7 +628,21 @@ export default function RegistrationsManagement() {
     }
   };
 
-  const getStageBadge = (stage: string) => {
+  const getStageBadge = (stage: string, selectionPassed?: boolean | null) => {
+    // Special display for passed stages
+    if (stage === "administrasi" && selectionPassed === true) {
+      return <Badge className="gap-1 bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3" />Lolos Administrasi</Badge>;
+    }
+    if (stage === "administrasi" && selectionPassed === false) {
+      return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos Adm</Badge>;
+    }
+    if (stage === "wawancara" && selectionPassed === true) {
+      return <Badge className="gap-1 bg-emerald-600 text-white"><CheckCircle2 className="h-3 w-3" />Lolos Wawancara</Badge>;
+    }
+    if (stage === "wawancara" && selectionPassed === false) {
+      return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos Waw</Badge>;
+    }
+    
     switch (stage) {
       case "administrasi":
         return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-700"><FileText className="h-3 w-3" />Administrasi</Badge>;
@@ -1396,7 +1412,7 @@ Tim Forum Indonesia Muda
                         <TableCell className="font-medium">{reg.full_name}</TableCell>
                         <TableCell>{reg.email}</TableCell>
                         <TableCell>{getStatusBadge(reg.registration_status)}</TableCell>
-                        <TableCell>{getStageBadge(reg.selection_stage || 'administrasi')}</TableCell>
+                        <TableCell>{getStageBadge(reg.selection_stage || 'administrasi', reg.selection_passed)}</TableCell>
                         <TableCell>
                           {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
@@ -1720,7 +1736,7 @@ Tim Forum Indonesia Muda
               <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold">Tahap Seleksi Saat Ini</h4>
-                  {getStageBadge(selectedRegistration.selection_stage || 'administrasi')}
+                  {getStageBadge(selectedRegistration.selection_stage || 'administrasi', selectedRegistration.selection_passed)}
                 </div>
                 {selectedRegistration.interview_date && (
                   <div className="text-sm">
@@ -1753,6 +1769,16 @@ Tim Forum Indonesia Muda
                   onChange={(e) => setReviewerNote(e.target.value)}
                   rows={3}
                 />
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    id="note-visibility"
+                    checked={noteVisibleToApplicant}
+                    onCheckedChange={(checked) => setNoteVisibleToApplicant(checked === true)}
+                  />
+                  <Label htmlFor="note-visibility" className="text-sm text-muted-foreground">
+                    Tampilkan catatan ini ke pendaftar
+                  </Label>
+                </div>
               </div>
 
               {/* Action Buttons based on Selection Stage */}
@@ -1769,7 +1795,7 @@ Tim Forum Indonesia Muda
                 </div>
 
                 {/* Administrasi Stage Actions */}
-                {selectedRegistration.selection_stage === "administrasi" && !selectedRegistration.final_result && (
+                {selectedRegistration.selection_stage === "administrasi" && selectedRegistration.selection_passed !== true && !selectedRegistration.final_result && (
                   <div className="space-y-2 w-full">
                     <Label className="text-sm font-medium">Review Seleksi Administrasi:</Label>
                     <div className="flex gap-2">
@@ -1784,6 +1810,7 @@ Tim Forum Indonesia Muda
                             email: selectedRegistration.email,
                             name: selectedRegistration.full_name,
                             sendEmail: true,
+                            noteVisible: noteVisibleToApplicant,
                           });
                         }}
                         disabled={updateStageMutation.isPending}
@@ -1825,7 +1852,7 @@ Tim Forum Indonesia Muda
                 )}
 
                 {/* Lolos Administrasi - Waiting for Interview Scheduling */}
-                {selectedRegistration.selection_stage === "lolos_administrasi" && !selectedRegistration.final_result && (
+                {selectedRegistration.selection_stage === "administrasi" && selectedRegistration.selection_passed === true && !selectedRegistration.final_result && (
                   <div className="space-y-3 w-full">
                     <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
                       <p className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
@@ -2167,11 +2194,11 @@ Tim Forum Indonesia Muda
             
             <div className="flex items-center gap-2">
               <Checkbox 
-                id="note-visible"
-                checked={bulkStageType === "lolos_administrasi"}
-                onCheckedChange={(checked) => setBulkStageType(checked ? "lolos_administrasi" : "wawancara")}
+                id="bulk-note-visible"
+                checked={bulkNoteVisible}
+                onCheckedChange={(checked) => setBulkNoteVisible(checked === true)}
               />
-              <Label htmlFor="note-visible" className="text-sm">
+              <Label htmlFor="bulk-note-visible" className="text-sm">
                 Tampilkan catatan ini ke pendaftar
               </Label>
             </div>
@@ -2181,6 +2208,7 @@ Tim Forum Indonesia Muda
             <Button variant="outline" onClick={() => {
               setIsBulkStageDialogOpen(false);
               setBulkNote("");
+              setBulkNoteVisible(false);
             }}>
               Batal
             </Button>
@@ -2191,7 +2219,7 @@ Tim Forum Indonesia Muda
                   stage: "lolos_seleksi",
                   note: bulkNote,
                   passed: true,
-                  noteVisible: bulkStageType === "lolos_administrasi",
+                  noteVisible: bulkNoteVisible,
                 });
               }}
               disabled={bulkStageMutation.isPending}
