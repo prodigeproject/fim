@@ -103,7 +103,9 @@ interface Registration {
   created_at: string;
   updated_at: string;
   selection_stage: string;
+  selection_passed: boolean | null;
   admin_selection_note: string | null;
+  note_visible_to_applicant: boolean | null;
   interview_note: string | null;
   interview_date: string | null;
   final_result: string | null;
@@ -383,25 +385,50 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Bulk stage update mutation
+  // Bulk stage update mutation - for bulk "lolos seleksi" which just marks selection_passed = true
   const bulkStageMutation = useMutation({
-    mutationFn: async ({ ids, stage, note, interviewDate }: { 
+    mutationFn: async ({ ids, stage, note, interviewDate, passed, noteVisible = false }: { 
       ids: string[]; 
       stage: string; 
       note?: string;
       interviewDate?: string;
+      passed?: boolean;
+      noteVisible?: boolean;
     }) => {
       // Get registration details for email
       const { data: regs } = await supabase
         .from("fim_registrations")
-        .select("id, email, full_name")
+        .select("id, email, full_name, selection_stage")
         .in("id", ids);
 
-      const updates: any = { selection_stage: stage };
-      if (note) updates.admin_selection_note = note;
-      if (interviewDate && stage === "wawancara") updates.interview_date = interviewDate;
+      // Build update object based on stage type
+      const updates: any = {
+        updated_at: new Date().toISOString(),
+        note_visible_to_applicant: noteVisible
+      };
+      
+      if (stage === "lolos_seleksi") {
+        // Just mark as passed the current stage, don't change stage
+        updates.selection_passed = true;
+        if (note) updates.admin_selection_note = note;
+      } else if (stage === "tidak_lolos") {
+        // Mark as not passed and set final result
+        updates.selection_passed = false;
+        updates.final_result = "tidak_lolos";
+        updates.selection_stage = "pengumuman";
+        updates.registration_status = "rejected";
+        if (note) updates.admin_selection_note = note;
+      } else if (stage === "wawancara") {
+        updates.selection_stage = "wawancara";
+        updates.selection_passed = null;
+        if (note) updates.admin_selection_note = note;
+        if (interviewDate) updates.interview_date = interviewDate;
+      } else {
+        updates.selection_stage = stage;
+        if (note) updates.admin_selection_note = note;
+      }
 
-      // Update all stages
+      // Update all records
       const { error } = await supabase
         .from("fim_registrations")
         .update(updates)
@@ -409,15 +436,16 @@ export default function RegistrationsManagement() {
       
       if (error) throw error;
 
-      // Send emails for each registration
-      if (regs && stage === "wawancara") {
+      // Send emails for stage changes if needed
+      if (regs && (stage === "wawancara" || stage === "tidak_lolos" || stage === "lolos_seleksi")) {
         for (const reg of regs) {
           try {
             await supabase.functions.invoke("notify-selection-stage", {
               body: {
                 registrantEmail: reg.email,
                 registrantName: reg.full_name,
-                stage: stage,
+                stage: stage === "lolos_seleksi" ? `lolos_${reg.selection_stage}` : stage,
+                passed: stage === "lolos_seleksi",
                 interviewDate: interviewDate || undefined,
                 note: note || undefined,
               },
@@ -431,8 +459,12 @@ export default function RegistrationsManagement() {
       return ids.length;
     },
     onSuccess: (count, variables) => {
-      const stageText = variables.stage === "wawancara" ? "Wawancara" : variables.stage === "lolos_administrasi" ? "Lolos Administrasi" : "Administrasi";
-      toast.success(`${count} pendaftaran dipindahkan ke tahap ${stageText}`);
+      const stageText = variables.stage === "lolos_seleksi" 
+        ? "ditandai Lolos Seleksi" 
+        : variables.stage === "tidak_lolos" 
+        ? "ditandai Tidak Lolos" 
+        : `dipindahkan ke tahap ${variables.stage}`;
+      toast.success(`${count} pendaftaran berhasil ${stageText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setSelectedIds(new Set());
       setBulkNote("");
@@ -440,8 +472,8 @@ export default function RegistrationsManagement() {
       setBulkStageDate("");
       setBulkStageTime("");
     },
-    onError: () => {
-      toast.error("Gagal memperbarui tahap seleksi");
+    onError: (error: any) => {
+      toast.error(`Gagal memperbarui: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -598,8 +630,6 @@ export default function RegistrationsManagement() {
     switch (stage) {
       case "administrasi":
         return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-700"><FileText className="h-3 w-3" />Administrasi</Badge>;
-      case "lolos_administrasi":
-        return <Badge variant="outline" className="gap-1 border-emerald-500 text-emerald-700"><CheckCircle2 className="h-3 w-3" />Lolos Administrasi</Badge>;
       case "wawancara":
         return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-700"><MessageSquare className="h-3 w-3" />Wawancara</Badge>;
       case "pengumuman":
@@ -616,14 +646,13 @@ export default function RegistrationsManagement() {
     approved: registrations?.filter(r => r.registration_status === "approved").length || 0,
     rejected: registrations?.filter(r => r.registration_status === "rejected").length || 0,
     stageAdministrasi: registrations?.filter(r => r.selection_stage === "administrasi").length || 0,
-    stageLolosAdministrasi: registrations?.filter(r => r.selection_stage === "lolos_administrasi").length || 0,
     stageWawancara: registrations?.filter(r => r.selection_stage === "wawancara").length || 0,
     stagePengumuman: registrations?.filter(r => r.selection_stage === "pengumuman").length || 0,
   };
 
   // Selection stage mutation with email notification
   const updateStageMutation = useMutation({
-    mutationFn: async ({ id, stage, note, interviewDate, email, name, sendEmail = true }: { 
+    mutationFn: async ({ id, stage, note, interviewDate, email, name, sendEmail = true, passed, noteVisible = false }: { 
       id: string; 
       stage: string; 
       note?: string; 
@@ -631,23 +660,35 @@ export default function RegistrationsManagement() {
       email: string;
       name: string;
       sendEmail?: boolean;
+      passed?: boolean; // Track if user passed current stage
+      noteVisible?: boolean; // Whether note is visible to applicant
     }) => {
       const updates: any = { 
-        selection_stage: stage,
         updated_at: new Date().toISOString()
       };
       
+      // Map logical stage names to valid database values
+      // Database constraint only allows: 'administrasi', 'wawancara', 'pengumuman'
       if (stage === "lolos_administrasi") {
-        // Lolos administrasi - move to waiting for interview scheduling
-        updates.selection_stage = "lolos_administrasi";
+        // User passed administrasi, still at administrasi stage but marked as passed
+        updates.selection_stage = "administrasi";
+        updates.selection_passed = true;
         if (note) updates.admin_selection_note = note;
+        updates.note_visible_to_applicant = noteVisible;
       } else if (stage === "wawancara") {
-        updates.admin_selection_note = note;
+        updates.selection_stage = "wawancara";
+        updates.selection_passed = null; // Reset for new stage
+        if (note) updates.admin_selection_note = note;
         if (interviewDate) updates.interview_date = interviewDate;
-      } else if (stage === "pengumuman" && note) {
-        updates.interview_note = note;
-      } else if (note) {
-        updates.admin_selection_note = note;
+        updates.note_visible_to_applicant = noteVisible;
+      } else if (stage === "pengumuman") {
+        updates.selection_stage = "pengumuman";
+        if (note) updates.interview_note = note;
+        updates.note_visible_to_applicant = noteVisible;
+      } else {
+        updates.selection_stage = stage;
+        if (note) updates.admin_selection_note = note;
+        updates.note_visible_to_applicant = noteVisible;
       }
 
       console.log("Updating stage:", { id, stage, updates });
@@ -698,9 +739,10 @@ export default function RegistrationsManagement() {
       setReviewerNote("");
       setInterviewDate("");
       setIsScheduleDialogOpen(false);
-      // Update selected registration state
+      // Update selected registration state with correct stage value
       if (selectedRegistration?.id === variables.id) {
-        setSelectedRegistration(prev => prev ? { ...prev, selection_stage: variables.stage } : null);
+        const actualStage = variables.stage === "lolos_administrasi" ? "administrasi" : variables.stage;
+        setSelectedRegistration(prev => prev ? { ...prev, selection_stage: actualStage } : null);
       }
     },
     onError: (error: any) => {
@@ -1724,17 +1766,6 @@ Tim Forum Indonesia Muda
                     <Download className="h-4 w-4 mr-2" />
                     Export PDF
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setRegistrationToDelete(selectedRegistration);
-                      setIsDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Hapus
-                  </Button>
                 </div>
 
                 {/* Administrasi Stage Actions */}
@@ -2108,107 +2139,70 @@ Tim Forum Indonesia Muda
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Stage Update Dialog */}
+      {/* Bulk Stage Update Dialog - Simplified for Lolos Seleksi */}
       <Dialog open={isBulkStageDialogOpen} onOpenChange={setIsBulkStageDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CalendarPlus className="h-5 w-5" />
-              Lolos ke Tahap Wawancara
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              Lolos Seleksi
             </DialogTitle>
             <DialogDescription>
-              {selectedIds.size} pendaftaran akan dipindahkan ke tahap wawancara dan akan mendapat undangan
+              {selectedIds.size} pendaftaran akan ditandai sebagai <strong>lolos seleksi</strong> pada tahap saat ini 
+              (administrasi atau wawancara). Untuk penjadwalan wawancara, gunakan menu Kalender Wawancara.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="bulk-schedule-date">Tanggal Wawancara</Label>
-                <Input
-                  id="bulk-schedule-date"
-                  type="date"
-                  value={bulkStageDate}
-                  onChange={(e) => setBulkStageDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bulk-schedule-time">Waktu</Label>
-                <Input
-                  id="bulk-schedule-time"
-                  type="time"
-                  value={bulkStageTime}
-                  onChange={(e) => setBulkStageTime(e.target.value)}
-                />
-              </div>
-            </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="bulk-schedule-note">Catatan (opsional)</Label>
+              <Label htmlFor="bulk-note">Catatan (opsional)</Label>
               <Textarea
-                id="bulk-schedule-note"
-                placeholder="Lokasi, link meeting, atau catatan lainnya..."
+                id="bulk-note"
+                placeholder="Catatan untuk pendaftar (misal: alasan lolos)..."
                 value={bulkNote}
                 onChange={(e) => setBulkNote(e.target.value)}
                 rows={3}
               />
             </div>
-
-            {bulkStageDate && bulkStageTime && (
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Preview jadwal yang akan dikirim:</p>
-                <p className="font-medium">
-                  {new Date(`${bulkStageDate}T${bulkStageTime}`).toLocaleDateString('id-ID', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })} pukul {bulkStageTime} WIB
-                </p>
-              </div>
-            )}
+            
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="note-visible"
+                checked={bulkStageType === "lolos_administrasi"}
+                onCheckedChange={(checked) => setBulkStageType(checked ? "lolos_administrasi" : "wawancara")}
+              />
+              <Label htmlFor="note-visible" className="text-sm">
+                Tampilkan catatan ini ke pendaftar
+              </Label>
+            </div>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setIsBulkStageDialogOpen(false);
-              setBulkStageDate("");
-              setBulkStageTime("");
               setBulkNote("");
             }}>
               Batal
             </Button>
             <Button
               onClick={() => {
-                if (!bulkStageDate || !bulkStageTime) {
-                  toast.error("Mohon lengkapi tanggal dan waktu wawancara");
-                  return;
-                }
-                
-                const formattedDate = new Date(`${bulkStageDate}T${bulkStageTime}`).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }) + ` pukul ${bulkStageTime} WIB`;
-
                 bulkStageMutation.mutate({
                   ids: Array.from(selectedIds),
-                  stage: "wawancara",
+                  stage: "lolos_seleksi",
                   note: bulkNote,
-                  interviewDate: formattedDate,
+                  passed: true,
+                  noteVisible: bulkStageType === "lolos_administrasi",
                 });
               }}
-              disabled={bulkStageMutation.isPending || !bulkStageDate || !bulkStageTime}
-              className="bg-blue-600 hover:bg-blue-700"
+              disabled={bulkStageMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
             >
               {bulkStageMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 mr-2" />
+                <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
-              Kirim {selectedIds.size} Undangan
+              Tandai {selectedIds.size} Lolos
             </Button>
           </DialogFooter>
         </DialogContent>
