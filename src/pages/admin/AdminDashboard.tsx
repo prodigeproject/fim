@@ -339,7 +339,7 @@ export default function AdminDashboard() {
 
   const Sidebar = () => (
     <TooltipProvider>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b shrink-0">
           <h1 className="text-lg font-bold text-foreground">FIM Admin</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -347,7 +347,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto overscroll-contain" style={{ scrollBehavior: 'auto' }}>
           {filteredNavItems.map((item) => (
             <NavItemComponent key={item.href} item={item} />
           ))}

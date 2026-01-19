@@ -79,7 +79,19 @@ import {
   CalendarArrowDown,
   CalendarPlus,
   Send,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Registration {
   id: string;
@@ -158,6 +170,11 @@ export default function RegistrationsManagement() {
   const [isBulkStageDialogOpen, setIsBulkStageDialogOpen] = useState(false);
   const [bulkStageDate, setBulkStageDate] = useState("");
   const [bulkStageTime, setBulkStageTime] = useState("");
+  const [bulkStageType, setBulkStageType] = useState<"lolos_administrasi" | "wawancara">("lolos_administrasi");
+  
+  // Delete state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [registrationToDelete, setRegistrationToDelete] = useState<Registration | null>(null);
   
   // Email preview state
   const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
@@ -413,15 +430,60 @@ export default function RegistrationsManagement() {
       return ids.length;
     },
     onSuccess: (count, variables) => {
-      const stageText = variables.stage === "wawancara" ? "Wawancara" : "Administrasi";
+      const stageText = variables.stage === "wawancara" ? "Wawancara" : variables.stage === "lolos_administrasi" ? "Lolos Administrasi" : "Administrasi";
       toast.success(`${count} pendaftaran dipindahkan ke tahap ${stageText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setSelectedIds(new Set());
       setBulkNote("");
       setIsBulkStageDialogOpen(false);
+      setBulkStageDate("");
+      setBulkStageTime("");
     },
     onError: () => {
       toast.error("Gagal memperbarui tahap seleksi");
+    },
+  });
+
+  // Delete registration mutation
+  const deleteRegistrationMutation = useMutation({
+    mutationFn: async (registration: Registration) => {
+      // Delete training data first
+      await supabase
+        .from("fim_training_registrations")
+        .delete()
+        .eq("registration_id", registration.id);
+      
+      // Delete interview schedules
+      await supabase
+        .from("interview_schedules")
+        .delete()
+        .eq("registration_id", registration.id);
+      
+      // Delete registration
+      const { error } = await supabase
+        .from("fim_registrations")
+        .delete()
+        .eq("id", registration.id);
+      
+      if (error) throw error;
+      
+      // Delete auth user if exists
+      if (registration.auth_user_id) {
+        // Note: This requires admin privileges - may not work without service role
+        console.log("Auth user deletion would require service role:", registration.auth_user_id);
+      }
+      
+      return registration;
+    },
+    onSuccess: (reg) => {
+      toast.success(`Data pendaftar ${reg.full_name} berhasil dihapus`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setIsDeleteDialogOpen(false);
+      setRegistrationToDelete(null);
+      setIsDetailOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal menghapus data: ${error.message}`);
     },
   });
 
@@ -1092,26 +1154,18 @@ Tim Forum Indonesia Muda
               <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="default"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-green-600 hover:bg-green-700"
                   onClick={() => setIsBulkStageDialogOpen(true)}
                 >
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  Lolos ke Wawancara
-                </Button>
-                <Button
-                  variant="default"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => openBulkDialog("approve")}
-                >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Setujui Semua
+                  Lolos Seleksi
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => openBulkDialog("reject")}
                 >
                   <XCircle className="h-4 w-4 mr-2" />
-                  Tolak Semua
+                  Tidak Lolos
                 </Button>
                 <Button
                   variant="outline"
@@ -1226,7 +1280,6 @@ Tim Forum Indonesia Muda
                   <TableHead>Status</TableHead>
                   <TableHead>Tahap Seleksi</TableHead>
                   <TableHead>Tanggal Daftar</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1611,6 +1664,17 @@ Tim Forum Indonesia Muda
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Export PDF
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setRegistrationToDelete(selectedRegistration);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hapus
                   </Button>
                 </div>
 
@@ -2090,6 +2154,37 @@ Tim Forum Indonesia Muda
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Hapus Data Pendaftar
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus data pendaftar <strong>{registrationToDelete?.full_name}</strong>? 
+              Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait termasuk formulir dan jadwal wawancara.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => registrationToDelete && deleteRegistrationMutation.mutate(registrationToDelete)}
+              disabled={deleteRegistrationMutation.isPending}
+            >
+              {deleteRegistrationMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Hapus Permanen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
