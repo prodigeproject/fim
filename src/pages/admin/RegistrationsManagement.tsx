@@ -767,6 +767,34 @@ export default function RegistrationsManagement() {
     },
   });
 
+  // Revert status mutation - for human error correction
+  const revertStatusMutation = useMutation({
+    mutationFn: async ({ id, stage }: { id: string; stage: string }) => {
+      const { data, error } = await supabase
+        .from("fim_registrations")
+        .update({
+          selection_stage: stage,
+          final_result: null,
+          selection_passed: null,
+          registration_status: "pending",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Status berhasil dikembalikan ke tahap sebelumnya");
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal mengembalikan status: ${error.message}`);
+    },
+  });
+
   // Final result mutation - fixed with proper error handling
   const updateFinalResultMutation = useMutation({
     mutationFn: async ({ id, result, note, email, name }: { 
@@ -1937,15 +1965,82 @@ Tim Forum Indonesia Muda
                   </div>
                 )}
 
-                {/* Pengumuman Stage - Final Result Already Set */}
+{/* Pengumuman Stage - Final Result Already Set */}
                 {selectedRegistration.final_result && (
-                  <div className="w-full p-4 rounded-lg bg-muted text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Pendaftar ini sudah memiliki hasil akhir: 
-                      <span className={`ml-1 font-semibold ${selectedRegistration.final_result === 'lolos' ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedRegistration.final_result === 'lolos' ? 'LOLOS' : 'TIDAK LOLOS'}
-                      </span>
-                    </p>
+                  <div className="space-y-3 w-full">
+                    <div className="p-4 rounded-lg bg-muted text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Pendaftar ini sudah memiliki hasil akhir: 
+                        <span className={`ml-1 font-semibold ${selectedRegistration.final_result === 'lolos' ? 'text-green-600' : 'text-red-600'}`}>
+                          {selectedRegistration.final_result === 'lolos' ? 'LOLOS' : 'TIDAK LOLOS'}
+                        </span>
+                      </p>
+                    </div>
+                    {/* Option to revert status for human error correction */}
+                    <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Koreksi hasil (jika terjadi kesalahan input):
+                      </p>
+                      <div className="flex gap-2">
+                        {selectedRegistration.final_result === 'tidak_lolos' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-300 hover:bg-green-50"
+                            onClick={() => {
+                              updateFinalResultMutation.mutate({
+                                id: selectedRegistration.id,
+                                result: "lolos",
+                                note: reviewerNote || "Koreksi status: diubah menjadi Lolos",
+                                email: selectedRegistration.email,
+                                name: selectedRegistration.full_name
+                              });
+                            }}
+                            disabled={updateFinalResultMutation.isPending}
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Ubah ke Lolos
+                          </Button>
+                        )}
+                        {selectedRegistration.final_result === 'lolos' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => {
+                              updateFinalResultMutation.mutate({
+                                id: selectedRegistration.id,
+                                result: "tidak_lolos",
+                                note: reviewerNote || "Koreksi status: diubah menjadi Tidak Lolos",
+                                email: selectedRegistration.email,
+                                name: selectedRegistration.full_name
+                              });
+                            }}
+                            disabled={updateFinalResultMutation.isPending}
+                          >
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Ubah ke Tidak Lolos
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Revert to previous stage
+                            const revertStage = selectedRegistration.selection_stage === 'pengumuman' ? 'wawancara' : 'administrasi';
+                            revertStatusMutation.mutate({
+                              id: selectedRegistration.id,
+                              stage: revertStage,
+                            });
+                          }}
+                          disabled={revertStatusMutation?.isPending}
+                        >
+                          <History className="h-3 w-3 mr-1" />
+                          Kembalikan ke Tahap Sebelumnya
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </SheetFooter>

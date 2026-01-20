@@ -15,6 +15,18 @@
     "donate": "Donasi",
     "register": "Daftar"
   },
+  "home": {
+    "title": "Beranda",
+    "description": "Forum Indonesia Muda - Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang. Organisasi kaderisasi pemuda sejak 2003 dengan 4000+ alumni dari 61 regional.",
+    "hero": {
+      "heading": "Bangun Karakter & Kepemimpinan",
+      "subheading": "untuk Masa Depan Indonesia",
+      "socialProof": "✓ 4000+ Alumni di Kementerian, Startup, NGO | ✓ 34+ Angkatan Sejak 2003",
+      "description": "Raih kesempatan untuk mengembangkan diri melalui pelatihan kepemimpinan berbasis 7 Pilar Karakter. Bergabunglah dengan jaringan pemuda terbaik Indonesia.",
+      "urgency": "Pendaftaran Angkatan Baru Segera Dibuka!",
+      "cta": "Pelajari Lebih Lanjut"
+    }
+  },
   "hero": {
     "title": "Bangun Karakter & Kepemimpinan",
     "titleHighlight": "untuk Masa Depan Indonesia",

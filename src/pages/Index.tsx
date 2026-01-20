@@ -10,6 +10,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
+import { useTranslation } from "@/hooks/useTranslation";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -42,6 +43,8 @@ import logo28 from "@/assets/partners/logo-28.png";
 import logo29 from "@/assets/partners/logo-29.png";
 
 const Index = () => {
+  const { t } = useTranslation();
+  
   // Fetch regional count from database
   const { data: regionalCount } = useQuery({
     queryKey: ["regional-count"],
@@ -194,8 +197,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO 
-        title="Beranda" 
-        description="Forum Indonesia Muda - Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang. Organisasi kaderisasi pemuda sejak 2003 dengan 4000+ alumni dari 61 regional."
+        title={t("home.title")} 
+        description={t("home.description")}
       />
       {/* Hero Section - Optimized for mobile to show content peek below */}
       <section className="relative overflow-hidden">
@@ -211,28 +214,27 @@ const Index = () => {
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
             />
             <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Bangun Karakter & Kepemimpinan
+              {t("home.hero.heading")}
               <br />
-              <span className="text-accent">untuk Masa Depan Indonesia</span>
+              <span className="text-accent">{t("home.hero.subheading")}</span>
             </h1>
             {/* Social Proof Subheadline */}
             <p className="text-sm lg:text-base text-accent font-semibold mb-4 animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              ✓ 4000+ Alumni di Kementerian, Startup, NGO | ✓ 34+ Angkatan Sejak 2003
+              {t("home.hero.socialProof")}
             </p>
             <p className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Raih kesempatan untuk mengembangkan diri melalui pelatihan kepemimpinan berbasis 
-              <span className="text-accent font-semibold"> 7 Pilar Karakter</span>. Bergabunglah dengan jaringan pemuda terbaik Indonesia.
+              {t("home.hero.description")}
             </p>
             {/* Urgency Banner */}
             <div className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 animate-fade-in inline-block" style={{ animationDelay: "0.25s" }}>
               <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
-                <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
+                <span className="animate-pulse">🔥</span> {t("home.hero.urgency")}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Link to="/tentang">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                  Pelajari Lebih Lanjut <ArrowRight className="ml-2 h-5 w-5" />
+                  {t("home.hero.cta")} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>

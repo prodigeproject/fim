@@ -88,11 +88,16 @@ export default function RegistrationDashboard() {
   const currentStage = registration.selection_stage || "administrasi";
   const currentStageIndex = SELECTION_STAGES.findIndex(s => s.key === currentStage);
   const finalResult = registration.final_result;
+  const selectionPassed = registration.selection_passed;
+  const noteVisible = registration.note_visible_to_applicant;
+  const adminNote = registration.admin_selection_note;
+  const interviewNote = registration.interview_note;
   
-  // Calculate progress percentage based on stage
+  // Calculate progress percentage based on stage and status
   const getStageProgress = () => {
     if (finalResult === "lolos") return 100;
     if (finalResult === "tidak_lolos") return currentStageIndex * 33.33;
+    if (currentStage === "administrasi" && selectionPassed === true) return 30;
     if (currentStage === "administrasi") return 10;
     if (currentStage === "wawancara") return 50;
     if (currentStage === "pengumuman") return 85;
@@ -132,6 +137,14 @@ export default function RegistrationDashboard() {
         description: registration.interview_date 
           ? `Jadwal wawancara: ${new Date(registration.interview_date).toLocaleDateString("id-ID", { dateStyle: "full" })}`
           : "Menunggu jadwal wawancara"
+      };
+    }
+    if (currentStage === "administrasi" && selectionPassed === true) {
+      return {
+        label: "Lolos Administrasi",
+        color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
+        icon: CheckCircle2,
+        description: "Selamat! Anda lolos tahap administrasi. Menunggu jadwal wawancara."
       };
     }
     return {
@@ -310,6 +323,19 @@ export default function RegistrationDashboard() {
                       })}
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* Reviewer Notes - if visible to applicant */}
+              {noteVisible && (adminNote || interviewNote) && (
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium text-blue-700 dark:text-blue-300">Catatan dari Tim Seleksi</span>
+                  </div>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    {currentStage === "wawancara" || finalResult ? interviewNote : adminNote}
+                  </p>
                 </div>
               )}
 
