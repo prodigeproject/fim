@@ -63,6 +63,7 @@ interface Registration {
   email: string;
   phone: string | null;
   selection_stage: string;
+  selection_passed?: boolean | null;
 }
 
 export default function InterviewCalendar() {
@@ -131,18 +132,22 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Fetch registrations in wawancara stage
+  // Fetch registrations eligible for interview (lolos administrasi)
   const { data: registrations } = useQuery({
-    queryKey: ["registrations-wawancara"],
+    queryKey: ["registrations-for-interview"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fim_registrations")
-        .select("id, full_name, email, phone, selection_stage")
-        .eq("selection_stage", "wawancara")
+        .select("id, full_name, email, phone, selection_stage, selection_passed")
+        .or("selection_stage.eq.administrasi,selection_stage.eq.wawancara")
         .is("final_result", null);
       
       if (error) throw error;
-      return data as Registration[];
+      // Filter to only include those who passed administrasi or are in wawancara stage
+      return (data as (Registration & { selection_passed: boolean | null })[]).filter(
+        r => (r.selection_stage === "administrasi" && r.selection_passed === true) || 
+             r.selection_stage === "wawancara"
+      );
     },
   });
 

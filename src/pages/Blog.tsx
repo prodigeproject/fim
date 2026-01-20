@@ -28,6 +28,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const categories = ["Semua", "Pengumuman", "Prestasi", "Kegiatan", "Sosial", "Opini", "Tips"];
 

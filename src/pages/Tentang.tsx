@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import { Target, Compass, User, Users, Briefcase, Building2, Heart, Shield, Star, Handshake, Scale, UserCheck, MessageSquare, BookOpen, Brain, Clipboard, Network } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const Tentang = () => {
   const pilarKarakter = [

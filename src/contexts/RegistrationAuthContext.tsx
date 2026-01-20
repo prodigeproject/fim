@@ -14,6 +14,8 @@ interface Registration {
   updated_at: string;
   email_verified?: boolean;
   selection_stage: string | null;
+  selection_passed: boolean | null;
+  note_visible_to_applicant: boolean | null;
   final_result: string | null;
   interview_date: string | null;
   interview_note: string | null;

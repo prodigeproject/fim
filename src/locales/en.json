@@ -15,6 +15,18 @@
     "donate": "Donate",
     "register": "Register"
   },
+  "home": {
+    "title": "Home",
+    "description": "Forum Indonesia Muda - A platform for Indonesian youth to grow, collaborate, and become firefly lights. Youth leadership organization since 2003 with 4000+ alumni from 61 regions.",
+    "hero": {
+      "heading": "Build Character & Leadership",
+      "subheading": "for Indonesia's Future",
+      "socialProof": "✓ 4000+ Alumni in Ministries, Startups, NGOs | ✓ 34+ Batches Since 2003",
+      "description": "Seize the opportunity to develop yourself through leadership training based on 7 Character Pillars. Join Indonesia's best youth network.",
+      "urgency": "New Batch Registration Opening Soon!",
+      "cta": "Learn More"
+    }
+  },
   "hero": {
     "title": "Build Character & Leadership",
     "titleHighlight": "for Indonesia's Future",
