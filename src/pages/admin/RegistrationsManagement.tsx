@@ -81,6 +81,11 @@ import {
   Send,
   Trash2,
   AlertTriangle,
+  Key,
+  CalendarCheck,
+  Edit,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -196,7 +201,17 @@ export default function RegistrationsManagement() {
     date: string;
     time: string;
     note: string;
-  }>({ registration: null, date: "", time: "", note: "" });
+    location: string;
+    meetingLink: string;
+  }>({ registration: null, date: "", time: "", note: "", location: "", meetingLink: "" });
+
+  // Password reset state
+  const [isPasswordResetDialogOpen, setIsPasswordResetDialogOpen] = useState(false);
+  const [passwordResetResult, setPasswordResetResult] = useState<{
+    email: string;
+    full_name: string;
+    temporary_password: string;
+  } | null>(null);
 
   // Fetch batches for filter
   const { data: batches } = useQuery({
@@ -291,6 +306,26 @@ export default function RegistrationsManagement() {
 
       if (error && error.code !== "PGRST116") throw error;
       return data as TrainingData | null;
+    },
+    enabled: !!selectedRegistration?.id,
+  });
+
+  // Fetch interview schedule for selected registration
+  const { data: interviewSchedule, isLoading: isLoadingSchedule } = useQuery({
+    queryKey: ["interview-schedule", selectedRegistration?.id],
+    queryFn: async () => {
+      if (!selectedRegistration?.id) return null;
+      
+      const { data, error } = await supabase
+        .from("interview_schedules")
+        .select("*")
+        .eq("registration_id", selectedRegistration.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
     },
     enabled: !!selectedRegistration?.id,
   });
@@ -895,6 +930,81 @@ export default function RegistrationsManagement() {
     onError: (error: any) => {
       console.error("Mutation error:", error);
       toast.error(`Gagal memperbarui hasil akhir: ${error.message || "Unknown error"}`);
+    },
+  });
+
+  // Password reset mutation for registrants
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ registrationId }: { registrationId: string }) => {
+      const { data, error } = await supabase.functions.invoke("reset-registrant-password", {
+        body: { registration_id: registrationId },
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data as { 
+        success: boolean; 
+        email: string; 
+        full_name: string; 
+        temporary_password: string; 
+      };
+    },
+    onSuccess: (data) => {
+      setPasswordResetResult({
+        email: data.email,
+        full_name: data.full_name,
+        temporary_password: data.temporary_password,
+      });
+      setIsPasswordResetDialogOpen(true);
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal reset password: ${error.message || "Unknown error"}`);
+    },
+  });
+
+  // Create interview schedule mutation
+  const createInterviewScheduleMutation = useMutation({
+    mutationFn: async ({ 
+      registrationId, 
+      date, 
+      time, 
+      note, 
+      location, 
+      meetingLink 
+    }: { 
+      registrationId: string; 
+      date: string; 
+      time: string; 
+      note?: string;
+      location?: string;
+      meetingLink?: string;
+    }) => {
+      // First create the interview schedule entry
+      const { data: scheduleData, error: scheduleError } = await supabase
+        .from("interview_schedules")
+        .insert({
+          registration_id: registrationId,
+          scheduled_date: date,
+          scheduled_time: time,
+          notes: note || null,
+          location: location || null,
+          meeting_link: meetingLink || null,
+          status: "scheduled",
+        })
+        .select()
+        .single();
+      
+      if (scheduleError) throw scheduleError;
+      
+      return scheduleData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+    },
+    onError: (error: any) => {
+      console.error("Failed to create interview schedule:", error);
     },
   });
 
@@ -1792,7 +1902,63 @@ Tim Forum Indonesia Muda
                   <h4 className="font-semibold">Tahap Seleksi Saat Ini</h4>
                   {getStageBadge(selectedRegistration.selection_stage || 'administrasi', selectedRegistration.selection_passed)}
                 </div>
-                {selectedRegistration.interview_date && (
+                
+                {/* Interview Schedule Status Indicator */}
+                {interviewSchedule && (
+                  <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CalendarCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Jadwal Wawancara Terdaftar</span>
+                      </div>
+                      <Badge className={
+                        interviewSchedule.status === "completed" ? "bg-green-600" :
+                        interviewSchedule.status === "cancelled" ? "bg-red-600" :
+                        "bg-blue-600"
+                      }>
+                        {interviewSchedule.status === "completed" ? "Selesai" :
+                         interviewSchedule.status === "cancelled" ? "Dibatalkan" : "Terjadwal"}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                      <p>📅 {new Date(interviewSchedule.scheduled_date).toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })} pukul {interviewSchedule.scheduled_time}</p>
+                      {interviewSchedule.location && <p>📍 {interviewSchedule.location}</p>}
+                      {interviewSchedule.meeting_link && (
+                        <p className="flex items-center gap-1">
+                          🔗 <a href={interviewSchedule.meeting_link} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-800">
+                            Link Meeting <ExternalLink className="h-3 w-3 inline" />
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        setScheduleData({
+                          registration: selectedRegistration,
+                          date: interviewSchedule.scheduled_date,
+                          time: interviewSchedule.scheduled_time,
+                          note: interviewSchedule.notes || "",
+                          location: interviewSchedule.location || "",
+                          meetingLink: interviewSchedule.meeting_link || ""
+                        });
+                        setIsScheduleDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Ubah Jadwal
+                    </Button>
+                  </div>
+                )}
+
+                {!interviewSchedule && selectedRegistration.interview_date && (
                   <div className="text-sm">
                     <span className="text-muted-foreground">Jadwal Wawancara: </span>
                     <span className="font-medium">{selectedRegistration.interview_date}</span>
@@ -1812,6 +1978,25 @@ Tim Forum Indonesia Muda
                     </span>
                   </div>
                 )}
+
+                {/* Password Reset Button */}
+                <div className="pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      resetPasswordMutation.mutate({ registrationId: selectedRegistration.id });
+                    }}
+                    disabled={resetPasswordMutation.isPending}
+                  >
+                    {resetPasswordMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Key className="h-3 w-3 mr-1" />
+                    )}
+                    Reset Password Akun
+                  </Button>
+                </div>
               </div>
 
               {/* Reviewer Section */}
@@ -1923,7 +2108,9 @@ Tim Forum Indonesia Muda
                             registration: selectedRegistration,
                             date: "",
                             time: "",
-                            note: reviewerNote
+                            note: reviewerNote,
+                            location: "",
+                            meetingLink: ""
                           });
                           setIsScheduleDialogOpen(true);
                         }}
@@ -2185,7 +2372,7 @@ Tim Forum Indonesia Muda
 
       {/* Interview Schedule Dialog */}
       <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarPlus className="h-5 w-5" />
@@ -2222,13 +2409,33 @@ Tim Forum Indonesia Muda
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="schedule-location">Lokasi (opsional)</Label>
+              <Input
+                id="schedule-location"
+                placeholder="Contoh: Ruang Meeting A, Lt. 2"
+                value={scheduleData.location}
+                onChange={(e) => setScheduleData(prev => ({ ...prev, location: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schedule-meeting-link">Link Meeting (opsional)</Label>
+              <Input
+                id="schedule-meeting-link"
+                placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                value={scheduleData.meetingLink}
+                onChange={(e) => setScheduleData(prev => ({ ...prev, meetingLink: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="schedule-note">Catatan (opsional)</Label>
               <Textarea
                 id="schedule-note"
-                placeholder="Lokasi, link meeting, atau catatan lainnya..."
+                placeholder="Catatan tambahan untuk pendaftar..."
                 value={scheduleData.note}
                 onChange={(e) => setScheduleData(prev => ({ ...prev, note: e.target.value }))}
-                rows={3}
+                rows={2}
               />
             </div>
 
@@ -2243,6 +2450,8 @@ Tim Forum Indonesia Muda
                     day: 'numeric',
                   })} pukul {scheduleData.time} WIB
                 </p>
+                {scheduleData.location && <p className="text-sm text-muted-foreground mt-1">📍 {scheduleData.location}</p>}
+                {scheduleData.meetingLink && <p className="text-sm text-muted-foreground">🔗 {scheduleData.meetingLink}</p>}
               </div>
             )}
           </div>
@@ -2252,31 +2461,49 @@ Tim Forum Indonesia Muda
               Batal
             </Button>
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!scheduleData.registration || !scheduleData.date || !scheduleData.time) {
                   toast.error("Mohon lengkapi tanggal dan waktu wawancara");
                   return;
                 }
                 
-                const formattedDate = new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }) + ` pukul ${scheduleData.time} WIB`;
+                try {
+                  // Create interview schedule in database
+                  await createInterviewScheduleMutation.mutateAsync({
+                    registrationId: scheduleData.registration.id,
+                    date: scheduleData.date,
+                    time: scheduleData.time,
+                    note: scheduleData.note,
+                    location: scheduleData.location,
+                    meetingLink: scheduleData.meetingLink,
+                  });
 
-                updateStageMutation.mutate({
-                  id: scheduleData.registration.id,
-                  stage: "wawancara",
-                  note: scheduleData.note,
-                  interviewDate: formattedDate,
-                  email: scheduleData.registration.email,
-                  name: scheduleData.registration.full_name,
-                });
+                  const formattedDate = new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }) + ` pukul ${scheduleData.time} WIB`;
+
+                  // Update registration stage
+                  await updateStageMutation.mutateAsync({
+                    id: scheduleData.registration.id,
+                    stage: "wawancara",
+                    note: scheduleData.note,
+                    interviewDate: formattedDate,
+                    email: scheduleData.registration.email,
+                    name: scheduleData.registration.full_name,
+                  });
+
+                  toast.success("Jadwal wawancara berhasil dibuat dan disinkronkan dengan kalender");
+                  setIsScheduleDialogOpen(false);
+                } catch (error: any) {
+                  toast.error(`Gagal menjadwalkan wawancara: ${error.message}`);
+                }
               }}
-              disabled={updateStageMutation.isPending || !scheduleData.date || !scheduleData.time}
+              disabled={updateStageMutation.isPending || createInterviewScheduleMutation.isPending || !scheduleData.date || !scheduleData.time}
             >
-              {updateStageMutation.isPending ? (
+              {(updateStageMutation.isPending || createInterviewScheduleMutation.isPending) ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Send className="h-4 w-4 mr-2" />
@@ -2418,6 +2645,67 @@ Tim Forum Indonesia Muda
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Password Reset Result Dialog */}
+      <Dialog open={isPasswordResetDialogOpen} onOpenChange={setIsPasswordResetDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              Password Berhasil Direset
+            </DialogTitle>
+            <DialogDescription>
+              Password untuk akun pendaftar telah direset. Berikan password sementara ini kepada pendaftar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {passwordResetResult && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Nama</Label>
+                  <p className="font-medium">{passwordResetResult.full_name}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Email</Label>
+                  <p className="font-medium">{passwordResetResult.email}</p>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <Label className="text-xs text-amber-700 dark:text-amber-300">Password Sementara</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <code className="flex-1 px-3 py-2 bg-white dark:bg-black rounded border font-mono text-lg">
+                    {passwordResetResult.temporary_password}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(passwordResetResult.temporary_password);
+                      toast.success("Password disalin ke clipboard");
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                  ⚠️ Pastikan untuk menyampaikan password ini kepada pendaftar secara aman.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={() => {
+              setIsPasswordResetDialogOpen(false);
+              setPasswordResetResult(null);
+            }}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
