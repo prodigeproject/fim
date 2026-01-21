@@ -86,7 +86,15 @@ import {
   Edit,
   ExternalLink,
   Copy,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -291,6 +299,33 @@ export default function RegistrationsManagement() {
       return sorted;
     },
   });
+
+  // Fetch all interview schedules for list view
+  const { data: allInterviewSchedules } = useQuery({
+    queryKey: ["all-interview-schedules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("interview_schedules")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Array<{
+        id: string;
+        registration_id: string;
+        scheduled_date: string;
+        scheduled_time: string;
+        status: string;
+        location: string | null;
+        meeting_link: string | null;
+      }>;
+    },
+  });
+
+  // Helper to get interview schedule for a registration
+  const getInterviewScheduleForRegistration = (registrationId: string) => {
+    return allInterviewSchedules?.find(s => s.registration_id === registrationId);
+  };
 
   // Fetch training data for selected registration
   const { data: trainingData, isLoading: isLoadingTraining } = useQuery({
@@ -635,6 +670,7 @@ export default function RegistrationsManagement() {
       toast.success("Wawancara ditandai selesai");
       queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
     },
     onError: (error: any) => {
       toast.error(`Gagal memperbarui status: ${error.message}`);
@@ -1058,6 +1094,7 @@ export default function RegistrationsManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
     },
     onError: (error: any) => {
       console.error("Failed to create interview schedule:", error);
@@ -1617,6 +1654,7 @@ Tim Forum Indonesia Muda
                 ) : registrations && registrations.length > 0 ? (
                   registrations.map((reg) => {
                     const canSelect = reg.registration_status !== "approved" && reg.registration_status !== "rejected";
+                    const schedule = getInterviewScheduleForRegistration(reg.id);
                     return (
                       <TableRow key={reg.id}>
                         <TableCell>
@@ -1631,37 +1669,55 @@ Tim Forum Indonesia Muda
                         </TableCell>
                         <TableCell className="font-medium">{reg.full_name}</TableCell>
                         <TableCell>{reg.email}</TableCell>
-                        <TableCell>{getStatusBadge(reg)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {getStatusBadge(reg) || getInterviewStatusBadge(reg, schedule)}
+                          </div>
+                        </TableCell>
                         <TableCell>{getStageBadge(reg.selection_stage || 'administrasi', reg.selection_passed)}</TableCell>
                         <TableCell>
                           {format(new Date(reg.created_at), "dd MMM yyyy", { locale: localeId })}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedRegistration(reg);
-                                setIsDetailOpen(true);
-                                setReviewerNote("");
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Detail
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                setRegistrationToDelete(reg);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedRegistration(reg);
+                                  setIsDetailOpen(true);
+                                  setReviewerNote("");
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Lihat Detail
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  resetPasswordMutation.mutate({ registrationId: reg.id });
+                                }}
+                                disabled={resetPasswordMutation.isPending}
+                              >
+                                <Key className="h-4 w-4 mr-2" />
+                                Reset Password
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setRegistrationToDelete(reg);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Hapus Data
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -2035,24 +2091,6 @@ Tim Forum Indonesia Muda
                   </div>
                 )}
 
-                {/* Password Reset Button */}
-                <div className="pt-2 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      resetPasswordMutation.mutate({ registrationId: selectedRegistration.id });
-                    }}
-                    disabled={resetPasswordMutation.isPending}
-                  >
-                    {resetPasswordMutation.isPending ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <Key className="h-3 w-3 mr-1" />
-                    )}
-                    Reset Password Akun
-                  </Button>
-                </div>
               </div>
 
               {/* Reviewer Section */}

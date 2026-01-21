@@ -35,6 +35,7 @@ import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavItem {
   name: string;
@@ -347,7 +348,7 @@ export default function AdminDashboard() {
 
   const Sidebar = () => (
     <TooltipProvider>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b shrink-0">
           <h1 className="text-lg font-bold text-foreground">FIM Admin</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -355,14 +356,15 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <nav 
-          className="flex-1 p-2 space-y-0.5 overflow-y-auto"
-          onScroll={(e) => e.stopPropagation()}
-        >
-          {filteredNavItems.map((item) => (
-            <NavItemComponent key={item.href} item={item} />
-          ))}
-        </nav>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <nav className="p-2 space-y-0.5">
+              {filteredNavItems.map((item) => (
+                <NavItemComponent key={item.href} item={item} />
+              ))}
+            </nav>
+          </ScrollArea>
+        </div>
 
         <div className="p-3 border-t shrink-0">
           <div className="flex items-center gap-2 mb-3">
