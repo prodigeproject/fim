@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +32,31 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending interview completed notification to:", registrantEmail);
 
-    const emailHtml = `
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Try to get customizable email template
+    let emailHtml: string;
+    let emailSubject: string;
+
+    const { data: template } = await supabase
+      .from("email_templates")
+      .select("subject, html_content")
+      .eq("name", "interview_completed")
+      .eq("is_active", true)
+      .single();
+
+    if (template) {
+      // Use customizable template
+      emailSubject = template.subject;
+      emailHtml = template.html_content
+        .replace(/\{\{registrantName\}\}/g, registrantName)
+        .replace(/\{\{interviewDate\}\}/g, interviewDate ? ` pada ${interviewDate}` : "")
+        .replace(/\{\{interviewerName\}\}/g, interviewerName ? ` bersama ${interviewerName}` : "");
+    } else {
+      // Fallback to default template
+      emailSubject = "✅ Wawancara FIM Anda Telah Selesai";
+      emailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -85,7 +112,8 @@ const handler = async (req: Request): Promise<Response> => {
   </div>
 </body>
 </html>
-    `;
+      `;
+    }
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -96,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "FIM Indonesia <noreply@resend.dev>",
         to: [registrantEmail],
-        subject: "✅ Wawancara FIM Anda Telah Selesai",
+        subject: emailSubject,
         html: emailHtml,
       }),
     });
