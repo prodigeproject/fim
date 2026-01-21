@@ -803,37 +803,69 @@ export default function RegistrationsManagement() {
       options: { email: boolean; phone: boolean; nik: boolean; fullName: boolean }
     }) => {
       // Get training data for NIK
-      const { data: trainingData } = await supabase
+      const { data: trainingDataRaw } = await supabase
         .from("fim_training_registrations")
         .select("nik")
         .eq("registration_id", registration.id)
         .maybeSingle();
 
+      // Build the blocked_registrations insert data - email is required
+      const blockedData: {
+        email: string;
+        blocked_reason?: string;
+        phone?: string;
+        nik?: string;
+        full_name?: string;
+        blocked_by?: string;
+      } = {
+        email: registration.email, // Email is always required
+        blocked_reason: reason || "Diblokir oleh admin",
+      };
+      
+      if (options.phone && registration.phone) {
+        blockedData.phone = registration.phone;
+      }
+      if (options.nik && (trainingDataRaw as any)?.nik) {
+        blockedData.nik = (trainingDataRaw as any).nik;
+      }
+      if (options.fullName && registration.full_name) {
+        blockedData.full_name = registration.full_name;
+      }
+      
+      // Only include blocked_by if profile exists
+      if (profile?.id) {
+        blockedData.blocked_by = profile.id;
+      }
+
       // Insert into blocked_registrations
       const { error: blockError } = await supabase
         .from("blocked_registrations")
-        .insert({
-          email: options.email ? registration.email : null,
-          phone: options.phone ? registration.phone : null,
-          nik: options.nik ? (trainingData as any)?.nik : null,
-          full_name: options.fullName ? registration.full_name : null,
-          blocked_reason: reason,
-          blocked_by: profile?.id,
-        });
+        .insert([blockedData]);
       
-      if (blockError) throw blockError;
+      if (blockError) {
+        console.error("Block insert error:", blockError);
+        throw new Error(`Gagal menambah ke daftar blokir: ${blockError.message}`);
+      }
 
-      // Delete training data
-      await supabase
+      // Delete training data first
+      const { error: trainingDeleteError } = await supabase
         .from("fim_training_registrations")
         .delete()
         .eq("registration_id", registration.id);
       
+      if (trainingDeleteError) {
+        console.error("Training delete error:", trainingDeleteError);
+      }
+      
       // Delete interview schedules
-      await supabase
+      const { error: scheduleDeleteError } = await supabase
         .from("interview_schedules")
         .delete()
         .eq("registration_id", registration.id);
+      
+      if (scheduleDeleteError) {
+        console.error("Schedule delete error:", scheduleDeleteError);
+      }
       
       // Delete registration
       const { error: deleteError } = await supabase
@@ -841,7 +873,10 @@ export default function RegistrationsManagement() {
         .delete()
         .eq("id", registration.id);
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Registration delete error:", deleteError);
+        throw new Error(`Gagal menghapus pendaftaran: ${deleteError.message}`);
+      }
       
       return registration;
     },
@@ -852,10 +887,12 @@ export default function RegistrationsManagement() {
       setIsBlockDialogOpen(false);
       setRegistrationToBlock(null);
       setBlockReason("");
+      setBlockOptions({ email: true, phone: true, nik: true, fullName: false });
       setIsDetailOpen(false);
     },
     onError: (error: any) => {
-      toast.error(`Gagal memblokir: ${error.message}`);
+      console.error("Block mutation error:", error);
+      toast.error(error.message || "Gagal memblokir");
     },
   });
 
@@ -1337,13 +1374,16 @@ export default function RegistrationsManagement() {
         throw new Error("Pendaftar ini sudah memiliki jadwal wawancara aktif. Batalkan jadwal yang ada terlebih dahulu jika ingin menjadwalkan ulang.");
       }
       
-      // Create the interview schedule entry - scheduled_date is type 'date', scheduled_time is type 'time'
+      // Create the interview schedule entry - scheduled_date is type 'date' (YYYY-MM-DD), scheduled_time is type 'time' (HH:MM:SS or HH:MM)
+      // Ensure time is in proper format
+      const formattedTime = time.includes(":") && time.split(":").length === 2 ? `${time}:00` : time;
+      
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("interview_schedules")
         .insert({
           registration_id: registrationId,
           scheduled_date: date, // YYYY-MM-DD format
-          scheduled_time: time, // HH:MM format  
+          scheduled_time: formattedTime, // HH:MM:SS format  
           notes: note || null,
           location: location || null,
           meeting_link: meetingLink || null,
@@ -1355,12 +1395,28 @@ export default function RegistrationsManagement() {
       
       if (scheduleError) throw scheduleError;
       
+      // Also update the registration to move to wawancara stage with "belum_wawancara" status if not already
+      const { error: regError } = await supabase
+        .from("fim_registrations")
+        .update({
+          selection_stage: "wawancara",
+          selection_passed: null, // Belum ditentukan
+        })
+        .eq("id", registrationId);
+      
+      if (regError) {
+        console.error("Failed to update registration stage:", regError);
+      }
+      
       return scheduleData;
     },
     onSuccess: () => {
+      toast.success("Jadwal wawancara berhasil dibuat");
       queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setIsScheduleDialogOpen(false);
     },
     onError: (error: any) => {
       console.error("Failed to create interview schedule:", error);

@@ -56,6 +56,7 @@ interface InterviewSchedule {
   reminder_sent: boolean;
   created_at: string;
   interview_feedback: string | null;
+  interviewer_name: string | null;
 }
 
 interface Registration {
@@ -163,24 +164,69 @@ export default function InterviewCalendar() {
     return registrations?.find(r => r.id === id);
   };
 
-  // Create schedule
+  // Get current user profile for interviewer name
+  const { data: currentProfile } = useQuery({
+    queryKey: ["current-admin-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, username")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) return null;
+      return data;
+    },
+  });
+
+  // Create schedule with interviewer name
   const createMutation = useMutation({
     mutationFn: async (data: typeof scheduleForm) => {
+      // Check for existing active schedule (duplicate prevention)
+      const { data: existingSchedule } = await supabase
+        .from("interview_schedules")
+        .select("id, status")
+        .eq("registration_id", data.registration_id)
+        .in("status", ["scheduled", "completed"])
+        .maybeSingle();
+      
+      if (existingSchedule) {
+        throw new Error("Pendaftar ini sudah memiliki jadwal wawancara aktif.");
+      }
+
+      // Ensure time is in proper format (HH:MM:SS)
+      const formattedTime = data.scheduled_time.includes(":") && data.scheduled_time.split(":").length === 2 
+        ? `${data.scheduled_time}:00` 
+        : data.scheduled_time;
+
       const { data: result, error } = await supabase
         .from("interview_schedules")
         .insert([{
           registration_id: data.registration_id,
           scheduled_date: data.scheduled_date,
-          scheduled_time: data.scheduled_time,
+          scheduled_time: formattedTime,
           duration_minutes: data.duration_minutes,
           location: data.location || null,
           meeting_link: data.meeting_link || null,
           notes: data.notes || null,
+          interviewer_name: currentProfile?.full_name || currentProfile?.username || null,
         }])
         .select()
         .single();
       
       if (error) throw error;
+
+      // Update registration to wawancara stage
+      await supabase
+        .from("fim_registrations")
+        .update({
+          selection_stage: "wawancara",
+          selection_passed: null,
+        })
+        .eq("id", data.registration_id);
 
       // Send notification email
       const reg = registrations?.find(r => r.id === data.registration_id);
@@ -205,11 +251,13 @@ export default function InterviewCalendar() {
     onSuccess: () => {
       toast.success("Jadwal wawancara berhasil dibuat");
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["registrations-for-interview"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setIsScheduleDialogOpen(false);
       resetForm();
     },
-    onError: () => {
-      toast.error("Gagal membuat jadwal wawancara");
+    onError: (error: any) => {
+      toast.error(error.message || "Gagal membuat jadwal wawancara");
     },
   });
 
@@ -316,10 +364,10 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Batch create schedules
+  // Batch create schedules with interviewer name
   const batchCreateMutation = useMutation({
     mutationFn: async (data: typeof batchForm & { registration_ids: string[] }) => {
-      const schedules: Array<{
+      const schedulesToCreate: Array<{
         registration_id: string;
         scheduled_date: string;
         scheduled_time: string;
@@ -327,6 +375,7 @@ export default function InterviewCalendar() {
         location: string | null;
         meeting_link: string | null;
         notes: string | null;
+        interviewer_name: string | null;
       }> = [];
 
       // Parse start time
@@ -337,9 +386,9 @@ export default function InterviewCalendar() {
       for (const regId of data.registration_ids) {
         const hours = Math.floor(currentMinutes / 60);
         const mins = currentMinutes % 60;
-        const timeStr = `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+        const timeStr = `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:00`;
 
-        schedules.push({
+        schedulesToCreate.push({
           registration_id: regId,
           scheduled_date: data.scheduled_date,
           scheduled_time: timeStr,
@@ -347,6 +396,7 @@ export default function InterviewCalendar() {
           location: data.location || null,
           meeting_link: data.meeting_link || null,
           notes: data.notes || null,
+          interviewer_name: currentProfile?.full_name || currentProfile?.username || null,
         });
 
         currentMinutes += data.interval_minutes;
@@ -354,13 +404,24 @@ export default function InterviewCalendar() {
 
       const { data: result, error } = await supabase
         .from("interview_schedules")
-        .insert(schedules)
+        .insert(schedulesToCreate)
         .select();
 
       if (error) throw error;
 
+      // Update all registrations to wawancara stage
+      for (const regId of data.registration_ids) {
+        await supabase
+          .from("fim_registrations")
+          .update({
+            selection_stage: "wawancara",
+            selection_passed: null,
+          })
+          .eq("id", regId);
+      }
+
       // Send notification emails
-      for (const schedule of schedules) {
+      for (const schedule of schedulesToCreate) {
         const reg = registrations?.find(r => r.id === schedule.registration_id);
         if (reg) {
           try {
@@ -384,6 +445,8 @@ export default function InterviewCalendar() {
     onSuccess: (_, variables) => {
       toast.success(`${variables.registration_ids.length} jadwal wawancara berhasil dibuat`);
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["registrations-for-interview"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setIsBatchDialogOpen(false);
       setSelectedRegistrations([]);
       setBatchForm({
@@ -638,6 +701,84 @@ export default function InterviewCalendar() {
               <div className="text-sm text-red-600/70">Dibatalkan</div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Registrants in Interview Stage */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Peserta Tahap Wawancara
+          </CardTitle>
+          <CardDescription>
+            Daftar peserta yang sudah masuk tahap wawancara dengan status wawancaranya
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[250px]">
+            <div className="space-y-2">
+              {registrations?.filter(r => r.selection_stage === "wawancara").length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">Belum ada peserta di tahap wawancara</p>
+              ) : (
+                registrations
+                  ?.filter(r => r.selection_stage === "wawancara")
+                  .map((reg) => {
+                    const schedule = schedules?.find(s => s.registration_id === reg.id);
+                    const hasSchedule = !!schedule;
+                    const isCompleted = schedule?.status === "completed";
+                    const isCancelled = schedule?.status === "cancelled" || schedule?.status === "no_show";
+                    
+                    return (
+                      <div
+                        key={reg.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted",
+                          isCompleted && "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800",
+                          isCancelled && "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                        )}
+                        onClick={() => {
+                          if (schedule) {
+                            setSelectedSchedule(schedule);
+                            setIsEditDialogOpen(true);
+                          }
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{reg.full_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{reg.email}</p>
+                          {schedule && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              📅 {format(new Date(schedule.scheduled_date), "dd MMM yyyy", { locale: localeId })} {schedule.scheduled_time.substring(0, 5)}
+                              {schedule.interviewer_name && ` • ${schedule.interviewer_name}`}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-2 flex-shrink-0">
+                          {!hasSchedule ? (
+                            <Badge variant="outline" className="border-amber-500 text-amber-700 text-xs">
+                              Belum Dijadwal
+                            </Badge>
+                          ) : isCompleted ? (
+                            <Badge className="bg-green-600 text-xs">
+                              Selesai
+                            </Badge>
+                          ) : isCancelled ? (
+                            <Badge variant="destructive" className="text-xs">
+                              {schedule?.status === "no_show" ? "Tidak Hadir" : "Dibatalkan"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs">
+                              Terjadwal
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 

@@ -48,24 +48,41 @@ export function RecommendationStep({ formData, updateField, registrationId }: Re
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${registrationId}/recommendation-${Date.now()}.${fileExt}`;
+      const fileExt = file.name.split(".").pop()?.toLowerCase();
+      // Use a safe filename without special characters
+      const safeFileName = `recommendation-${Date.now()}.${fileExt}`;
+      const filePath = `${registrationId}/${safeFileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      // Upload with upsert to handle overwrites
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("registration-photos")
-        .upload(fileName, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type,
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error(uploadError.message || "Upload failed");
+      }
 
-      const { data: urlData } = supabase.storage
+      // Get signed URL since bucket is not public
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from("registration-photos")
-        .getPublicUrl(fileName);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
 
-      updateField("recommendation_file_url", urlData.publicUrl);
+      if (signedUrlError) {
+        console.error("Signed URL error:", signedUrlError);
+        // Fallback to path reference
+        updateField("recommendation_file_url", filePath);
+      } else {
+        updateField("recommendation_file_url", signedUrlData.signedUrl);
+      }
+      
       toast.success("File berhasil diupload");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Gagal mengupload file");
+      toast.error(error.message || "Gagal mengupload file");
     } finally {
       setIsUploading(false);
     }
