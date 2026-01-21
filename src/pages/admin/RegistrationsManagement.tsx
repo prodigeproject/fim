@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
+import { id as localeId, id } from "date-fns/locale";
 import { toast } from "sonner";
 import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { jsPDF } from "jspdf";
@@ -617,6 +617,27 @@ export default function RegistrationsManagement() {
     },
     onError: (error: any) => {
       toast.error(`Gagal menghapus data: ${error.message}`);
+    },
+  });
+
+  // Mark interview as completed mutation
+  const markInterviewCompletedMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const { error } = await supabase
+        .from("interview_schedules")
+        .update({ status: "completed" })
+        .eq("id", scheduleId);
+      
+      if (error) throw error;
+      return scheduleId;
+    },
+    onSuccess: () => {
+      toast.success("Wawancara ditandai selesai");
+      queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal memperbarui status: ${error.message}`);
     },
   });
 
@@ -2229,11 +2250,30 @@ Tim Forum Indonesia Muda
                     )}
                     
                     {interviewSchedule && interviewSchedule.status === "scheduled" && (
-                      <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                      <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 space-y-2">
                         <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
                           <CalendarCheck className="h-4 w-4" />
                           <strong>Terjadwal</strong> - Wawancara belum dilaksanakan.
                         </p>
+                        <div className="text-xs text-blue-600 dark:text-blue-400">
+                          <p>Tanggal: {format(new Date(interviewSchedule.scheduled_date), "dd MMMM yyyy", { locale: id })}</p>
+                          <p>Waktu: {interviewSchedule.scheduled_time}</p>
+                          {interviewSchedule.location && <p>Lokasi: {interviewSchedule.location}</p>}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                          onClick={() => markInterviewCompletedMutation.mutate(interviewSchedule.id)}
+                          disabled={markInterviewCompletedMutation.isPending}
+                        >
+                          {markInterviewCompletedMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          )}
+                          Tandai Wawancara Selesai
+                        </Button>
                       </div>
                     )}
                     
@@ -2299,15 +2339,6 @@ Tim Forum Indonesia Muda
                           </Button>
                         </div>
                       </>
-                    )}
-                    
-                    {/* Allow manual review if no schedule or force mode */}
-                    {(!interviewSchedule || interviewSchedule.status === "scheduled") && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Untuk menentukan keputusan, tandai wawancara sebagai selesai di Kalender Wawancara terlebih dahulu.
-                        </p>
-                      </div>
                     )}
                   </div>
                 )}

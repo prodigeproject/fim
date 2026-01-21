@@ -355,13 +355,14 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto" style={{ scrollBehavior: 'auto' }}>
-          <nav className="p-2 space-y-0.5">
-            {filteredNavItems.map((item) => (
-              <NavItemComponent key={item.href} item={item} />
-            ))}
-          </nav>
-        </div>
+        <nav 
+          className="flex-1 p-2 space-y-0.5 overflow-y-auto"
+          onScroll={(e) => e.stopPropagation()}
+        >
+          {filteredNavItems.map((item) => (
+            <NavItemComponent key={item.href} item={item} />
+          ))}
+        </nav>
 
         <div className="p-3 border-t shrink-0">
           <div className="flex items-center gap-2 mb-3">
