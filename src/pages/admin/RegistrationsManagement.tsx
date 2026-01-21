@@ -6,6 +6,7 @@ import { id as localeId, id } from "date-fns/locale";
 import { toast } from "sonner";
 import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { jsPDF } from "jspdf";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -166,6 +167,7 @@ interface Batch {
 
 export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
+  const { profile } = useAdminAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stageFilter, setStageFilter] = useState<string>("all");
@@ -697,7 +699,7 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Export to Excel
+  // Export to Excel with interview feedback and recommendation data
   const handleExport = async () => {
     try {
       const { data: allRegs, error: regsError } = await supabase
@@ -713,13 +715,35 @@ export default function RegistrationsManagement() {
 
       if (trainingError) throw trainingError;
 
+      const { data: allInterviews, error: interviewError } = await supabase
+        .from("interview_schedules")
+        .select("*");
+
+      if (interviewError) throw interviewError;
+
+      const getDurationLabel = (duration: string) => {
+        const labels: Record<string, string> = {
+          'kurang_1_tahun': 'Kurang dari 1 tahun',
+          '1_2_tahun': '1-2 tahun',
+          '2_3_tahun': '2-3 tahun',
+          '3_5_tahun': '3-5 tahun',
+          'lebih_5_tahun': 'Lebih dari 5 tahun',
+        };
+        return labels[duration] || duration || '-';
+      };
+
       const exportData = allRegs?.map(reg => {
         const training = allTraining?.find(t => t.registration_id === reg.id);
+        const interview = allInterviews?.find(i => i.registration_id === reg.id);
         return {
           "Nama Lengkap": reg.full_name,
           "Email": reg.email,
           "No. Telepon": reg.phone || "-",
+          "NIK": (training as any)?.nik || "-",
           "Status": reg.registration_status,
+          "Tahap Seleksi": reg.selection_stage,
+          "Hasil Seleksi": reg.selection_passed === true ? "Lolos" : reg.selection_passed === false ? "Tidak Lolos" : "Belum Ditentukan",
+          "Hasil Akhir": reg.final_result === "lolos" ? "Diterima" : reg.final_result === "tidak_lolos" ? "Tidak Diterima" : "-",
           "Tanggal Daftar": format(new Date(reg.created_at), "dd/MM/yyyy HH:mm"),
           "Progress (%)": training?.completion_percentage || 0,
           "Sudah Submit": training?.is_submitted ? "Ya" : "Belum",
@@ -739,6 +763,19 @@ export default function RegistrationsManagement() {
           "Pengalaman Kontribusi": training?.social_contribution_experience || "-",
           "Rencana Kontribusi": training?.strategic_contribution_plan || "-",
           "Dampak yang Diharapkan": training?.impact_expected || "-",
+          // Recommendation data
+          "Nama Pemberi Rekomendasi": (training as any)?.recommender_name || "-",
+          "Jabatan Pemberi Rekomendasi": (training as any)?.recommender_position || "-",
+          "Lama Kenal Pemberi Rekomendasi": getDurationLabel((training as any)?.recommender_duration),
+          "File Surat Rekomendasi": (training as any)?.recommendation_file_url || "-",
+          // Interview data
+          "Tanggal Wawancara": interview?.scheduled_date ? format(new Date(interview.scheduled_date), "dd/MM/yyyy") : "-",
+          "Waktu Wawancara": interview?.scheduled_time || "-",
+          "Lokasi Wawancara": interview?.location || "-",
+          "Status Wawancara": interview?.status === "completed" ? "Selesai" : interview?.status === "scheduled" ? "Terjadwal" : interview?.status === "cancelled" ? "Dibatalkan" : interview?.status === "no_show" ? "Tidak Hadir" : "-",
+          "Pewawancara": (interview as any)?.interviewer_name || "-",
+          "Catatan Wawancara": interview?.interview_feedback || "-",
+          "Catatan Admin": reg.admin_selection_note || "-",
         };
       }) || [];
 
@@ -1075,7 +1112,7 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Create interview schedule mutation
+  // Create interview schedule mutation with duplicate check and interviewer name
   const createInterviewScheduleMutation = useMutation({
     mutationFn: async ({ 
       registrationId, 
@@ -1083,7 +1120,8 @@ export default function RegistrationsManagement() {
       time, 
       note, 
       location, 
-      meetingLink 
+      meetingLink,
+      interviewerName
     }: { 
       registrationId: string; 
       date: string; 
@@ -1091,18 +1129,32 @@ export default function RegistrationsManagement() {
       note?: string;
       location?: string;
       meetingLink?: string;
+      interviewerName?: string;
     }) => {
-      // First create the interview schedule entry
+      // Check for existing active schedule (duplicate prevention)
+      const { data: existingSchedule } = await supabase
+        .from("interview_schedules")
+        .select("id, status")
+        .eq("registration_id", registrationId)
+        .in("status", ["scheduled", "completed"])
+        .maybeSingle();
+      
+      if (existingSchedule) {
+        throw new Error("Pendaftar ini sudah memiliki jadwal wawancara aktif. Batalkan jadwal yang ada terlebih dahulu jika ingin menjadwalkan ulang.");
+      }
+      
+      // Create the interview schedule entry - scheduled_date is type 'date', scheduled_time is type 'time'
       const { data: scheduleData, error: scheduleError } = await supabase
         .from("interview_schedules")
         .insert({
           registration_id: registrationId,
-          scheduled_date: date,
-          scheduled_time: time,
+          scheduled_date: date, // YYYY-MM-DD format
+          scheduled_time: time, // HH:MM format  
           notes: note || null,
           location: location || null,
           meeting_link: meetingLink || null,
           status: "scheduled",
+          interviewer_name: interviewerName || null,
         })
         .select()
         .single();
@@ -1118,6 +1170,7 @@ export default function RegistrationsManagement() {
     },
     onError: (error: any) => {
       console.error("Failed to create interview schedule:", error);
+      toast.error(error.message || "Gagal membuat jadwal wawancara");
     },
   });
 
@@ -2689,7 +2742,7 @@ Tim Forum Indonesia Muda
                 }
                 
                 try {
-                  // Create interview schedule in database
+                  // Create interview schedule in database with interviewer name
                   await createInterviewScheduleMutation.mutateAsync({
                     registrationId: scheduleData.registration.id,
                     date: scheduleData.date,
@@ -2697,6 +2750,7 @@ Tim Forum Indonesia Muda
                     note: scheduleData.note,
                     location: scheduleData.location,
                     meetingLink: scheduleData.meetingLink,
+                    interviewerName: profile?.full_name || profile?.username || undefined,
                   });
 
                   const formattedDate = new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
