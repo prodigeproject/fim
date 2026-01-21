@@ -389,66 +389,92 @@ export default function RegistrationsManagement() {
 
   // Bulk stage update mutation - for bulk "lolos seleksi" which just marks selection_passed = true
   const bulkStageMutation = useMutation({
-    mutationFn: async ({ ids, stage, note, interviewDate, passed, noteVisible = false }: { 
+    mutationFn: async ({ ids, stage, note, passed, noteVisible = false }: { 
       ids: string[]; 
       stage: string; 
       note?: string;
-      interviewDate?: string;
       passed?: boolean;
       noteVisible?: boolean;
     }) => {
       // Get registration details for email
       const { data: regs } = await supabase
         .from("fim_registrations")
-        .select("id, email, full_name, selection_stage")
+        .select("id, email, full_name, selection_stage, selection_passed")
         .in("id", ids);
 
-      // Build update object based on stage type
-      const updates: any = {
-        updated_at: new Date().toISOString(),
-        note_visible_to_applicant: noteVisible
-      };
-      
-      if (stage === "lolos_seleksi") {
-        // Just mark as passed the current stage, don't change stage
-        updates.selection_passed = true;
-        if (note) updates.admin_selection_note = note;
-      } else if (stage === "tidak_lolos") {
-        // Mark as not passed and set final result
-        updates.selection_passed = false;
-        updates.final_result = "tidak_lolos";
-        updates.selection_stage = "pengumuman";
-        updates.registration_status = "rejected";
-        if (note) updates.admin_selection_note = note;
-      } else if (stage === "wawancara") {
-        updates.selection_stage = "wawancara";
-        updates.selection_passed = null;
-        if (note) updates.admin_selection_note = note;
-        if (interviewDate) updates.interview_date = interviewDate;
-      } else {
-        updates.selection_stage = stage;
-        if (note) updates.admin_selection_note = note;
+      if (!regs || regs.length === 0) {
+        throw new Error("No registrations found");
       }
 
-      // Update all records
-      const { error } = await supabase
-        .from("fim_registrations")
-        .update(updates)
-        .in("id", ids);
-      
-      if (error) throw error;
+      // Group registrations by their current stage for smart bulk update
+      const adminStageRegs = regs.filter(r => r.selection_stage === "administrasi" && !r.selection_passed);
+      const adminPassedRegs = regs.filter(r => r.selection_stage === "administrasi" && r.selection_passed === true);
+      const interviewStageRegs = regs.filter(r => r.selection_stage === "wawancara");
 
-      // Send emails for stage changes if needed
-      if (regs && (stage === "wawancara" || stage === "tidak_lolos" || stage === "lolos_seleksi")) {
+      let totalUpdated = 0;
+
+      // Process based on stage parameter
+      if (stage === "lolos_seleksi") {
+        // For "lolos_seleksi", mark current stage as passed based on where they are
         for (const reg of regs) {
+          const updates: any = {
+            updated_at: new Date().toISOString(),
+            selection_passed: true,
+            note_visible_to_applicant: noteVisible
+          };
+          if (note) updates.admin_selection_note = note;
+
+          const { error } = await supabase
+            .from("fim_registrations")
+            .update(updates)
+            .eq("id", reg.id);
+          
+          if (error) throw error;
+          totalUpdated++;
+
+          // Send email
           try {
             await supabase.functions.invoke("notify-selection-stage", {
               body: {
-                registrantEmail: reg.email,
-                registrantName: reg.full_name,
-                stage: stage === "lolos_seleksi" ? `lolos_${reg.selection_stage}` : stage,
-                passed: stage === "lolos_seleksi",
-                interviewDate: interviewDate || undefined,
+                email: reg.email,
+                name: reg.full_name,
+                stage: `lolos_${reg.selection_stage}`,
+                passed: true,
+                note: note || undefined,
+              },
+            });
+          } catch (emailError) {
+            console.error(`Failed to send email to ${reg.email}:`, emailError);
+          }
+        }
+      } else if (stage === "tidak_lolos") {
+        // For "tidak_lolos", mark as failed
+        for (const reg of regs) {
+          const updates: any = {
+            updated_at: new Date().toISOString(),
+            selection_passed: false,
+            final_result: "tidak_lolos",
+            selection_stage: "pengumuman",
+            note_visible_to_applicant: noteVisible
+          };
+          if (note) updates.admin_selection_note = note;
+
+          const { error } = await supabase
+            .from("fim_registrations")
+            .update(updates)
+            .eq("id", reg.id);
+          
+          if (error) throw error;
+          totalUpdated++;
+
+          // Send email
+          try {
+            await supabase.functions.invoke("notify-selection-stage", {
+              body: {
+                email: reg.email,
+                name: reg.full_name,
+                stage: `tidak_lolos_${reg.selection_stage}`,
+                passed: false,
                 note: note || undefined,
               },
             });
@@ -458,7 +484,7 @@ export default function RegistrationsManagement() {
         }
       }
 
-      return ids.length;
+      return totalUpdated;
     },
     onSuccess: (count, variables) => {
       const stageText = variables.stage === "lolos_seleksi" 
