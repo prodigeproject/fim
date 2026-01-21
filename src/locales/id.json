@@ -187,5 +187,46 @@
     "alumniCount": "Pemimpin muda sejak 2003",
     "regionalCount": "Dari Sabang sampai Merauke",
     "projectCount": "Proyek sosial berdampak"
+  },
+  "index": {
+    "stats": {
+      "since": "Berdiri Sejak",
+      "batches": "Angkatan",
+      "regions": "Regional",
+      "alumni": "Alumni"
+    },
+    "alumniSection": {
+      "title": "Kata Alumni",
+      "subtitle": "Dengarkan pengalaman langsung dari alumni FIM yang kini berkarya di berbagai bidang",
+      "viewAll": "Lihat Semua Cerita Alumni"
+    },
+    "programSection": {
+      "title": "Program Unggulan",
+      "subtitle": "Program pengembangan kepemimpinan dan karakter untuk generasi muda Indonesia",
+      "training": "Pelatihan",
+      "trainingDesc": "Program kaderisasi kepemimpinan intensif dengan kurikulum 7 pilar karakter dan 7 pilar kepemimpinan.",
+      "mentoring": "Mentoring",
+      "mentoringDesc": "Bimbingan langsung dari alumni FIM yang telah berkarir di berbagai bidang.",
+      "discussion": "Series Discussion",
+      "discussionDesc": "Diskusi rutin membahas isu-isu aktual bersama pakar dan praktisi.",
+      "viewAll": "Lihat Semua Program"
+    },
+    "newsSection": {
+      "title": "Kabar FIM",
+      "subtitle": "Berita pilihan dan informasi penting dari Forum Indonesia Muda",
+      "featured": "Pilihan",
+      "viewAll": "Lihat Semua Berita"
+    },
+    "partnersSection": {
+      "title": "Mitra Kami",
+      "subtitle": "Kolaborator yang telah bekerjasama dengan FIM"
+    },
+    "ctaSection": {
+      "title": "Siap Menjadi Bagian dari Perubahan?",
+      "subtitle": "Bergabunglah dengan ribuan pemuda Indonesia dalam membangun masa depan yang lebih baik.",
+      "registerNow": "Daftar Sekarang",
+      "supportFim": "Dukung FIM"
+    },
+    "quote": "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa."
   }
 }
