@@ -55,6 +55,7 @@ interface InterviewSchedule {
   status: string;
   reminder_sent: boolean;
   created_at: string;
+  interview_feedback: string | null;
 }
 
 interface Registration {
@@ -75,6 +76,7 @@ export default function InterviewCalendar() {
   const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<InterviewSchedule | null>(null);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
+  const [interviewFeedback, setInterviewFeedback] = useState("");
   
   // Dashboard filter state
   const [dashboardPeriod, setDashboardPeriod] = useState<"all" | "week" | "month" | "custom">("month");
@@ -211,20 +213,52 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Update schedule
+  // Update schedule with auto-sync to registrant data
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InterviewSchedule> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<InterviewSchedule> & { interview_feedback?: string } }) => {
       const { error } = await supabase
         .from("interview_schedules")
         .update(data)
         .eq("id", id);
       
       if (error) throw error;
+
+      // Auto-sync status changes to registrant data
+      if (data.status) {
+        const schedule = schedules?.find(s => s.id === id);
+        if (schedule) {
+          if (data.status === "completed") {
+            // Move to interview stage with "belum_ditentukan" (awaiting recommendation)
+            await supabase
+              .from("fim_registrations")
+              .update({ 
+                selection_stage: "wawancara",
+                selection_passed: null, // Awaiting recommendation
+                interview_note: data.interview_feedback || null
+              })
+              .eq("id", schedule.registration_id);
+          } else if (data.status === "cancelled" || data.status === "no_show") {
+            // Mark as tidak lolos wawancara
+            await supabase
+              .from("fim_registrations")
+              .update({ 
+                selection_stage: "wawancara",
+                selection_passed: false,
+                interview_note: data.status === "no_show" ? "Tidak hadir pada jadwal wawancara" : "Wawancara dibatalkan"
+              })
+              .eq("id", schedule.registration_id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Jadwal wawancara berhasil diperbarui");
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["registrations-for-interview"] });
       setIsEditDialogOpen(false);
+      setInterviewFeedback("");
     },
     onError: () => {
       toast.error("Gagal memperbarui jadwal");
@@ -1006,19 +1040,56 @@ export default function InterviewCalendar() {
                 <Label>Status</Label>
                 <Select
                   value={selectedSchedule.status}
-                  onValueChange={(v) => updateMutation.mutate({ id: selectedSchedule.id, data: { status: v } })}
+                  onValueChange={(v) => {
+                    if (v === "completed" && !interviewFeedback.trim()) {
+                      // Require feedback for completed status - handled by button
+                      toast.error("Catatan wawancara wajib diisi untuk menandai selesai");
+                      return;
+                    }
+                    if (v === "completed") {
+                      updateMutation.mutate({ 
+                        id: selectedSchedule.id, 
+                        data: { status: v, interview_feedback: interviewFeedback } 
+                      });
+                    } else {
+                      updateMutation.mutate({ id: selectedSchedule.id, data: { status: v } });
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="scheduled">Terjadwal</SelectItem>
-                    <SelectItem value="completed">Selesai</SelectItem>
+                    <SelectItem value="completed" disabled={!interviewFeedback.trim()}>Selesai</SelectItem>
                     <SelectItem value="cancelled">Dibatalkan</SelectItem>
                     <SelectItem value="no_show">Tidak Hadir</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Interview Feedback - Required when marking as completed */}
+              <div className="space-y-2">
+                <Label>
+                  Catatan Wawancara {selectedSchedule.status === "scheduled" && <span className="text-destructive">*</span>}
+                </Label>
+                <Textarea
+                  value={interviewFeedback || selectedSchedule.interview_feedback || ""}
+                  onChange={(e) => setInterviewFeedback(e.target.value)}
+                  placeholder="Catatan hasil wawancara (wajib diisi untuk menandai selesai)..."
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Catatan ini akan disimpan sebagai feedback interviewer
+                </p>
+              </div>
+
+              {selectedSchedule.interview_feedback && selectedSchedule.status === "completed" && (
+                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                  <Label className="text-green-700 dark:text-green-300">Feedback Tersimpan</Label>
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">{selectedSchedule.interview_feedback}</p>
+                </div>
+              )}
             </div>
           )}
 

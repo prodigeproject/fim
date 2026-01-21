@@ -37,10 +37,14 @@ import {
   CheckCircle,
   Plus,
   Trash2,
-  Clock
+  Clock,
+  Upload,
+  FileText,
+  X
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { WordCountTextarea } from "@/components/WordCountTextarea";
+import { RecommendationStep } from "@/components/registration/RecommendationStep";
 import logoFim from "@/assets/logo-fim.png";
 
 interface OrganizationalExperience {
@@ -84,6 +88,11 @@ interface TrainingFormData {
   // Kontribusi Strategis
   strategic_contribution_plan: string;
   impact_expected: string;
+  // Rekomendasi
+  recommender_name: string;
+  recommender_duration: string;
+  recommender_position: string;
+  recommendation_file_url: string;
 }
 
 const STEPS = [
@@ -93,6 +102,7 @@ const STEPS = [
   { id: 4, title: "Motivasi", fields: ["motivation", "how_did_you_know", "why_join_fim"] },
   { id: 5, title: "Kepedulian Sosial", fields: ["social_issue_concern", "social_contribution_experience"] },
   { id: 6, title: "Kontribusi Strategis", fields: ["strategic_contribution_plan", "impact_expected"] },
+  { id: 7, title: "Rekomendasi", fields: ["recommender_name", "recommender_duration", "recommender_position", "recommendation_file_url"] },
 ];
 
 const initialFormData: TrainingFormData = {
@@ -117,6 +127,10 @@ const initialFormData: TrainingFormData = {
   social_contribution_experience: "",
   strategic_contribution_plan: "",
   impact_expected: "",
+  recommender_name: "",
+  recommender_duration: "",
+  recommender_position: "",
+  recommendation_file_url: "",
 };
 
 export default function TrainingRegistration() {
@@ -184,6 +198,10 @@ export default function TrainingRegistration() {
         social_contribution_experience: existingData.social_contribution_experience || "",
         strategic_contribution_plan: existingData.strategic_contribution_plan || "",
         impact_expected: existingData.impact_expected || "",
+        recommender_name: (existingData as any).recommender_name || "",
+        recommender_duration: (existingData as any).recommender_duration || "",
+        recommender_position: (existingData as any).recommender_position || "",
+        recommendation_file_url: (existingData as any).recommendation_file_url || "",
       });
       
       if (existingData.last_saved_at) {
@@ -234,6 +252,13 @@ export default function TrainingRegistration() {
     total += 2;
     if (formData.strategic_contribution_plan) filled++;
     if (formData.impact_expected) filled++;
+
+    // Rekomendasi
+    total += 4;
+    if (formData.recommender_name) filled++;
+    if (formData.recommender_duration) filled++;
+    if (formData.recommender_position) filled++;
+    if (formData.recommendation_file_url) filled++;
 
     return Math.round((filled / total) * 100);
   }, [formData]);
@@ -449,6 +474,7 @@ export default function TrainingRegistration() {
                 {currentStep === 4 && "Jelaskan motivasi Anda bergabung dengan FIM"}
                 {currentStep === 5 && "Jelaskan kepedulian sosial Anda"}
                 {currentStep === 6 && "Jelaskan rencana kontribusi Anda"}
+                {currentStep === 7 && "Lengkapi informasi pemberi rekomendasi"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -765,6 +791,15 @@ export default function TrainingRegistration() {
                     required
                   />
                 </div>
+              )}
+
+              {/* Step 7: Rekomendasi */}
+              {currentStep === 7 && (
+                <RecommendationStep 
+                  formData={formData}
+                  updateField={updateField}
+                  registrationId={registration?.id || ""}
+                />
               )}
             </CardContent>
           </Card>

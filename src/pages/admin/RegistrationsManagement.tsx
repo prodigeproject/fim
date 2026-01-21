@@ -177,6 +177,9 @@ export default function RegistrationsManagement() {
   const [reviewerNote, setReviewerNote] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
   const [noteVisibleToApplicant, setNoteVisibleToApplicant] = useState(false);
+  const [interviewFeedbackNote, setInterviewFeedbackNote] = useState("");
+  const [isInterviewCompletedDialogOpen, setIsInterviewCompletedDialogOpen] = useState(false);
+  const [scheduleToComplete, setScheduleToComplete] = useState<{ id: string; registrationId: string } | null>(null);
   
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -655,22 +658,39 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Mark interview as completed mutation
+  // Mark interview as completed mutation with feedback sync
   const markInterviewCompletedMutation = useMutation({
-    mutationFn: async (scheduleId: string) => {
-      const { error } = await supabase
+    mutationFn: async ({ scheduleId, registrationId, feedback }: { scheduleId: string; registrationId: string; feedback: string }) => {
+      // Update interview schedule with feedback
+      const { error: scheduleError } = await supabase
         .from("interview_schedules")
-        .update({ status: "completed" })
+        .update({ status: "completed", interview_feedback: feedback })
         .eq("id", scheduleId);
       
-      if (error) throw error;
+      if (scheduleError) throw scheduleError;
+
+      // Sync to registrant - move to wawancara stage with "belum_ditentukan" status
+      const { error: regError } = await supabase
+        .from("fim_registrations")
+        .update({ 
+          selection_stage: "wawancara",
+          selection_passed: null, // Awaiting recommendation
+          interview_note: feedback
+        })
+        .eq("id", registrationId);
+      
+      if (regError) throw regError;
       return scheduleId;
     },
     onSuccess: () => {
-      toast.success("Wawancara ditandai selesai");
+      toast.success("Wawancara ditandai selesai dan data pendaftar diperbarui");
       queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setIsInterviewCompletedDialogOpen(false);
+      setScheduleToComplete(null);
+      setInterviewFeedbackNote("");
     },
     onError: (error: any) => {
       toast.error(`Gagal memperbarui status: ${error.message}`);
@@ -2302,14 +2322,12 @@ Tim Forum Indonesia Muda
                           variant="outline"
                           size="sm"
                           className="mt-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-                          onClick={() => markInterviewCompletedMutation.mutate(interviewSchedule.id)}
-                          disabled={markInterviewCompletedMutation.isPending}
+                          onClick={() => {
+                            setScheduleToComplete({ id: interviewSchedule.id, registrationId: selectedRegistration.id });
+                            setIsInterviewCompletedDialogOpen(true);
+                          }}
                         >
-                          {markInterviewCompletedMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                          )}
+                          <CheckCircle className="h-4 w-4 mr-2" />
                           Tandai Wawancara Selesai
                         </Button>
                       </div>
@@ -2905,6 +2923,64 @@ Tim Forum Indonesia Muda
               setPasswordResetResult(null);
             }}>
               Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Interview Completed Dialog with Feedback */}
+      <Dialog open={isInterviewCompletedDialogOpen} onOpenChange={setIsInterviewCompletedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tandai Wawancara Selesai</DialogTitle>
+            <DialogDescription>
+              Masukkan catatan hasil wawancara sebelum menandai sebagai selesai.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Catatan Wawancara <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={interviewFeedbackNote}
+                onChange={(e) => setInterviewFeedbackNote(e.target.value)}
+                placeholder="Catatan hasil wawancara (wajib diisi)..."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                Catatan ini akan disimpan sebagai feedback interviewer dan ditampilkan pada data pendaftar.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsInterviewCompletedDialogOpen(false);
+              setScheduleToComplete(null);
+              setInterviewFeedbackNote("");
+            }}>
+              Batal
+            </Button>
+            <Button 
+              onClick={() => {
+                if (!interviewFeedbackNote.trim()) {
+                  toast.error("Catatan wawancara wajib diisi");
+                  return;
+                }
+                if (scheduleToComplete) {
+                  markInterviewCompletedMutation.mutate({
+                    scheduleId: scheduleToComplete.id,
+                    registrationId: scheduleToComplete.registrationId,
+                    feedback: interviewFeedbackNote
+                  });
+                }
+              }}
+              disabled={markInterviewCompletedMutation.isPending || !interviewFeedbackNote.trim()}
+            >
+              {markInterviewCompletedMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Tandai Selesai
             </Button>
           </DialogFooter>
         </DialogContent>
