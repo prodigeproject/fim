@@ -32,6 +32,25 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
+      // First check if email exists in profiles table (registered admin accounts)
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Profile check error:", profileError);
+      }
+
+      if (!profileData) {
+        // Email not found in registered accounts
+        setError("Email tidak terdaftar dalam sistem. Silakan hubungi administrator.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Email exists, proceed with password reset
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/admin/reset-password`,
       });

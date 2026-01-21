@@ -76,6 +76,11 @@ export default function InterviewCalendar() {
   const [selectedSchedule, setSelectedSchedule] = useState<InterviewSchedule | null>(null);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
   
+  // Dashboard filter state
+  const [dashboardPeriod, setDashboardPeriod] = useState<"all" | "week" | "month" | "custom">("month");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  
   const [scheduleForm, setScheduleForm] = useState({
     registration_id: "",
     scheduled_date: "",
@@ -459,6 +464,51 @@ export default function InterviewCalendar() {
     return registrations.filter(r => !scheduledIds.has(r.id));
   }, [registrations, schedules]);
 
+  // Dashboard statistics with period filter
+  const dashboardStats = useMemo(() => {
+    if (!schedules) return { total: 0, scheduled: 0, completed: 0, cancelled: 0, upcoming: 0 };
+    
+    let filteredSchedules = [...schedules];
+    const now = new Date();
+    
+    // Apply period filter
+    if (dashboardPeriod === "week") {
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      filteredSchedules = schedules.filter(s => {
+        const d = new Date(s.scheduled_date);
+        return d >= weekStart && d < weekEnd;
+      });
+    } else if (dashboardPeriod === "month") {
+      const monthStart = startOfMonth(now);
+      const monthEnd = endOfMonth(now);
+      filteredSchedules = schedules.filter(s => {
+        const d = new Date(s.scheduled_date);
+        return d >= monthStart && d <= monthEnd;
+      });
+    } else if (dashboardPeriod === "custom" && customStartDate && customEndDate) {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      filteredSchedules = schedules.filter(s => {
+        const d = new Date(s.scheduled_date);
+        return d >= start && d <= end;
+      });
+    }
+    
+    return {
+      total: filteredSchedules.length,
+      scheduled: filteredSchedules.filter(s => s.status === "scheduled").length,
+      completed: filteredSchedules.filter(s => s.status === "completed").length,
+      cancelled: filteredSchedules.filter(s => s.status === "cancelled").length,
+      upcoming: filteredSchedules.filter(s => {
+        const d = new Date(s.scheduled_date);
+        return d >= now && s.status === "scheduled";
+      }).length,
+    };
+  }, [schedules, dashboardPeriod, customStartDate, customEndDate]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -493,6 +543,69 @@ export default function InterviewCalendar() {
           </Button>
         </div>
       </div>
+
+      {/* Dashboard Statistics */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardTitle className="text-lg">Dashboard Wawancara</CardTitle>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Select value={dashboardPeriod} onValueChange={(v) => setDashboardPeriod(v as any)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua</SelectItem>
+                  <SelectItem value="week">Minggu Ini</SelectItem>
+                  <SelectItem value="month">Bulan Ini</SelectItem>
+                  <SelectItem value="custom">Kustom</SelectItem>
+                </SelectContent>
+              </Select>
+              {dashboardPeriod === "custom" && (
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="px-2 py-1 border rounded text-sm"
+                  />
+                  <span className="self-center">-</span>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="px-2 py-1 border rounded text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
+            <div className="text-center p-4 rounded-lg bg-muted">
+              <div className="text-2xl font-bold">{dashboardStats.total}</div>
+              <div className="text-sm text-muted-foreground">Total Jadwal</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-950">
+              <div className="text-2xl font-bold text-blue-600">{dashboardStats.scheduled}</div>
+              <div className="text-sm text-blue-600/70">Terjadwal</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-amber-50 dark:bg-amber-950">
+              <div className="text-2xl font-bold text-amber-600">{dashboardStats.upcoming}</div>
+              <div className="text-sm text-amber-600/70">Akan Datang</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-950">
+              <div className="text-2xl font-bold text-green-600">{dashboardStats.completed}</div>
+              <div className="text-sm text-green-600/70">Selesai</div>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-red-50 dark:bg-red-950">
+              <div className="text-2xl font-bold text-red-600">{dashboardStats.cancelled}</div>
+              <div className="text-sm text-red-600/70">Dibatalkan</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Batch Selection Panel */}
       {availableRegistrations.length > 0 && (

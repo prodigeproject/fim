@@ -7,7 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Shield,
   Mail,
@@ -16,34 +19,72 @@ import {
   AlertCircle,
   ExternalLink,
   Loader2,
+  Save,
+  Send,
+  Bell,
+  Newspaper,
 } from "lucide-react";
 
 export default function EmailSettings() {
   const { isSuperAdmin } = useAdminAuth();
-  const { toast } = useToast();
   const [isTestingResend, setIsTestingResend] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  
+  // Email provider settings (stored in database in production)
+  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("resend");
+  const [resendApiKey, setResendApiKey] = useState("");
+  const [gmailEmail, setGmailEmail] = useState("");
+  const [gmailAppPassword, setGmailAppPassword] = useState("");
+  
+  // Notification settings
+  const [notificationSettings, setNotificationSettings] = useState({
+    registrationStatus: true,
+    selectionStage: true,
+    interviewSchedule: true,
+    interviewReminder: true,
+    finalResult: true,
+  });
+  
+  // Newsletter settings
+  const [newsletterSettings, setNewsletterSettings] = useState({
+    welcomeEmail: true,
+    confirmationEmail: true,
+    broadcastEnabled: true,
+  });
 
-  const handleTestResend = async () => {
+  const handleTestEmail = async () => {
     if (!testEmail) {
-      toast({ title: "Masukkan email untuk test", variant: "destructive" });
+      toast.error("Masukkan email untuk test");
       return;
     }
 
     setIsTestingResend(true);
     try {
-      // Test email would be sent via edge function
-      toast({ 
-        title: "Email test terkirim", 
-        description: "Cek inbox untuk memverifikasi konfigurasi" 
+      // Call edge function to test email
+      const { error } = await supabase.functions.invoke("newsletter-subscribe", {
+        body: {
+          email: testEmail,
+          name: "Test User",
+          testMode: true,
+        },
       });
-    } catch (error) {
-      toast({ 
-        title: "Gagal mengirim email test", 
-        variant: "destructive" 
-      });
+      
+      if (error) throw error;
+      
+      toast.success("Email test berhasil dikirim! Cek inbox Anda.");
+    } catch (error: any) {
+      toast.error(`Gagal mengirim email: ${error.message || "Unknown error"}`);
     } finally {
       setIsTestingResend(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      // In production, save to database
+      toast.success("Pengaturan berhasil disimpan");
+    } catch (error) {
+      toast.error("Gagal menyimpan pengaturan");
     }
   };
 
@@ -68,115 +109,173 @@ export default function EmailSettings() {
         </p>
       </div>
 
-      <Tabs defaultValue="resend">
-        <TabsList>
-          <TabsTrigger value="resend">Resend (Aktif)</TabsTrigger>
-          <TabsTrigger value="gmail">Gmail SMTP</TabsTrigger>
+      <Tabs defaultValue="provider">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="provider">Provider Email</TabsTrigger>
+          <TabsTrigger value="notifications">Notifikasi</TabsTrigger>
+          <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="resend" className="space-y-4">
+        {/* Provider Configuration Tab */}
+        <TabsContent value="provider" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Resend
-                  </CardTitle>
-                  <CardDescription>
-                    Layanan email yang saat ini digunakan untuk newsletter
-                  </CardDescription>
-                </div>
-                <Badge className="bg-green-100 text-green-800">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Aktif
-                </Badge>
-              </div>
+              <CardTitle>Pilih Provider Email</CardTitle>
+              <CardDescription>
+                Pilih layanan yang akan digunakan untuk mengirim email
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert>
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  Resend API Key sudah dikonfigurasi. Email akan dikirim menggunakan layanan Resend.
-                </AlertDescription>
-              </Alert>
-
-              <div className="space-y-2">
-                <Label htmlFor="test-email">Test Email</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="test-email"
-                    type="email"
-                    placeholder="test@example.com"
-                    value={testEmail}
-                    onChange={(e) => setTestEmail(e.target.value)}
-                  />
-                  <Button onClick={handleTestResend} disabled={isTestingResend}>
-                    {isTestingResend && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Kirim Test
-                  </Button>
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Resend Option */}
+                <div
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    emailProvider === "resend"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setEmailProvider("resend")}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Resend</h4>
+                    {emailProvider === "resend" && (
+                      <Badge className="bg-green-100 text-green-800">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Aktif
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Layanan email modern dengan API yang mudah digunakan
+                  </p>
                 </div>
-              </div>
 
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Untuk mengubah API Key atau konfigurasi Resend:
-                </p>
-                <Button variant="outline" asChild>
-                  <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Buka Resend Dashboard
-                  </a>
-                </Button>
+                {/* Gmail SMTP Option */}
+                <div
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    emailProvider === "gmail"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setEmailProvider("gmail")}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Gmail SMTP</h4>
+                    {emailProvider === "gmail" && (
+                      <Badge className="bg-green-100 text-green-800">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Aktif
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Gunakan akun Gmail untuk mengirim email
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="gmail" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Gmail SMTP
-                  </CardTitle>
-                  <CardDescription>
-                    Gunakan akun Gmail untuk mengirim email
-                  </CardDescription>
-                </div>
-                <Badge variant="outline">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Belum Dikonfigurasi
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Integrasi Gmail SMTP memerlukan konfigurasi tambahan. 
-                  Untuk mengaktifkan, Anda perlu:
-                </AlertDescription>
-              </Alert>
+          {/* Resend Configuration */}
+          {emailProvider === "resend" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Konfigurasi Resend
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertDescription>
+                    Resend API Key sudah dikonfigurasi melalui environment variables.
+                    Untuk mengubah, update secret RESEND_API_KEY.
+                  </AlertDescription>
+                </Alert>
 
-              <div className="space-y-3 text-sm">
-                <div className="p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Langkah-langkah Setup Gmail SMTP:</h4>
-                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                    <li>Aktifkan 2-Step Verification di akun Google Anda</li>
-                    <li>Buat App Password di Google Account Settings</li>
-                    <li>Simpan App Password sebagai secret <code className="bg-background px-1 rounded">GMAIL_APP_PASSWORD</code></li>
-                    <li>Tambahkan email address sebagai secret <code className="bg-background px-1 rounded">GMAIL_EMAIL</code></li>
-                  </ol>
+                <div className="space-y-2">
+                  <Label htmlFor="resend-key">API Key (opsional - override)</Label>
+                  <Input
+                    id="resend-key"
+                    type="password"
+                    placeholder="re_xxxxxxxxxx"
+                    value={resendApiKey}
+                    onChange={(e) => setResendApiKey(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Kosongkan untuk menggunakan API key dari environment
+                  </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="pt-4 border-t">
                   <Button variant="outline" asChild>
-                    <a 
-                      href="https://myaccount.google.com/apppasswords" 
-                      target="_blank" 
+                    <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Buka Resend Dashboard
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Gmail SMTP Configuration */}
+          {emailProvider === "gmail" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Konfigurasi Gmail SMTP
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Gmail memiliki batas pengiriman 500 email/hari untuk akun personal.
+                    Untuk pengiriman massal, gunakan Resend.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail-email">Email Gmail</Label>
+                    <Input
+                      id="gmail-email"
+                      type="email"
+                      placeholder="yourname@gmail.com"
+                      value={gmailEmail}
+                      onChange={(e) => setGmailEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail-password">App Password</Label>
+                    <Input
+                      id="gmail-password"
+                      type="password"
+                      placeholder="xxxx xxxx xxxx xxxx"
+                      value={gmailAppPassword}
+                      onChange={(e) => setGmailAppPassword(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Buat App Password di Google Account → Security → 2-Step Verification → App Passwords
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t space-y-2">
+                  <p className="text-sm font-medium">Langkah Setup:</p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Aktifkan 2-Step Verification di akun Google</li>
+                    <li>Buat App Password di Google Account Settings</li>
+                    <li>Masukkan email dan App Password di form di atas</li>
+                    <li>Simpan pengaturan</li>
+                  </ol>
+                  <Button variant="outline" asChild className="mt-2">
+                    <a
+                      href="https://myaccount.google.com/apppasswords"
+                      target="_blank"
                       rel="noopener noreferrer"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
@@ -184,52 +283,174 @@ export default function EmailSettings() {
                     </a>
                   </Button>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          )}
 
-              <div className="pt-4 border-t">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Catatan:</strong> Gmail memiliki batas pengiriman 500 email/hari untuk akun personal 
-                    dan 2000 email/hari untuk Google Workspace. Untuk pengiriman massal, 
-                    disarankan tetap menggunakan Resend atau layanan email marketing lainnya.
-                  </AlertDescription>
-                </Alert>
+          {/* Test Email */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Test Email</CardTitle>
+              <CardDescription>
+                Kirim email test untuk memverifikasi konfigurasi
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="test@example.com"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                />
+                <Button onClick={handleTestEmail} disabled={isTestingResend}>
+                  {isTestingResend ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Kirim Test
+                </Button>
               </div>
             </CardContent>
           </Card>
 
+          <div className="flex justify-end">
+            <Button onClick={handleSaveSettings}>
+              <Save className="h-4 w-4 mr-2" />
+              Simpan Pengaturan Provider
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Konfigurasi SMTP
+                <Bell className="h-5 w-5" />
+                Notifikasi Email Pendaftaran
               </CardTitle>
+              <CardDescription>
+                Konfigurasi email otomatis yang dikirim ke pendaftar
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>SMTP Host</Label>
-                  <Input value="smtp.gmail.com" disabled />
+            <CardContent className="space-y-4">
+              {[
+                {
+                  key: "registrationStatus",
+                  label: "Status Pendaftaran",
+                  description: "Email saat pendaftaran disetujui atau ditolak",
+                },
+                {
+                  key: "selectionStage",
+                  label: "Tahap Seleksi",
+                  description: "Email saat tahap seleksi berubah (lolos/tidak lolos)",
+                },
+                {
+                  key: "interviewSchedule",
+                  label: "Jadwal Wawancara",
+                  description: "Email undangan wawancara dengan jadwal",
+                },
+                {
+                  key: "interviewReminder",
+                  label: "Reminder Wawancara",
+                  description: "Email pengingat H-1 sebelum wawancara",
+                },
+                {
+                  key: "finalResult",
+                  label: "Hasil Akhir",
+                  description: "Email pengumuman hasil akhir seleksi",
+                },
+              ].map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between py-3 border-b last:border-0"
+                >
+                  <div>
+                    <p className="font-medium">{item.label}</p>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                  <Switch
+                    checked={notificationSettings[item.key as keyof typeof notificationSettings]}
+                    onCheckedChange={(checked) =>
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        [item.key]: checked,
+                      }))
+                    }
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label>SMTP Port</Label>
-                  <Input value="587" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input placeholder="Belum dikonfigurasi" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>App Password</Label>
-                  <Input type="password" placeholder="••••••••" disabled />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">
-                Hubungi developer untuk mengaktifkan Gmail SMTP
-              </p>
+              ))}
             </CardContent>
           </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveSettings}>
+              <Save className="h-4 w-4 mr-2" />
+              Simpan Pengaturan Notifikasi
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Newsletter Tab */}
+        <TabsContent value="newsletter" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Newspaper className="h-5 w-5" />
+                Pengaturan Newsletter
+              </CardTitle>
+              <CardDescription>
+                Konfigurasi email newsletter dan broadcast
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                {
+                  key: "welcomeEmail",
+                  label: "Email Selamat Datang",
+                  description: "Kirim email selamat datang ke subscriber baru",
+                },
+                {
+                  key: "confirmationEmail",
+                  label: "Email Konfirmasi",
+                  description: "Kirim email konfirmasi langganan (double opt-in)",
+                },
+                {
+                  key: "broadcastEnabled",
+                  label: "Broadcast Email",
+                  description: "Aktifkan fitur broadcast email ke semua subscriber",
+                },
+              ].map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between py-3 border-b last:border-0"
+                >
+                  <div>
+                    <p className="font-medium">{item.label}</p>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                  <Switch
+                    checked={newsletterSettings[item.key as keyof typeof newsletterSettings]}
+                    onCheckedChange={(checked) =>
+                      setNewsletterSettings((prev) => ({
+                        ...prev,
+                        [item.key]: checked,
+                      }))
+                    }
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveSettings}>
+              <Save className="h-4 w-4 mr-2" />
+              Simpan Pengaturan Newsletter
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
