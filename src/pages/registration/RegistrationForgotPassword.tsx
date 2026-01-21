@@ -26,6 +26,25 @@ export default function RegistrationForgotPassword() {
     setIsSubmitting(true);
 
     try {
+      // First check if email exists in fim_registrations table (registered applicant accounts)
+      const { data: registrationData, error: registrationError } = await supabase
+        .from("fim_registrations")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (registrationError) {
+        console.error("Registration check error:", registrationError);
+      }
+
+      if (!registrationData) {
+        // Email not found in registered applicant accounts
+        toast.error("Email tidak terdaftar sebagai pendaftar. Silakan gunakan email yang terdaftar.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Email exists in registrations, proceed with password reset
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/daftar/reset-password`,
       });
