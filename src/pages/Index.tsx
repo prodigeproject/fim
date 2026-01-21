@@ -43,7 +43,7 @@ import logo28 from "@/assets/partners/logo-28.png";
 import logo29 from "@/assets/partners/logo-29.png";
 
 const Index = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   
   // Fetch regional count from database
   const { data: regionalCount } = useQuery({
@@ -110,11 +110,12 @@ const Index = () => {
     },
   });
 
+  // Using translations for static content
   const stats = [
-    { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
-    { icon: Users, value: "> 34", label: "Angkatan" },
-    { icon: MapPin, value: regionalCount?.toString() || "61", label: "Regional" },
-    { icon: Award, value: "4000+", label: "Alumni" },
+    { icon: Calendar, value: "2003", label: t("index.stats.since") },
+    { icon: Users, value: "> 34", label: t("index.stats.batches") },
+    { icon: MapPin, value: regionalCount?.toString() || "61", label: t("index.stats.regions") },
+    { icon: Award, value: "4000+", label: t("index.stats.alumni") },
   ];
 
   // Alumni testimonials with concrete data
@@ -125,7 +126,9 @@ const Index = () => {
       position: "Policy Analyst",
       company: "Kementerian Keuangan RI",
       icon: Building2,
-      quote: "FIM mengajarkan saya tentang kepemimpinan yang berintegritas. Pengalaman di FIM menjadi bekal berharga dalam karir saya di pemerintahan."
+      quote: language === "en" 
+        ? "FIM taught me about leadership with integrity. My experience at FIM has been invaluable in my government career."
+        : "FIM mengajarkan saya tentang kepemimpinan yang berintegritas. Pengalaman di FIM menjadi bekal berharga dalam karir saya di pemerintahan."
     },
     {
       name: "Siti Nurhaliza",
@@ -133,7 +136,9 @@ const Index = () => {
       position: "Co-Founder",
       company: "EduTech Startup",
       icon: Briefcase,
-      quote: "Jaringan alumni FIM sangat kuat. Banyak kolaborasi bisnis dan proyek sosial yang lahir dari pertemanan di FIM."
+      quote: language === "en"
+        ? "The FIM alumni network is very strong. Many business collaborations and social projects were born from friendships at FIM."
+        : "Jaringan alumni FIM sangat kuat. Banyak kolaborasi bisnis dan proyek sosial yang lahir dari pertemanan di FIM."
     },
     {
       name: "Budi Santoso",
@@ -141,27 +146,29 @@ const Index = () => {
       position: "Program Director",
       company: "NGO Pendidikan Nasional",
       icon: GraduationCap,
-      quote: "Nilai-nilai FIM tentang pelayanan dan kebersahajaan membentuk cara saya memimpin organisasi hingga hari ini."
+      quote: language === "en"
+        ? "FIM's values of service and humility have shaped the way I lead my organization to this day."
+        : "Nilai-nilai FIM tentang pelayanan dan kebersahajaan membentuk cara saya memimpin organisasi hingga hari ini."
     },
   ];
 
   // Program unggulan data
   const programUnggulan = [
     {
-      title: "Pelatihan",
-      description: "Program kaderisasi kepemimpinan intensif dengan kurikulum 7 pilar karakter dan 7 pilar kepemimpinan.",
+      title: t("index.programSection.training"),
+      description: t("index.programSection.trainingDesc"),
       icon: GraduationCap,
       link: "/program/pelatihan",
     },
     {
-      title: "Mentoring",
-      description: "Bimbingan langsung dari alumni FIM yang telah berkarir di berbagai bidang.",
+      title: t("index.programSection.mentoring"),
+      description: t("index.programSection.mentoringDesc"),
       icon: Users,
       link: "/program/program-unggulan",
     },
     {
-      title: "Series Discussion",
-      description: "Diskusi rutin membahas isu-isu aktual bersama pakar dan praktisi.",
+      title: t("index.programSection.discussion"),
+      description: t("index.programSection.discussionDesc"),
       icon: MessageSquare,
       link: "/program/program-unggulan",
     },
@@ -314,7 +321,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto text-center">
             <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
             <blockquote className="text-xl lg:text-2xl text-foreground italic mb-4">
-              "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa."
+              "{t("index.quote")}"
             </blockquote>
             <div className="w-16 h-1 bg-accent mx-auto" />
           </div>
@@ -324,9 +331,9 @@ const Index = () => {
       {/* Alumni Testimonials - Social Proof */}
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kata Alumni</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.alumniSection.title")}</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Dengarkan pengalaman langsung dari alumni FIM yang kini berkarya di berbagai bidang
+            {t("index.alumniSection.subtitle")}
           </p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {alumniTestimonials.map((testimonial, index) => (
@@ -356,7 +363,7 @@ const Index = () => {
           <div className="text-center mt-8">
             <Link to="/cerita-alumni">
               <Button variant="outline">
-                Lihat Semua Cerita Alumni <ArrowRight className="ml-2 h-4 w-4" />
+                {t("index.alumniSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -366,8 +373,8 @@ const Index = () => {
       {/* Program Unggulan Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Program Unggulan</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Program pengembangan kepemimpinan dan karakter untuk generasi muda Indonesia</p>
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.programSection.title")}</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.programSection.subtitle")}</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {programUnggulan.map((program, index) => (
               <Link key={program.title} to={program.link} className="group">
@@ -383,7 +390,7 @@ const Index = () => {
           </div>
           <div className="text-center mt-8">
             <Link to="/program/program-unggulan">
-              <Button variant="outline">Lihat Semua Program <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button variant="outline">{t("index.programSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
@@ -392,15 +399,15 @@ const Index = () => {
       {/* Kabar FIM Section - Pinned Articles */}
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar FIM</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita pilihan dan informasi penting dari Forum Indonesia Muda</p>
+          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.newsSection.title")}</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.newsSection.subtitle")}</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {featuredArticles?.length ? featuredArticles.map((article, index) => (
               <Link key={article.id} to={`/blog/${article.slug}`} className="group">
                 <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative" style={{ animationDelay: `${index * 0.1}s` }}>
                   {article.is_pinned && (
                     <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">
-                      Pilihan
+                      {t("index.newsSection.featured")}
                     </div>
                   )}
                   <img 
@@ -410,7 +417,7 @@ const Index = () => {
                   />
                   <div className="p-5">
                     <span className="text-xs text-muted-foreground">
-                      {article.published_at ? new Date(article.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}
+                      {article.published_at ? new Date(article.published_at).toLocaleDateString(language === "en" ? "en-US" : "id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}
                     </span>
                     <h3 className="font-bold text-foreground mb-2 mt-1 group-hover:text-primary transition-colors line-clamp-2">{article.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{article.excerpt || ""}</p>
@@ -433,7 +440,7 @@ const Index = () => {
           </div>
           <div className="text-center mt-8">
             <Link to="/blog">
-              <Button variant="outline">Lihat Semua Berita <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button variant="outline">{t("index.newsSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
@@ -442,8 +449,8 @@ const Index = () => {
       {/* Mitra Kami Section - Infinite Scroll Animation */}
       <section className="py-12 bg-background overflow-hidden">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">Mitra Kami</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">Kolaborator yang telah bekerjasama dengan FIM</p>
+          <h2 className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">{t("index.partnersSection.title")}</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">{t("index.partnersSection.subtitle")}</p>
         </div>
         <div className="relative">
           {/* Gradient masks */}
@@ -500,17 +507,17 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">Siap Menjadi Bagian dari Perubahan?</h2>
-          <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">Bergabunglah dengan ribuan pemuda Indonesia dalam membangun masa depan yang lebih baik.</p>
+          <h2 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("index.ctaSection.title")}</h2>
+          <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("index.ctaSection.subtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/daftar">
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                Daftar Sekarang <ArrowRight className="ml-2 h-5 w-5" />
+                {t("index.ctaSection.registerNow")} <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/donasi">
               <Button size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold">
-                Dukung FIM
+                {t("index.ctaSection.supportFim")}
               </Button>
             </Link>
           </div>

@@ -1994,8 +1994,26 @@ Tim Forum Indonesia Muda
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{reg.full_name}</TableCell>
-                        <TableCell>{reg.email}</TableCell>
+                        <TableCell 
+                          className="font-medium text-primary hover:underline cursor-pointer"
+                          onClick={() => {
+                            setSelectedRegistration(reg);
+                            setIsDetailOpen(true);
+                            setReviewerNote("");
+                          }}
+                        >
+                          {reg.full_name}
+                        </TableCell>
+                        <TableCell 
+                          className="text-primary hover:underline cursor-pointer"
+                          onClick={() => {
+                            setSelectedRegistration(reg);
+                            setIsDetailOpen(true);
+                            setReviewerNote("");
+                          }}
+                        >
+                          {reg.email}
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
                             {getStatusBadge(reg) || getInterviewStatusBadge(reg, schedule)}

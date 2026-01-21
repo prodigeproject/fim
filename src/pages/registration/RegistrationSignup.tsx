@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,8 @@ export default function RegistrationSignup() {
   const [phoneError, setPhoneError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -54,7 +57,53 @@ export default function RegistrationSignup() {
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === "email") {
+      setEmailError("");
+    }
   };
+
+  // Check if email already exists (debounced)
+  useEffect(() => {
+    const checkEmail = async () => {
+      if (!formData.email || !formData.email.includes("@")) {
+        setEmailError("");
+        return;
+      }
+      
+      setIsCheckingEmail(true);
+      try {
+        const { data, error } = await supabase
+          .from("fim_registrations")
+          .select("id")
+          .eq("email", formData.email.toLowerCase().trim())
+          .maybeSingle();
+        
+        if (data) {
+          setEmailError("Email ini sudah terdaftar. Silakan gunakan email lain atau login.");
+        } else {
+          // Also check blocked registrations
+          const { data: blocked } = await supabase
+            .from("blocked_registrations")
+            .select("id")
+            .eq("email", formData.email.toLowerCase().trim())
+            .maybeSingle();
+          
+          if (blocked) {
+            setEmailError("Email ini tidak dapat digunakan untuk pendaftaran.");
+          } else {
+            setEmailError("");
+          }
+        }
+      } catch (error) {
+        console.error("Email check error:", error);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    };
+
+    const timer = setTimeout(checkEmail, 500);
+    return () => clearTimeout(timer);
+  }, [formData.email]);
 
   const handlePhoneChange = (phone: string, countryCode: string) => {
     setFormData(prev => ({ ...prev, phone, phoneCountryCode: countryCode }));
@@ -180,10 +229,19 @@ export default function RegistrationSignup() {
                       placeholder="email@example.com"
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
-                      className="pl-10"
+                      className={`pl-10 ${emailError ? "border-destructive" : ""}`}
                       disabled={isSubmitting}
                     />
+                    {isCheckingEmail && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
                   </div>
+                  {emailError && (
+                    <div className="flex items-center gap-1 text-xs text-destructive">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>{emailError}</span>
+                    </div>
+                  )}
                 </div>
 
                 <PhoneInput
@@ -282,7 +340,7 @@ export default function RegistrationSignup() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !!phoneError || !passwordStrength.isValid}
+                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

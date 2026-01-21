@@ -187,5 +187,46 @@
     "alumniCount": "Young leaders since 2003",
     "regionalCount": "From Sabang to Merauke",
     "projectCount": "Impactful social projects"
+  },
+  "index": {
+    "stats": {
+      "since": "Established Since",
+      "batches": "Batches",
+      "regions": "Regions",
+      "alumni": "Alumni"
+    },
+    "alumniSection": {
+      "title": "Alumni Testimonials",
+      "subtitle": "Hear directly from FIM alumni who are now working in various fields",
+      "viewAll": "View All Alumni Stories"
+    },
+    "programSection": {
+      "title": "Featured Programs",
+      "subtitle": "Leadership and character development programs for young Indonesians",
+      "training": "Training",
+      "trainingDesc": "Intensive leadership cadre program with 7 character pillars and 7 leadership pillars curriculum.",
+      "mentoring": "Mentoring",
+      "mentoringDesc": "Direct guidance from FIM alumni who have careers in various fields.",
+      "discussion": "Series Discussion",
+      "discussionDesc": "Regular discussions on current issues with experts and practitioners.",
+      "viewAll": "View All Programs"
+    },
+    "newsSection": {
+      "title": "FIM News",
+      "subtitle": "Featured articles and important information from Forum Indonesia Muda",
+      "featured": "Featured",
+      "viewAll": "View All News"
+    },
+    "partnersSection": {
+      "title": "Our Partners",
+      "subtitle": "Collaborators who have worked with FIM"
+    },
+    "ctaSection": {
+      "title": "Ready to Be Part of the Change?",
+      "subtitle": "Join thousands of young Indonesians in building a better future.",
+      "registerNow": "Register Now",
+      "supportFim": "Support FIM"
+    },
+    "quote": "Like fireflies that are small yet able to illuminate the darkness, every Indonesian youth has a light that can illuminate the path for others and the nation."
   }
 }
