@@ -137,19 +137,27 @@ export default function AdminDashboard() {
   // Check if user is admin (has admin role) - note: "admin" role needs DB migration to take effect
   const isAdmin = role === "super_admin" || (role as string) === "admin";
 
-  // Auto-expand parent menu if child is active
+  // Auto-expand parent menu if child is active - only on mount
   useEffect(() => {
+    const initialOpenMenus: string[] = [];
     navItems.forEach(item => {
       if (item.children) {
         const hasActiveChild = item.children.some(child => 
           location.pathname === child.href || location.pathname.startsWith(child.href + "/")
         );
-        if (hasActiveChild && !openMenus.includes(item.name)) {
-          setOpenMenus(prev => [...prev, item.name]);
+        if (hasActiveChild) {
+          initialOpenMenus.push(item.name);
         }
       }
     });
-  }, [location.pathname]);
+    if (initialOpenMenus.length > 0) {
+      setOpenMenus(prev => {
+        const newMenus = initialOpenMenus.filter(m => !prev.includes(m));
+        return newMenus.length > 0 ? [...prev, ...newMenus] : prev;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount, not on every pathname change
 
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
