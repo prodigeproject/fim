@@ -739,6 +739,10 @@ export type Database = {
           organization: string | null
           organizational_experience: Json | null
           province: string | null
+          recommendation_file_url: string | null
+          recommender_duration: string | null
+          recommender_name: string | null
+          recommender_position: string | null
           registration_id: string | null
           social_contribution_experience: string | null
           social_issue_concern: string | null
@@ -770,6 +774,10 @@ export type Database = {
           organization?: string | null
           organizational_experience?: Json | null
           province?: string | null
+          recommendation_file_url?: string | null
+          recommender_duration?: string | null
+          recommender_name?: string | null
+          recommender_position?: string | null
           registration_id?: string | null
           social_contribution_experience?: string | null
           social_issue_concern?: string | null
@@ -801,6 +809,10 @@ export type Database = {
           organization?: string | null
           organizational_experience?: Json | null
           province?: string | null
+          recommendation_file_url?: string | null
+          recommender_duration?: string | null
+          recommender_name?: string | null
+          recommender_position?: string | null
           registration_id?: string | null
           social_contribution_experience?: string | null
           social_issue_concern?: string | null
@@ -825,6 +837,7 @@ export type Database = {
           created_by: string | null
           duration_minutes: number | null
           id: string
+          interview_feedback: string | null
           location: string | null
           meeting_link: string | null
           notes: string | null
@@ -841,6 +854,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           id?: string
+          interview_feedback?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
@@ -857,6 +871,7 @@ export type Database = {
           created_by?: string | null
           duration_minutes?: number | null
           id?: string
+          interview_feedback?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
