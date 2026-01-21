@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.send-interview-reminder]
 verify_jwt = false
+
+[functions.notify-interview-completed]
+verify_jwt = false

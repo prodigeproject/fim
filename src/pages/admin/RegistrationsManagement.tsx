@@ -88,6 +88,9 @@ import {
   ExternalLink,
   Copy,
   MoreHorizontal,
+  Ban,
+  UserX,
+  ListX,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -225,6 +228,20 @@ export default function RegistrationsManagement() {
     full_name: string;
     temporary_password: string;
   } | null>(null);
+
+  // Block registrant state
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+  const [blockReason, setBlockReason] = useState("");
+  const [blockOptions, setBlockOptions] = useState({
+    email: true,
+    phone: true,
+    nik: true,
+    fullName: false,
+  });
+  const [registrationToBlock, setRegistrationToBlock] = useState<Registration | null>(null);
+
+  // Blocked list state
+  const [isBlockedListOpen, setIsBlockedListOpen] = useState(false);
 
   // Fetch batches for filter
   const { data: batches } = useQuery({
@@ -660,9 +677,23 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Mark interview as completed mutation with feedback sync
+  // Mark interview as completed mutation with feedback sync and email notification
   const markInterviewCompletedMutation = useMutation({
     mutationFn: async ({ scheduleId, registrationId, feedback }: { scheduleId: string; registrationId: string; feedback: string }) => {
+      // Get registration info for email
+      const { data: regData } = await supabase
+        .from("fim_registrations")
+        .select("email, full_name")
+        .eq("id", registrationId)
+        .single();
+      
+      // Get interview schedule info
+      const { data: schedData } = await supabase
+        .from("interview_schedules")
+        .select("scheduled_date, scheduled_time, interviewer_name")
+        .eq("id", scheduleId)
+        .single();
+      
       // Update interview schedule with feedback
       const { error: scheduleError } = await supabase
         .from("interview_schedules")
@@ -682,10 +713,36 @@ export default function RegistrationsManagement() {
         .eq("id", registrationId);
       
       if (regError) throw regError;
+
+      // Send email notification
+      if (regData) {
+        try {
+          const formattedDate = schedData?.scheduled_date 
+            ? new Date(schedData.scheduled_date).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })
+            : undefined;
+          
+          await supabase.functions.invoke("notify-interview-completed", {
+            body: {
+              registrantEmail: regData.email,
+              registrantName: regData.full_name,
+              interviewDate: formattedDate,
+              interviewerName: schedData?.interviewer_name,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send interview completed notification:", emailError);
+        }
+      }
+      
       return scheduleId;
     },
     onSuccess: () => {
-      toast.success("Wawancara ditandai selesai dan data pendaftar diperbarui");
+      toast.success("Wawancara ditandai selesai dan notifikasi email dikirim");
       queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
@@ -696,6 +753,143 @@ export default function RegistrationsManagement() {
     },
     onError: (error: any) => {
       toast.error(`Gagal memperbarui status: ${error.message}`);
+    },
+  });
+
+  // Update interview status mutation (for No Show/Cancelled)
+  const updateInterviewStatusMutation = useMutation({
+    mutationFn: async ({ scheduleId, registrationId, status }: { scheduleId: string; registrationId: string; status: "no_show" | "cancelled" }) => {
+      // Update interview schedule status
+      const { error: scheduleError } = await supabase
+        .from("interview_schedules")
+        .update({ status })
+        .eq("id", scheduleId);
+      
+      if (scheduleError) throw scheduleError;
+
+      // Mark registrant as failed wawancara
+      const { error: regError } = await supabase
+        .from("fim_registrations")
+        .update({ 
+          selection_stage: "wawancara",
+          selection_passed: false,
+          final_result: "tidak_lolos",
+          admin_selection_note: status === "no_show" ? "Tidak hadir saat wawancara" : "Wawancara dibatalkan"
+        })
+        .eq("id", registrationId);
+      
+      if (regError) throw regError;
+      
+      return { scheduleId, status };
+    },
+    onSuccess: (result) => {
+      const statusText = result.status === "no_show" ? "Tidak Hadir" : "Dibatalkan";
+      toast.success(`Status wawancara diubah menjadi ${statusText}`);
+      queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal memperbarui status: ${error.message}`);
+    },
+  });
+
+  // Block registration mutation
+  const blockRegistrationMutation = useMutation({
+    mutationFn: async ({ registration, reason, options }: { 
+      registration: Registration; 
+      reason: string;
+      options: { email: boolean; phone: boolean; nik: boolean; fullName: boolean }
+    }) => {
+      // Get training data for NIK
+      const { data: trainingData } = await supabase
+        .from("fim_training_registrations")
+        .select("nik")
+        .eq("registration_id", registration.id)
+        .maybeSingle();
+
+      // Insert into blocked_registrations
+      const { error: blockError } = await supabase
+        .from("blocked_registrations")
+        .insert({
+          email: options.email ? registration.email : null,
+          phone: options.phone ? registration.phone : null,
+          nik: options.nik ? (trainingData as any)?.nik : null,
+          full_name: options.fullName ? registration.full_name : null,
+          blocked_reason: reason,
+          blocked_by: profile?.id,
+        });
+      
+      if (blockError) throw blockError;
+
+      // Delete training data
+      await supabase
+        .from("fim_training_registrations")
+        .delete()
+        .eq("registration_id", registration.id);
+      
+      // Delete interview schedules
+      await supabase
+        .from("interview_schedules")
+        .delete()
+        .eq("registration_id", registration.id);
+      
+      // Delete registration
+      const { error: deleteError } = await supabase
+        .from("fim_registrations")
+        .delete()
+        .eq("id", registration.id);
+      
+      if (deleteError) throw deleteError;
+      
+      return registration;
+    },
+    onSuccess: (reg) => {
+      toast.success(`${reg.full_name} telah diblokir dan dihapus dari sistem`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["blocked-registrations"] });
+      setIsBlockDialogOpen(false);
+      setRegistrationToBlock(null);
+      setBlockReason("");
+      setIsDetailOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal memblokir: ${error.message}`);
+    },
+  });
+
+  // Fetch blocked registrations
+  const { data: blockedRegistrations } = useQuery({
+    queryKey: ["blocked-registrations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blocked_registrations")
+        .select("*")
+        .order("blocked_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Unblock registration mutation
+  const unblockMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("blocked_registrations")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      toast.success("Data telah dihapus dari daftar blokir");
+      queryClient.invalidateQueries({ queryKey: ["blocked-registrations"] });
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal menghapus blokir: ${error.message}`);
     },
   });
 
@@ -807,10 +1001,10 @@ export default function RegistrationsManagement() {
     // For administrasi stage
     if (stage === "administrasi") {
       if (passed === true) {
-        return <Badge className="gap-1 bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Lolos Administrasi</Badge>;
+        return <Badge className="gap-1 bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Lolos</Badge>;
       }
       if (passed === false) {
-        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos Adm</Badge>;
+        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos</Badge>;
       }
       // Not yet reviewed - check submission status
       if (!isSubmitted) {
@@ -822,10 +1016,10 @@ export default function RegistrationsManagement() {
     // For wawancara stage
     if (stage === "wawancara") {
       if (passed === true) {
-        return <Badge className="gap-1 bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Lolos Wawancara</Badge>;
+        return <Badge className="gap-1 bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Lolos</Badge>;
       }
       if (passed === false) {
-        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos Waw</Badge>;
+        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos</Badge>;
       }
       // Not yet determined - return null, we'll use getInterviewStatusBadge
       return null;
@@ -1509,6 +1703,10 @@ Tim Forum Indonesia Muda
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBlockedListOpen(true)}>
+            <ListX className="h-4 w-4 mr-2" />
+            Daftar Blokir
+          </Button>
           <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["fim-registrations"] })}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -1788,6 +1986,16 @@ Tim Forum Indonesia Muda
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Hapus Data
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setRegistrationToBlock(reg);
+                                  setIsBlockDialogOpen(true);
+                                }}
+                              >
+                                <Ban className="h-4 w-4 mr-2" />
+                                Blokir & Hapus
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -2371,18 +2579,56 @@ Tim Forum Indonesia Muda
                           <p>Waktu: {interviewSchedule.scheduled_time}</p>
                           {interviewSchedule.location && <p>Lokasi: {interviewSchedule.location}</p>}
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-                          onClick={() => {
-                            setScheduleToComplete({ id: interviewSchedule.id, registrationId: selectedRegistration.id });
-                            setIsInterviewCompletedDialogOpen(true);
-                          }}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Tandai Wawancara Selesai
-                        </Button>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                            onClick={() => {
+                              setScheduleToComplete({ id: interviewSchedule.id, registrationId: selectedRegistration.id });
+                              setIsInterviewCompletedDialogOpen(true);
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Selesai
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                            onClick={() => {
+                              if (confirm("Tandai peserta ini sebagai Tidak Hadir? Status akan otomatis menjadi Tidak Lolos.")) {
+                                updateInterviewStatusMutation.mutate({
+                                  scheduleId: interviewSchedule.id,
+                                  registrationId: selectedRegistration.id,
+                                  status: "no_show"
+                                });
+                              }
+                            }}
+                            disabled={updateInterviewStatusMutation.isPending}
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            Tidak Hadir
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm("Batalkan wawancara ini? Status akan otomatis menjadi Tidak Lolos.")) {
+                                updateInterviewStatusMutation.mutate({
+                                  scheduleId: interviewSchedule.id,
+                                  registrationId: selectedRegistration.id,
+                                  status: "cancelled"
+                                });
+                              }
+                            }}
+                            disabled={updateInterviewStatusMutation.isPending}
+                          >
+                            <Ban className="h-4 w-4 mr-2" />
+                            Batalkan
+                          </Button>
+                        </div>
                       </div>
                     )}
                     
@@ -2419,7 +2665,7 @@ Tim Forum Indonesia Muda
                             ) : (
                               <CheckCircle2 className="h-4 w-4 mr-2" />
                             )}
-                            Lolos Wawancara (Diterima)
+                            Lolos (Diterima)
                           </Button>
                           <Button
                             variant="destructive"
@@ -2444,7 +2690,7 @@ Tim Forum Indonesia Muda
                             ) : (
                               <XCircle className="h-4 w-4 mr-2" />
                             )}
-                            Tidak Lolos Wawancara
+                            Tidak Lolos
                           </Button>
                         </div>
                       </>
@@ -3035,6 +3281,182 @@ Tim Forum Indonesia Muda
                 <CheckCircle className="h-4 w-4 mr-2" />
               )}
               Tandai Selesai
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Block Registrant Dialog */}
+      <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Ban className="h-5 w-5" />
+              Blokir & Hapus Pendaftar
+            </DialogTitle>
+            <DialogDescription>
+              Pendaftar akan dihapus dari sistem dan data berikut akan diblokir untuk mencegah pendaftaran ulang.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {registrationToBlock && (
+            <div className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{registrationToBlock.full_name}</p>
+                <p className="text-sm text-muted-foreground">{registrationToBlock.email}</p>
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Pilih data yang akan diblokir:</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="block-email"
+                      checked={blockOptions.email}
+                      onCheckedChange={(checked) => setBlockOptions(prev => ({ ...prev, email: checked === true }))}
+                    />
+                    <Label htmlFor="block-email" className="text-sm">Email ({registrationToBlock.email})</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="block-phone"
+                      checked={blockOptions.phone}
+                      onCheckedChange={(checked) => setBlockOptions(prev => ({ ...prev, phone: checked === true }))}
+                      disabled={!registrationToBlock.phone}
+                    />
+                    <Label htmlFor="block-phone" className="text-sm">
+                      No. HP ({registrationToBlock.phone || "Tidak ada"})
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="block-nik"
+                      checked={blockOptions.nik}
+                      onCheckedChange={(checked) => setBlockOptions(prev => ({ ...prev, nik: checked === true }))}
+                    />
+                    <Label htmlFor="block-nik" className="text-sm">NIK (jika ada)</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="block-name"
+                      checked={blockOptions.fullName}
+                      onCheckedChange={(checked) => setBlockOptions(prev => ({ ...prev, fullName: checked === true }))}
+                    />
+                    <Label htmlFor="block-name" className="text-sm">Nama Lengkap ({registrationToBlock.full_name})</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Alasan Blokir <span className="text-destructive">*</span></Label>
+                <Textarea
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="Tuliskan alasan pemblokiran..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsBlockDialogOpen(false);
+              setRegistrationToBlock(null);
+              setBlockReason("");
+            }}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!blockReason.trim()) {
+                  toast.error("Alasan blokir wajib diisi");
+                  return;
+                }
+                if (registrationToBlock) {
+                  blockRegistrationMutation.mutate({
+                    registration: registrationToBlock,
+                    reason: blockReason,
+                    options: blockOptions,
+                  });
+                }
+              }}
+              disabled={blockRegistrationMutation.isPending || !blockReason.trim()}
+            >
+              {blockRegistrationMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Ban className="h-4 w-4 mr-2" />
+              )}
+              Blokir & Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blocked List Dialog */}
+      <Dialog open={isBlockedListOpen} onOpenChange={setIsBlockedListOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListX className="h-5 w-5" />
+              Daftar Akun Terblokir
+            </DialogTitle>
+            <DialogDescription>
+              Akun yang diblokir tidak dapat mendaftar ulang dengan data yang sama.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[50vh]">
+            {blockedRegistrations && blockedRegistrations.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Alasan</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {blockedRegistrations.map((blocked) => (
+                    <TableRow key={blocked.id}>
+                      <TableCell className="text-sm">{blocked.email || "-"}</TableCell>
+                      <TableCell className="text-sm">{blocked.full_name || "-"}</TableCell>
+                      <TableCell className="text-sm max-w-[200px] truncate">{blocked.blocked_reason || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {blocked.blocked_at ? format(new Date(blocked.blocked_at), "dd/MM/yy") : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm("Hapus dari daftar blokir? Data tersebut dapat digunakan untuk mendaftar kembali.")) {
+                              unblockMutation.mutate(blocked.id);
+                            }
+                          }}
+                          disabled={unblockMutation.isPending}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                Tidak ada akun yang terblokir
+              </div>
+            )}
+          </ScrollArea>
+          
+          <DialogFooter>
+            <Button onClick={() => setIsBlockedListOpen(false)}>
+              Tutup
             </Button>
           </DialogFooter>
         </DialogContent>
