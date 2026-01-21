@@ -74,6 +74,7 @@ interface TrainingFormData {
   graduation_year: string;
   occupation: string;
   organization: string;
+  nik: string;
   // Pengalaman
   organizational_experience: OrganizationalExperience[];
   // Prestasi
@@ -96,7 +97,7 @@ interface TrainingFormData {
 }
 
 const STEPS = [
-  { id: 1, title: "Biodata Diri", fields: ["birth_date", "birth_place", "gender", "address", "city", "province", "education", "institution", "major", "graduation_year", "occupation", "organization"] },
+  { id: 1, title: "Biodata Diri", fields: ["birth_date", "birth_place", "gender", "nik", "address", "city", "province", "education", "institution", "major", "graduation_year", "occupation", "organization"] },
   { id: 2, title: "Pengalaman Organisasi", fields: ["organizational_experience"] },
   { id: 3, title: "5 Prestasi Terbaik", fields: ["achievements"] },
   { id: 4, title: "Motivasi", fields: ["motivation", "how_did_you_know", "why_join_fim"] },
@@ -118,6 +119,7 @@ const initialFormData: TrainingFormData = {
   graduation_year: "",
   occupation: "",
   organization: "",
+  nik: "",
   organizational_experience: [{ organization: "", position: "", year: "", description: "" }],
   achievements: Array(5).fill({ title: "", year: "", description: "" }),
   motivation: "",
@@ -189,6 +191,7 @@ export default function TrainingRegistration() {
         graduation_year: existingData.graduation_year || "",
         occupation: existingData.occupation || "",
         organization: existingData.organization || "",
+        nik: (existingData as any).nik || "",
         organizational_experience: (existingData.organizational_experience as unknown as OrganizationalExperience[]) || initialFormData.organizational_experience,
         achievements: (existingData.achievements as unknown as Achievement[]) || initialFormData.achievements,
         motivation: existingData.motivation || "",
@@ -221,7 +224,7 @@ export default function TrainingRegistration() {
     let total = 0;
 
     // Biodata fields
-    const biodataFields = ["birth_date", "birth_place", "gender", "address", "city", "province", "education", "institution", "major", "graduation_year", "occupation"];
+    const biodataFields = ["birth_date", "birth_place", "gender", "nik", "address", "city", "province", "education", "institution", "major", "graduation_year", "occupation"];
     biodataFields.forEach(field => {
       total++;
       if (formData[field as keyof TrainingFormData]) filled++;
@@ -508,6 +511,17 @@ export default function TrainingRegistration() {
                         <SelectItem value="female">Perempuan</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nik">NIK (Nomor Induk Kependudukan) *</Label>
+                    <Input
+                      id="nik"
+                      value={formData.nik}
+                      onChange={(e) => updateField("nik", e.target.value.replace(/\D/g, '').slice(0, 16))}
+                      placeholder="16 digit NIK"
+                      maxLength={16}
+                    />
+                    <p className="text-xs text-muted-foreground">NIK terdiri dari 16 digit angka</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="education">Pendidikan Terakhir *</Label>

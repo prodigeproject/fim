@@ -431,6 +431,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_registrations: {
+        Row: {
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          nik: string | null
+          phone: string | null
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          nik?: string | null
+          phone?: string | null
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          nik?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       dynamic_roles: {
         Row: {
           created_at: string | null
@@ -735,6 +771,7 @@ export type Database = {
           last_saved_at: string | null
           major: string | null
           motivation: string | null
+          nik: string | null
           occupation: string | null
           organization: string | null
           organizational_experience: Json | null
@@ -770,6 +807,7 @@ export type Database = {
           last_saved_at?: string | null
           major?: string | null
           motivation?: string | null
+          nik?: string | null
           occupation?: string | null
           organization?: string | null
           organizational_experience?: Json | null
@@ -805,6 +843,7 @@ export type Database = {
           last_saved_at?: string | null
           major?: string | null
           motivation?: string | null
+          nik?: string | null
           occupation?: string | null
           organization?: string | null
           organizational_experience?: Json | null
@@ -838,6 +877,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           interview_feedback: string | null
+          interviewer_name: string | null
           location: string | null
           meeting_link: string | null
           notes: string | null
@@ -855,6 +895,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           interview_feedback?: string | null
+          interviewer_name?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
@@ -872,6 +913,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           interview_feedback?: string | null
+          interviewer_name?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
