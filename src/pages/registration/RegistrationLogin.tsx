@@ -39,22 +39,15 @@ export default function RegistrationLogin() {
     setIsSubmitting(true);
     setNeedsVerification(false);
 
-    // First check if email is verified
-    const { data: regData, error: regError } = await supabase
-      .from("fim_registrations")
-      .select("email_verified")
-      .eq("email", email.toLowerCase().trim())
-      .maybeSingle();
-
-    if (regData && regData.email_verified === false) {
-      setNeedsVerification(true);
-      setIsSubmitting(false);
-      return;
-    }
-
     const { error } = await signIn(email, password);
     
     if (error) {
+      // Check for unverified email error
+      if (error.message === "UNVERIFIED_EMAIL") {
+        setNeedsVerification(true);
+        setIsSubmitting(false);
+        return;
+      }
       toast.error("Login gagal: " + error.message);
       setIsSubmitting(false);
     } else {

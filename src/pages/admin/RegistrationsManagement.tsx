@@ -126,6 +126,7 @@ interface Registration {
   interview_note: string | null;
   interview_date: string | null;
   final_result: string | null;
+  email_verified: boolean;
 }
 
 interface TrainingData {
@@ -928,6 +929,60 @@ export default function RegistrationsManagement() {
     onError: (error: any) => {
       toast.error(`Gagal menghapus blokir: ${error.message}`);
     },
+  });
+
+  // Manual email verification mutation
+  const manualVerifyMutation = useMutation({
+    mutationFn: async ({ id, email, name }: { id: string; email: string; name: string }) => {
+      const { error } = await supabase
+        .from("fim_registrations")
+        .update({ 
+          email_verified: true,
+          email_verified_at: new Date().toISOString()
+        })
+        .eq("id", id);
+      
+      if (error) throw error;
+
+      // Log this action
+      await supabase.from("registration_activity_logs").insert({
+        registration_id: id,
+        user_id: profile?.id,
+        action: "manual_verify",
+        details: { email, name, verified_by: profile?.username || profile?.full_name },
+      });
+
+      return { id, email, name };
+    },
+    onSuccess: (data) => {
+      toast.success(`Email ${data.email} berhasil diverifikasi secara manual`);
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      // Update selected registration if open
+      if (selectedRegistration && selectedRegistration.id === data.id) {
+        setSelectedRegistration(prev => prev ? { ...prev, email_verified: true } : null);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal memverifikasi: ${error.message}`);
+    },
+  });
+
+  // Fetch activity logs for selected registration
+  const { data: activityLogs } = useQuery({
+    queryKey: ["activity-logs", selectedRegistration?.id],
+    queryFn: async () => {
+      if (!selectedRegistration?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("registration_activity_logs")
+        .select("*")
+        .eq("registration_id", selectedRegistration.id)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedRegistration?.id,
   });
 
   // Export to Excel with interview feedback and recommendation data
@@ -1995,7 +2050,7 @@ Tim Forum Indonesia Muda
                           )}
                         </TableCell>
                         <TableCell 
-                          className="font-medium text-primary hover:underline cursor-pointer"
+                          className="font-medium text-foreground hover:text-primary hover:underline cursor-pointer"
                           onClick={() => {
                             setSelectedRegistration(reg);
                             setIsDetailOpen(true);
@@ -2005,7 +2060,7 @@ Tim Forum Indonesia Muda
                           {reg.full_name}
                         </TableCell>
                         <TableCell 
-                          className="text-primary hover:underline cursor-pointer"
+                          className="text-muted-foreground hover:text-primary hover:underline cursor-pointer"
                           onClick={() => {
                             setSelectedRegistration(reg);
                             setIsDetailOpen(true);
@@ -2105,11 +2160,46 @@ Tim Forum Indonesia Muda
 
           {selectedRegistration && (
             <div className="mt-6 space-y-6">
-              {/* Status Badge */}
+              {/* Status Badge and Email Verification */}
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">{selectedRegistration.full_name}</h3>
                   <p className="text-sm text-muted-foreground">{selectedRegistration.email}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {selectedRegistration.email_verified ? (
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Email Terverifikasi
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-orange-600 border-orange-600">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Belum Verifikasi
+                      </Badge>
+                    )}
+                    {!selectedRegistration.email_verified && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        onClick={() => {
+                          manualVerifyMutation.mutate({
+                            id: selectedRegistration.id,
+                            email: selectedRegistration.email,
+                            name: selectedRegistration.full_name,
+                          });
+                        }}
+                        disabled={manualVerifyMutation.isPending}
+                      >
+                        {manualVerifyMutation.isPending ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                        )}
+                        Verifikasi Manual
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {getStatusBadge(selectedRegistration, trainingData)}
               </div>
@@ -2118,11 +2208,12 @@ Tim Forum Indonesia Muda
 
               {/* Tabs */}
               <Tabs defaultValue="biodata" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="biodata">Biodata</TabsTrigger>
                   <TabsTrigger value="experience">Pengalaman</TabsTrigger>
                   <TabsTrigger value="motivation">Motivasi</TabsTrigger>
                   <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  <TabsTrigger value="logs">Log Aktivitas</TabsTrigger>
                 </TabsList>
 
                 {isLoadingTraining ? (
@@ -2351,6 +2442,37 @@ Tim Forum Indonesia Muda
                           <Label className="text-muted-foreground">Status Submit</Label>
                           <p className="font-medium">{trainingData.is_submitted ? "Sudah Dikirim" : "Belum Dikirim"}</p>
                         </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* Activity Logs Tab */}
+                    <TabsContent value="logs" className="space-y-4 mt-4">
+                      <div>
+                        <h4 className="font-semibold flex items-center gap-2 mb-3">
+                          <History className="h-4 w-4" />
+                          Log Aktivitas Admin
+                        </h4>
+                        {activityLogs && activityLogs.length > 0 ? (
+                          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {activityLogs.map((log: any) => (
+                              <div key={log.id} className="border rounded-lg p-3 text-sm">
+                                <div className="flex justify-between items-start">
+                                  <span className="font-medium capitalize">{log.action.replace(/_/g, ' ')}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(log.created_at), "dd MMM yyyy HH:mm", { locale: localeId })}
+                                  </span>
+                                </div>
+                                {log.details && Object.keys(log.details).length > 0 && (
+                                  <p className="text-muted-foreground mt-1 text-xs">
+                                    {JSON.stringify(log.details)}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Belum ada log aktivitas</p>
+                        )}
                       </div>
                     </TabsContent>
                   </>

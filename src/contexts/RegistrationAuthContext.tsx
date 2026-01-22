@@ -204,14 +204,27 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
-      // Check if user is an admin (has role in user_roles table)
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", (await supabase.auth.signInWithPassword({ email, password })).data?.user?.id || "")
+      // First check if registration exists and is verified
+      const { data: regCheck, error: regCheckError } = await supabase
+        .from("fim_registrations")
+        .select("id, email_verified, auth_user_id")
+        .eq("email", email.toLowerCase().trim())
         .maybeSingle();
 
-      // First do the actual sign in
+      if (regCheckError && regCheckError.code !== "PGRST116") {
+        throw new Error("Gagal memeriksa data pendaftaran");
+      }
+
+      if (!regCheck) {
+        throw new Error("Email tidak terdaftar sebagai pendaftar FIM. Silakan daftar terlebih dahulu.");
+      }
+
+      // Check email verification status BEFORE signing in
+      if (!regCheck.email_verified) {
+        throw new Error("UNVERIFIED_EMAIL");
+      }
+
+      // Now do the actual sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -219,7 +232,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       if (error) throw error;
 
-      // Check if this user has an admin role
+      // Check if this user has an admin role - admins should use /admin
       if (data.user) {
         const { data: adminRole } = await supabase
           .from("user_roles")

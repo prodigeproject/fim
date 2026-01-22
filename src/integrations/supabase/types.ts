@@ -778,7 +778,9 @@ export type Database = {
           province: string | null
           recommendation_file_url: string | null
           recommender_duration: string | null
+          recommender_email: string | null
           recommender_name: string | null
+          recommender_phone: string | null
           recommender_position: string | null
           registration_id: string | null
           social_contribution_experience: string | null
@@ -814,7 +816,9 @@ export type Database = {
           province?: string | null
           recommendation_file_url?: string | null
           recommender_duration?: string | null
+          recommender_email?: string | null
           recommender_name?: string | null
+          recommender_phone?: string | null
           recommender_position?: string | null
           registration_id?: string | null
           social_contribution_experience?: string | null
@@ -850,7 +854,9 @@ export type Database = {
           province?: string | null
           recommendation_file_url?: string | null
           recommender_duration?: string | null
+          recommender_email?: string | null
           recommender_name?: string | null
+          recommender_phone?: string | null
           recommender_position?: string | null
           registration_id?: string | null
           social_contribution_experience?: string | null
@@ -1171,6 +1177,91 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      recruiter_assignments: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string
+          assignment_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          registration_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to: string
+          assignment_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          registration_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string
+          assignment_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          registration_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_assignments_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "fim_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registration_activity_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: string | null
+          registration_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          registration_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          registration_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_activity_logs_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "fim_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registration_settings: {
         Row: {
