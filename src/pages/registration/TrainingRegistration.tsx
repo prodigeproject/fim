@@ -93,6 +93,8 @@ interface TrainingFormData {
   recommender_name: string;
   recommender_duration: string;
   recommender_position: string;
+  recommender_email: string;
+  recommender_phone: string;
   recommendation_file_url: string;
 }
 
@@ -103,7 +105,7 @@ const STEPS = [
   { id: 4, title: "Motivasi", fields: ["motivation", "how_did_you_know", "why_join_fim"] },
   { id: 5, title: "Kepedulian Sosial", fields: ["social_issue_concern", "social_contribution_experience"] },
   { id: 6, title: "Kontribusi Strategis", fields: ["strategic_contribution_plan", "impact_expected"] },
-  { id: 7, title: "Rekomendasi", fields: ["recommender_name", "recommender_duration", "recommender_position", "recommendation_file_url"] },
+  { id: 7, title: "Rekomendasi", fields: ["recommender_name", "recommender_duration", "recommender_position", "recommender_email", "recommender_phone", "recommendation_file_url"] },
 ];
 
 const initialFormData: TrainingFormData = {
@@ -132,6 +134,8 @@ const initialFormData: TrainingFormData = {
   recommender_name: "",
   recommender_duration: "",
   recommender_position: "",
+  recommender_email: "",
+  recommender_phone: "",
   recommendation_file_url: "",
 };
 
@@ -204,6 +208,8 @@ export default function TrainingRegistration() {
         recommender_name: (existingData as any).recommender_name || "",
         recommender_duration: (existingData as any).recommender_duration || "",
         recommender_position: (existingData as any).recommender_position || "",
+        recommender_email: (existingData as any).recommender_email || "",
+        recommender_phone: (existingData as any).recommender_phone || "",
         recommendation_file_url: (existingData as any).recommendation_file_url || "",
       });
       

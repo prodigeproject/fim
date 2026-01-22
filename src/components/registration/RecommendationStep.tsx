@@ -19,6 +19,8 @@ interface RecommendationStepProps {
     recommender_name: string;
     recommender_duration: string;
     recommender_position: string;
+    recommender_email: string;
+    recommender_phone: string;
     recommendation_file_url: string;
   };
   updateField: (field: string, value: string) => void;
@@ -125,6 +127,28 @@ export function RecommendationStep({ formData, updateField, registrationId }: Re
             value={formData.recommender_position}
             onChange={(e) => updateField("recommender_position", e.target.value)}
             placeholder="Dosen Pembimbing / Kepala Divisi"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="recommender_email">Email Pemberi Rekomendasi *</Label>
+          <Input
+            id="recommender_email"
+            type="email"
+            value={formData.recommender_email || ""}
+            onChange={(e) => updateField("recommender_email", e.target.value)}
+            placeholder="email@example.com"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="recommender_phone">No. Telepon Pemberi Rekomendasi *</Label>
+          <Input
+            id="recommender_phone"
+            type="tel"
+            value={formData.recommender_phone || ""}
+            onChange={(e) => updateField("recommender_phone", e.target.value)}
+            placeholder="08123456789"
           />
         </div>
 

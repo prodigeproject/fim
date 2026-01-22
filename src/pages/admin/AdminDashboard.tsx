@@ -174,20 +174,21 @@ export default function AdminDashboard() {
     }
   }, [user, isLoading, navigate]);
 
-  // Separate effect for role check with delay to allow async role fetch
+  // Separate effect for role check - only redirect if explicitly no role after sufficient time
   useEffect(() => {
     if (!authChecked || isLoading || !user) return;
 
-    // Give role time to load - only redirect after a short delay if still no role
-    const timer = setTimeout(() => {
-      if (!role) {
-        console.log("No admin role found for user, redirecting to login");
+    // Only redirect if we're sure there's no role (profile loaded but no role)
+    // Don't redirect during initial load or if profile is still loading
+    if (profile && !role) {
+      const timer = setTimeout(() => {
+        console.log("No admin role found for user with loaded profile, redirecting to login");
         navigate("/admin", { replace: true });
-      }
-    }, 2000); // Wait 2 seconds for role to load
+      }, 3000); // Wait 3 seconds for role to load
 
-    return () => clearTimeout(timer);
-  }, [authChecked, user, role, isLoading, navigate]);
+      return () => clearTimeout(timer);
+    }
+  }, [authChecked, user, role, profile, isLoading, navigate]);
 
   // Check if must change password
   useEffect(() => {
