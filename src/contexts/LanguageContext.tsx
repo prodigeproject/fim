@@ -6,13 +6,21 @@ type Language = "id" | "en";
 const translations: Record<string, Record<Language, string>> = {
   // Navigation
   "nav.home": { id: "Beranda", en: "Home" },
-  "nav.about": { id: "Tentang", en: "About" },
+  "nav.about": { id: "Tentang FIM", en: "About FIM" },
+  "nav.aboutMenu": { id: "Tentang", en: "About" },
+  "nav.regional": { id: "Regional FIM", en: "FIM Regional" },
+  "nav.fimClub": { id: "FIM Club", en: "FIM Club" },
+  "nav.program": { id: "Program", en: "Programs" },
+  "nav.training": { id: "Pelatihan FIM", en: "FIM Training" },
+  "nav.flagship": { id: "Program Unggulan", en: "Featured Programs" },
   "nav.programs": { id: "Program", en: "Programs" },
   "nav.blog": { id: "Blog", en: "Blog" },
   "nav.faq": { id: "FAQ", en: "FAQ" },
   "nav.donate": { id: "Donasi", en: "Donate" },
   "nav.join": { id: "Gabung", en: "Join" },
-  "nav.register": { id: "Daftar Pelatihan", en: "Register Training" },
+  "nav.register": { id: "Daftar", en: "Register" },
+  "nav.alumni": { id: "Alumni", en: "Alumni" },
+  "nav.volunteer": { id: "Relawan", en: "Volunteer" },
   
   // Home page
   "home.hero.title": { id: "Forum Indonesia Muda", en: "Forum Indonesia Muda" },
@@ -92,9 +100,19 @@ const translations: Record<string, Record<Language, string>> = {
   "footer.programs": { id: "Program", en: "Programs" },
   "footer.connect": { id: "Hubungi Kami", en: "Connect With Us" },
   "footer.rights": { id: "Hak Cipta", en: "All Rights Reserved" },
-  "footer.newsletter": { id: "Berlangganan Newsletter", en: "Subscribe to Newsletter" },
-  "footer.newsletter.placeholder": { id: "Masukkan email Anda", en: "Enter your email" },
-  "footer.newsletter.button": { id: "Berlangganan", en: "Subscribe" },
+  "footer.newsletter": { id: "Dapatkan Update Terbaru", en: "Get Latest Updates" },
+  "footer.newsletterDesc": { id: "Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.", en: "Subscribe to our newsletter for activities, registration, and latest news from FIM." },
+  "footer.emailPlaceholder": { id: "Masukkan email Anda", en: "Enter your email" },
+  "footer.subscribe": { id: "Langganan", en: "Subscribe" },
+  "footer.subscribeSuccess": { id: "Berhasil berlangganan!", en: "Successfully subscribed!" },
+  "footer.subscribeSuccessDesc": { id: "Terima kasih telah berlangganan newsletter FIM.", en: "Thank you for subscribing to FIM newsletter." },
+  "footer.description": { id: "Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang yang menerangi masa depan bangsa. Berdiri sejak 2003.", en: "A platform for Indonesian youth to grow, collaborate, and become fireflies illuminating the nation's future. Established since 2003." },
+  "footer.navigation": { id: "Navigasi", en: "Navigation" },
+  "footer.contact": { id: "Hubungi Kami", en: "Contact Us" },
+  "footer.supportFim": { id: "Dukung FIM", en: "Support FIM" },
+  "footer.copyright": { id: "© {year} Forum Indonesia Muda. Hak cipta dilindungi.", en: "© {year} Forum Indonesia Muda. All rights reserved." },
+  "footer.madeWith": { id: "Dibuat dengan", en: "Made with" },
+  "footer.forIndonesia": { id: "untuk Indonesia", en: "for Indonesia" },
   
   // Common
   "common.loading": { id: "Memuat...", en: "Loading..." },
@@ -113,6 +131,7 @@ const translations: Record<string, Record<Language, string>> = {
   "common.viewall": { id: "Lihat Semua", en: "View All" },
   "common.readmore": { id: "Baca Selengkapnya", en: "Read More" },
   "common.share": { id: "Bagikan", en: "Share" },
+  "common.selectLanguage": { id: "Pilih Bahasa", en: "Select Language" },
 };
 
 interface LanguageContextType {

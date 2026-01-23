@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SearchDialog } from "@/components/SearchDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 import logoFim from "@/assets/logo-fim.png";
 
 const Navbar = () => {
@@ -12,33 +13,34 @@ const Navbar = () => {
   const [tentangOpen, setTentangOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   const location = useLocation();
+  const { t } = useLanguage();
 
   const isActive = (path: string) => location.pathname === path;
   const isActiveParent = (paths: string[]) => paths.some(p => location.pathname.startsWith(p));
 
   const navLinks = [
-    { name: "Beranda", path: "/" },
+    { name: t("nav.home"), path: "/" },
     {
-      name: "Tentang",
+      name: t("nav.aboutMenu"),
       path: "/tentang",
       children: [
-        { name: "Tentang FIM", path: "/tentang" },
-        { name: "Regional FIM", path: "/tentang/regional" },
-        { name: "FIM Club", path: "/tentang/fim-club" },
+        { name: t("nav.about"), path: "/tentang" },
+        { name: t("nav.regional"), path: "/tentang/regional" },
+        { name: t("nav.fimClub"), path: "/tentang/fim-club" },
       ],
     },
     {
-      name: "Program",
+      name: t("nav.program"),
       path: "/program",
       children: [
-        { name: "Pelatihan FIM", path: "/program/pelatihan" },
-        { name: "Program Unggulan", path: "/program/program-unggulan" },
+        { name: t("nav.training"), path: "/program/pelatihan" },
+        { name: t("nav.flagship"), path: "/program/program-unggulan" },
       ],
     },
-    { name: "Alumni", path: "/cerita-alumni" },
-    { name: "Blog", path: "/blog" },
-    { name: "FAQ", path: "/faq" },
-    { name: "Relawan", path: "/gabung-relawan" },
+    { name: t("nav.alumni"), path: "/cerita-alumni" },
+    { name: t("nav.blog"), path: "/blog" },
+    { name: t("nav.faq"), path: "/faq" },
+    { name: t("nav.volunteer"), path: "/gabung-relawan" },
   ];
 
   return (
@@ -116,12 +118,12 @@ const Navbar = () => {
             <LanguageSwitcher />
             <Link to="/daftar">
               <Button variant="outline" className="font-semibold">
-                Daftar
+                {t("nav.register")}
               </Button>
             </Link>
             <Link to="/donasi">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-                Donasi
+                {t("nav.donate")}
               </Button>
             </Link>
           </div>
@@ -148,19 +150,19 @@ const Navbar = () => {
                   <>
                     <button
                       onClick={() => {
-                        if (link.name === "Tentang") setTentangOpen(!tentangOpen);
-                        if (link.name === "Program") setProgramOpen(!programOpen);
+                        if (link.name === t("nav.aboutMenu")) setTentangOpen(!tentangOpen);
+                        if (link.name === t("nav.program")) setProgramOpen(!programOpen);
                       }}
                       className="flex items-center justify-between w-full px-4 py-3 text-foreground font-medium"
                     >
                       {link.name}
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          (link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen) ? "rotate-180" : ""
+                          (link.name === t("nav.aboutMenu") && tentangOpen) || (link.name === t("nav.program") && programOpen) ? "rotate-180" : ""
                         }`}
                       />
                     </button>
-                    {((link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen)) && (
+                    {((link.name === t("nav.aboutMenu") && tentangOpen) || (link.name === t("nav.program") && programOpen)) && (
                       <div className="pl-4 bg-muted/50">
                         {link.children.map((child) => (
                           <Link
@@ -195,16 +197,16 @@ const Navbar = () => {
             <div className="px-4 pt-4 space-y-2">
               <div className="flex items-center gap-2 mb-2">
                 <LanguageSwitcher />
-                <span className="text-sm text-muted-foreground">Pilih Bahasa</span>
+                <span className="text-sm text-muted-foreground">{t("common.selectLanguage")}</span>
               </div>
               <Link to="/daftar" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Daftar
+                  {t("nav.register")}
                 </Button>
               </Link>
               <Link to="/donasi" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-primary text-primary-foreground">
-                  Donasi
+                  {t("nav.donate")}
                 </Button>
               </Link>
             </div>
