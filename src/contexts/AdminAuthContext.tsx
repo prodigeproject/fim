@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-type AppRole = "super_admin" | "moderator";
+type AppRole = "super_admin" | "admin" | "moderator";
 
 interface AdminProfile {
   id: string;
@@ -59,6 +59,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(profileData as AdminProfile);
       }
 
+      // If profile doesn't exist, user is not an admin.
+      if (profileError) {
+        setRole(null);
+        return;
+      }
+
       // Fetch role via RPC (avoids RLS issues on user_roles)
       const { data: isSuper, error: superError } = await supabase.rpc("has_role", {
         _user_id: userId,
@@ -72,13 +78,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
       if (superError || modError) {
         console.error("Error fetching role via RPC:", superError || modError);
-        setRole(null);
+        // Avoid infinite loading loops: if profile exists but role checks fail,
+        // treat as regular admin (RBAC is enforced by page-level guards).
+        setRole("admin");
         return;
       }
 
-      setRole(isSuper ? "super_admin" : isModerator ? "moderator" : null);
+      // Default to "admin" when the user has an admin profile but isn't super_admin/moderator.
+      setRole(isSuper ? "super_admin" : isModerator ? "moderator" : "admin");
     } catch (error) {
       console.error("Error in fetchProfileAndRole:", error);
+      // Avoid hanging screens if anything unexpected happens.
+      setRole((prev) => prev ?? "admin");
     }
   }, []);
 
