@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +15,42 @@ interface SelectionStageRequest {
   interviewDate?: string;
   note?: string;
   finalResult?: "lolos" | "tidak_lolos";
+}
+
+async function sendGmailEmail(to: string, subject: string, html: string) {
+  const gmailUser = Deno.env.get("GMAIL_USER");
+  const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
+  
+  if (!gmailUser || !gmailAppPassword) {
+    throw new Error("Gmail credentials not configured");
+  }
+
+  const client = new SMTPClient({
+    connection: {
+      hostname: "smtp.gmail.com",
+      port: 465,
+      tls: true,
+      auth: {
+        username: gmailUser,
+        password: gmailAppPassword,
+      },
+    },
+  });
+
+  try {
+    await client.send({
+      from: `Forum Indonesia Muda <${gmailUser}>`,
+      to: to,
+      subject: subject,
+      content: "Please view this email in an HTML-compatible email client.",
+      html: html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error) {
+    await client.close();
+    throw error;
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -152,31 +187,11 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "FIM Indonesia <noreply@resend.dev>",
-        to: [registrantEmail],
-        subject: subject,
-        html: emailHtml,
-      }),
-    });
-
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error("Resend API error:", errorData);
-      throw new Error(`Email sending failed: ${errorData}`);
-    }
-
-    const emailData = await emailResponse.json();
-    console.log("Selection stage email sent successfully:", emailData);
+    await sendGmailEmail(registrantEmail, subject, emailHtml);
+    console.log("Selection stage email sent successfully to:", registrantEmail);
 
     return new Response(
-      JSON.stringify({ success: true, data: emailData }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
