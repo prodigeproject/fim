@@ -11,6 +11,9 @@ import { Loader2, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, Eye, E
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 import PhoneInput from "@/components/PhoneInput";
+import { ReCaptcha, useReCaptcha } from "@/components/ReCaptcha";
+
+const RECAPTCHA_SITE_KEY = "6Lf9kFMsAAAAAKpNUXjDFZ1ngh03qOLUOIWG7ELj";
 
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -45,6 +48,9 @@ export default function RegistrationSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  
+  // reCAPTCHA
+  const { isVerified: isCaptchaVerified, handleVerify, handleExpire, handleError } = useReCaptcha();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -141,6 +147,12 @@ export default function RegistrationSignup() {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Password dan konfirmasi password tidak cocok");
+      return;
+    }
+
+    // Validate reCAPTCHA
+    if (!isCaptchaVerified) {
+      toast.error("Harap selesaikan verifikasi reCAPTCHA");
       return;
     }
 
@@ -337,10 +349,20 @@ export default function RegistrationSignup() {
               </CardContent>
 
               <CardFooter className="flex flex-col gap-4">
+                {/* reCAPTCHA */}
+                <div className="w-full flex justify-center">
+                  <ReCaptcha
+                    siteKey={RECAPTCHA_SITE_KEY}
+                    onVerify={handleVerify}
+                    onExpire={handleExpire}
+                    onError={handleError}
+                  />
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail}
+                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail || !isCaptchaVerified}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
