@@ -9,9 +9,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { z } from "zod";
-import { ReCaptcha, useReCaptcha } from "@/components/ReCaptcha";
-
-const RECAPTCHA_SITE_KEY = "6Lf9kFMsAAAAAKpNUXjDFZ1ngh03qOLUOIWG7ELj";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
@@ -29,9 +26,6 @@ export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [redirecting, setRedirecting] = useState(false);
-  
-  // reCAPTCHA
-  const { isVerified: isCaptchaVerified, handleVerify, handleExpire, handleError, reset: resetCaptcha } = useReCaptcha();
 
   // Redirect if already logged in with role
   useEffect(() => {
@@ -53,12 +47,6 @@ export default function AdminLogin() {
     const result = loginSchema.safeParse({ identifier, password });
     if (!result.success) {
       setError(result.error.errors[0].message);
-      return;
-    }
-
-    // Check reCAPTCHA (only require after 2 attempts)
-    if (attempts >= 2 && !isCaptchaVerified) {
-      setError("Harap selesaikan verifikasi reCAPTCHA");
       return;
     }
 
@@ -196,22 +184,10 @@ export default function AdminLogin() {
                 </div>
               </div>
 
-              {/* Show reCAPTCHA after 2 failed attempts */}
-              {attempts >= 2 && (
-                <div className="flex justify-center">
-                  <ReCaptcha
-                    siteKey={RECAPTCHA_SITE_KEY}
-                    onVerify={handleVerify}
-                    onExpire={handleExpire}
-                    onError={handleError}
-                  />
-                </div>
-              )}
-
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || attempts >= 5 || (attempts >= 2 && !isCaptchaVerified)}
+                disabled={isLoading || attempts >= 5}
               >
                 {isLoading ? (
                   <>

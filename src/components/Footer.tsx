@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Linkedin, Youtube, Mail, Phone, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import logoFim from "@/assets/logo-fim.png";
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>((props, ref) => {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -48,7 +48,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-foreground text-background">
+    <footer ref={ref} className="bg-foreground text-background" {...props}>
       {/* Newsletter Section */}
       <div className="border-b border-background/10">
         <div className="container mx-auto px-4 py-8">
@@ -174,6 +174,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 export default Footer;
