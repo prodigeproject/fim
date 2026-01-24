@@ -70,41 +70,88 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   }, [user, fetchRegistration]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST (avoid deadlocks)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-
-      if (nextSession?.user) {
-        // Defer Supabase calls
-        setTimeout(() => {
-          fetchRegistration(nextSession.user.id).then(setRegistration);
-        }, 0);
-      } else {
-        setRegistration(null);
-      }
-
-      setIsLoading(false);
-    });
-
-    // THEN check for existing session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: existingSession } }) => {
-        setSession(existingSession);
-        setUser(existingSession?.user ?? null);
-
+    let isMounted = true;
+    
+    // Check for existing session first
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
         if (existingSession?.user) {
-          fetchRegistration(existingSession.user.id).then(setRegistration);
+          // Check if this is a registration user (not an admin)
+          const { data: adminProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", existingSession.user.id)
+            .maybeSingle();
+          
+          if (!isMounted) return;
+          
+          // Only set session for non-admin users (registrants)
+          if (!adminProfile) {
+            setSession(existingSession);
+            setUser(existingSession.user);
+            const reg = await fetchRegistration(existingSession.user.id);
+            if (isMounted) {
+              setRegistration(reg);
+            }
+          }
         }
+        
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing registration auth:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    initializeAuth();
 
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
+    // Set up auth state listener for future changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, nextSession) => {
+        if (!isMounted) return;
+        
+        // Handle sign out
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
+          setRegistration(null);
+          return;
+        }
+        
+        // Handle sign in
+        if (nextSession?.user && event === "SIGNED_IN") {
+          // Check if this is a registration user (not an admin)
+          const { data: adminProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", nextSession.user.id)
+            .maybeSingle();
+          
+          if (!isMounted) return;
+          
+          // Only set session for non-admin users
+          if (!adminProfile) {
+            setSession(nextSession);
+            setUser(nextSession.user);
+            const reg = await fetchRegistration(nextSession.user.id);
+            if (isMounted) {
+              setRegistration(reg);
+            }
+          }
+        }
+      }
+    );
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchRegistration]);

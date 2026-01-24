@@ -153,9 +153,6 @@ const AnimatedRoutes = () => {
           </AdminAuthProvider>
         } />
         
-        {/* Legacy admin route redirect */}
-        <Route path="/fim-admin-portal-2024/*" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
-
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

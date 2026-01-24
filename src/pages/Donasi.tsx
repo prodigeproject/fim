@@ -7,10 +7,12 @@ import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const Donasi = () => {
+  const { t } = useTranslation();
+  
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Berhasil disalin!",
+      title: t("donation.copied"),
       description: `${label} telah disalin ke clipboard.`,
     });
   };
@@ -54,12 +56,12 @@ const Donasi = () => {
   return (
     <Layout>
       <SEO 
-        title="Donasi" 
-        description="Dukung Forum Indonesia Muda untuk mencetak lebih banyak pemimpin muda Indonesia. Donasi Anda membantu program beasiswa, pelatihan, dan proyek sosial alumni FIM."
+        title={t("donation.title")} 
+        description={t("donation.subtitle")}
       />
       <PageHero
-        title="Dukung Forum Indonesia Muda"
-        subtitle="Kontribusi Anda membantu kami mencetak lebih banyak pemimpin muda untuk Indonesia"
+        title={t("donation.title")}
+        subtitle={t("donation.subtitle")}
       />
 
       {/* Two Column Layout - Main Donations vs Disaster */}
@@ -71,19 +73,17 @@ const Donasi = () => {
               {/* Why Donate */}
               <div>
                 <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-                  Mengapa Mendukung FIM?
+                  {t("donation.whyDonate")}
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-                  Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang 
-                  kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami 
-                  menjangkau lebih banyak pemuda dari berbagai latar belakang.
+                  {t("donation.whyDesc")}
                 </p>
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
-                    { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda sejak 2003" },
-                    { icon: Building, title: "60+ Regional", desc: "Dari Sabang sampai Merauke" },
-                    { icon: CheckCircle, title: "100+ Proyek/Tahun", desc: "Proyek sosial berdampak" },
+                    { icon: Heart, title: "4000+ Alumni", desc: t("common.alumniCount") },
+                    { icon: Building, title: "60+ Regional", desc: t("common.regionalCount") },
+                    { icon: CheckCircle, title: "100+ Proyek/Tahun", desc: t("common.projectCount") },
                   ].map((item, index) => (
                     <div
                       key={item.title}
@@ -101,7 +101,7 @@ const Donasi = () => {
               {/* Donation Method */}
               <div>
                 <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6">
-                  Cara Berdonasi
+                  {t("donation.howToDonate")}
                 </h2>
 
                 {/* Bank Account */}
@@ -110,7 +110,7 @@ const Donasi = () => {
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                       <Building className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-lg font-bold text-foreground">Rekening Donasi</h3>
+                    <h3 className="text-lg font-bold text-foreground">{t("donation.donationAccount")}</h3>
                   </div>
 
                   <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-xl p-5 border border-primary/20">
@@ -127,7 +127,7 @@ const Donasi = () => {
                         className="gap-2"
                       >
                         <Copy className="h-4 w-4" />
-                        Salin
+                        {t("donation.copy")}
                       </Button>
                     </div>
                   </div>
@@ -135,7 +135,7 @@ const Donasi = () => {
 
                 {/* Donation Steps */}
                 <div className="bg-card rounded-2xl p-6 shadow-lg border border-border">
-                  <h3 className="text-lg font-bold text-foreground mb-4">Langkah-langkah</h3>
+                  <h3 className="text-lg font-bold text-foreground mb-4">{t("donation.steps")}</h3>
                   
                   <div className="space-y-4">
                     {donationSteps.map((item, index) => (
@@ -153,7 +153,7 @@ const Donasi = () => {
 
                   <div className="mt-6 bg-accent/10 rounded-xl p-3 border border-accent/20">
                     <p className="text-xs text-foreground">
-                      <span className="font-semibold">💡 Penting:</span> Kode unik (99) membantu kami mengidentifikasi donasi Anda.
+                      <span className="font-semibold">💡 {t("donation.importantNote")}</span> {t("donation.uniqueCode")}
                     </p>
                   </div>
                 </div>
@@ -162,10 +162,10 @@ const Donasi = () => {
               {/* Transparency */}
               <div>
                 <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                  Transparansi Penggunaan Dana
+                  {t("donation.transparency")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Kami berkomitmen menggunakan setiap donasi secara bertanggung jawab dan transparan.
+                  {t("donation.transparencyDesc")}
                 </p>
 
                 <div className="space-y-4">
@@ -194,10 +194,10 @@ const Donasi = () => {
               {/* Confirmation CTA */}
               <div className="bg-secondary rounded-2xl p-6 text-center">
                 <h3 className="text-xl font-bold text-foreground mb-2">
-                  Sudah Berdonasi?
+                  {t("donation.alreadyDonated")}
                 </h3>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto mb-4">
-                  Kirimkan bukti transfer ke WhatsApp kami untuk konfirmasi.
+                  {t("donation.confirmDonation")}
                 </p>
                 <a
                   href="https://wa.me/6285213580323?text=Halo,%20saya%20ingin%20konfirmasi%20donasi%20ke%20FIM"
@@ -206,7 +206,7 @@ const Donasi = () => {
                   className="inline-flex items-center gap-2 bg-supporting text-supporting-foreground px-5 py-2.5 rounded-lg font-semibold hover:bg-supporting/90 transition-colors text-sm"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Konfirmasi via WhatsApp
+                  {t("donation.confirmViaWA")}
                 </a>
               </div>
             </div>
@@ -220,20 +220,19 @@ const Donasi = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">
-                      Donasi Bencana
+                      {t("donation.disasterTitle")}
                     </h2>
-                    <p className="text-sm text-destructive font-medium">🆘 FIM Tanggap Bencana</p>
+                    <p className="text-sm text-destructive font-medium">{t("donation.disasterSubtitle")}</p>
                   </div>
                 </div>
                 
                 <p className="text-muted-foreground mb-6 leading-relaxed">
-                  FIM aktif dalam tanggap darurat bencana melalui program <strong>FIM Tanggap Bencana</strong>. 
-                  Kami berkolaborasi dengan relawan dan regional di seluruh Indonesia.
+                  {t("donation.disasterDesc")}
                 </p>
 
                 <div className="bg-card rounded-xl p-5 mb-6 border border-border">
                   <p className="text-sm text-muted-foreground italic mb-5">
-                    Update penggalangan donasi untuk bencana kemanusiaan dapat diikuti melalui:
+                    {t("donation.disasterUpdate")}
                   </p>
                   
                   <div className="space-y-3">
@@ -277,10 +276,9 @@ const Donasi = () => {
                       <CheckCircle className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-foreground mb-1">Transparansi Dana</h4>
+                      <h4 className="font-semibold text-foreground mb-1">{t("donation.disasterTransparency")}</h4>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        Laporan penggunaan dana donasi bencana diinformasikan secara spesifik dan rutin 
-                        di akun Instagram @fimtanggapbencana dan @fimnews.
+                        {t("donation.disasterTransparencyDesc")}
                       </p>
                     </div>
                   </div>
@@ -288,10 +286,10 @@ const Donasi = () => {
 
                 <div className="text-center p-4 bg-destructive/10 rounded-xl border border-destructive/20">
                   <p className="text-sm text-foreground">
-                    <span className="font-semibold">📢 Info Penting</span>
+                    <span className="font-semibold">{t("donation.disasterInfo")}</span>
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Cara berdonasi untuk bencana akan diinformasikan saat ada penggalangan aktif.
+                    {t("donation.disasterInfoDesc")}
                   </p>
                 </div>
               </div>

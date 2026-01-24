@@ -85,10 +85,61 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state - Admin panel uses separate session tracking
   // to avoid conflicts with registration panel
   useEffect(() => {
+    let isMounted = true;
+    
+    // Check for existing session first
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        if (existingSession?.user) {
+          // Verify this is an admin user by checking for profile
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", existingSession.user.id)
+            .maybeSingle();
+          
+          if (!isMounted) return;
+          
+          if (profileData) {
+            setSession(existingSession);
+            setUser(existingSession.user);
+            await fetchProfileAndRole(existingSession.user.id);
+          }
+        }
+        
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    initializeAuth();
+
+    // Set up auth state listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        // Only handle admin sessions (users with profiles/roles)
-        if (currentSession?.user) {
+        if (!isMounted) return;
+        
+        // Handle sign out
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setRole(null);
+          return;
+        }
+        
+        // Handle sign in or token refresh
+        if (currentSession?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
           // Check if this is an admin user by checking for profile
           const { data: profileData } = await supabase
             .from("profiles")
@@ -96,54 +147,22 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
             .eq("id", currentSession.user.id)
             .maybeSingle();
           
+          if (!isMounted) return;
+          
           // Only set session for admin users
           if (profileData) {
             setSession(currentSession);
             setUser(currentSession.user);
-            // Defer Supabase calls
-            setTimeout(() => {
-              fetchProfileAndRole(currentSession.user.id);
-            }, 0);
-          } else {
-            // Not an admin user - this is likely a registration user
-            // Don't change state, keep admin session separate
-          }
-        } else {
-          // Only clear if this was an admin logout
-          if (user && profile) {
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            setRole(null);
+            await fetchProfileAndRole(currentSession.user.id);
           }
         }
-        setIsLoading(false);
       }
     );
 
-    // Check for existing session
-    const checkExistingSession = async () => {
-      const { data: { session: existingSession } } = await supabase.auth.getSession();
-      if (existingSession?.user) {
-        // Verify this is an admin user
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", existingSession.user.id)
-          .maybeSingle();
-        
-        if (profileData) {
-          setSession(existingSession);
-          setUser(existingSession.user);
-          fetchProfileAndRole(existingSession.user.id);
-        }
-      }
-      setIsLoading(false);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
     };
-    
-    checkExistingSession();
-
-    return () => subscription.unsubscribe();
   }, [fetchProfileAndRole]);
 
   // Idle timeout
