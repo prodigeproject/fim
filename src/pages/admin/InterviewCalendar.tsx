@@ -182,9 +182,19 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Create schedule with interviewer name
+  // Create schedule with interviewer name - validate future date
   const createMutation = useMutation({
     mutationFn: async (data: typeof scheduleForm) => {
+      // Validate that scheduled date is in the future
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const scheduledDate = new Date(data.scheduled_date);
+      scheduledDate.setHours(0, 0, 0, 0);
+      
+      if (scheduledDate < today) {
+        throw new Error("Tanggal wawancara tidak boleh di masa lalu. Silakan pilih tanggal mendatang.");
+      }
+      
       // Check for existing active schedule (duplicate prevention)
       const { data: existingSchedule } = await supabase
         .from("interview_schedules")
@@ -364,9 +374,19 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Batch create schedules with interviewer name
+  // Batch create schedules with interviewer name - validate future date
   const batchCreateMutation = useMutation({
     mutationFn: async (data: typeof batchForm & { registration_ids: string[] }) => {
+      // Validate that scheduled date is in the future
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const scheduledDate = new Date(data.scheduled_date);
+      scheduledDate.setHours(0, 0, 0, 0);
+      
+      if (scheduledDate < today) {
+        throw new Error("Tanggal wawancara tidak boleh di masa lalu. Silakan pilih tanggal mendatang.");
+      }
+      
       const schedulesToCreate: Array<{
         registration_id: string;
         scheduled_date: string;
@@ -1055,8 +1075,12 @@ export default function InterviewCalendar() {
                 <Input
                   type="date"
                   value={scheduleForm.scheduled_date}
+                  min={format(new Date(), "yyyy-MM-dd")}
                   onChange={(e) => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Hanya bisa menjadwalkan untuk tanggal mendatang
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Waktu</Label>

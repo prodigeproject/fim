@@ -357,8 +357,8 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - simple overflow scroll, no autoscroll */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Navigation - lovable.dev style scroll */}
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
           <nav className="p-2 space-y-0.5">
             {filteredNavItems.map((item) => (
               <NavItemComponent key={item.href} item={item} />

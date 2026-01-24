@@ -13,6 +13,8 @@ import { Mail, MessageCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const FAQ = () => {
+  const { t } = useTranslation();
+
   const faqCategories = [
     {
       category: "Tentang FIM",
@@ -121,12 +123,12 @@ const FAQ = () => {
   return (
     <Layout>
       <SEO 
-        title="FAQ" 
-        description="Pertanyaan yang sering diajukan tentang Forum Indonesia Muda. Temukan jawaban seputar pendaftaran, program, regional, alumni, donasi, dan kerjasama dengan FIM."
+        title={t("faq.title")} 
+        description={t("faq.subtitle")}
       />
       <PageHero
-        title="Pertanyaan yang Sering Diajukan"
-        subtitle="Temukan jawaban untuk pertanyaan umum tentang Forum Indonesia Muda"
+        title={t("faq.title")}
+        subtitle={t("faq.subtitle")}
       />
 
       {/* FAQ Section */}
@@ -168,10 +170,10 @@ const FAQ = () => {
       <section className="py-16 bg-secondary">
         <div className="container mx-auto px-4 text-center">
           <h3 className="text-2xl font-bold text-foreground mb-4">
-            Pertanyaan Lain?
+            {t("faq.otherQuestions")}
           </h3>
           <p className="text-muted-foreground max-w-md mx-auto mb-8">
-            Jika pertanyaan Anda belum terjawab, jangan ragu untuk menghubungi kami.
+            {t("faq.contactUs")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -179,7 +181,7 @@ const FAQ = () => {
               className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
             >
               <Mail className="h-5 w-5" />
-              Email Kami
+              {t("faq.emailUs")}
             </a>
             <a
               href="https://wa.me/6285213580323"
@@ -188,7 +190,7 @@ const FAQ = () => {
               className="inline-flex items-center justify-center gap-2 bg-supporting text-supporting-foreground px-6 py-3 rounded-lg font-semibold hover:bg-supporting/90 transition-colors"
             >
               <MessageCircle className="h-5 w-5" />
-              WhatsApp
+              {t("faq.whatsapp")}
             </a>
           </div>
         </div>
@@ -198,20 +200,20 @@ const FAQ = () => {
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <h3 className="text-xl font-bold text-center text-foreground mb-8">
-            Link Cepat
+            {t("faq.quickLinks")}
           </h3>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/tentang">
-              <Button variant="outline">Tentang FIM</Button>
+              <Button variant="outline">{t("faq.aboutFim")}</Button>
             </Link>
             <Link to="/program/pelatihan">
-              <Button variant="outline">Program Pelatihan</Button>
+              <Button variant="outline">{t("faq.trainingProgram")}</Button>
             </Link>
-            <Link to="/program/regional">
-              <Button variant="outline">Regional FIM</Button>
+            <Link to="/tentang/regional">
+              <Button variant="outline">{t("faq.regionalFim")}</Button>
             </Link>
             <Link to="/donasi">
-              <Button variant="outline">Donasi</Button>
+              <Button variant="outline">{t("faq.donate")}</Button>
             </Link>
           </div>
         </div>

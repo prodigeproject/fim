@@ -59,6 +59,7 @@ export default function EmailTemplatesManagement() {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [previewVariables, setPreviewVariables] = useState<Record<string, string>>({});
   const [editData, setEditData] = useState({
     subject: "",
     html_content: "",
@@ -130,7 +131,22 @@ export default function EmailTemplatesManagement() {
 
   const openPreviewDialog = (template: EmailTemplate) => {
     setSelectedTemplate(template);
+    // Initialize preview variables with placeholders
+    const initialVars: Record<string, string> = {};
+    template.variables?.forEach(v => {
+      initialVars[v] = `[${v}]`;
+    });
+    setPreviewVariables(initialVars);
     setIsPreviewDialogOpen(true);
+  };
+
+  const getPreviewContent = (content: string, variables: Record<string, string>) => {
+    let result = content;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(regex, value);
+    });
+    return result;
   };
 
   const handleSave = () => {
@@ -347,25 +363,46 @@ export default function EmailTemplatesManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog with Variable Input */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
               Preview: {selectedTemplate && getTemplateLabel(selectedTemplate.name)}
             </DialogTitle>
             <DialogDescription>
-              Subject: {selectedTemplate?.subject}
+              Subject: {selectedTemplate && getPreviewContent(selectedTemplate.subject, previewVariables)}
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 border rounded-lg">
+          {selectedTemplate?.variables && selectedTemplate.variables.length > 0 && (
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <Label className="text-sm font-medium mb-3 block">
+                Test Variables (untuk preview)
+              </Label>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {selectedTemplate.variables.map((v) => (
+                  <div key={v} className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">{v}</Label>
+                    <Input
+                      value={previewVariables[v] || ''}
+                      onChange={(e) => setPreviewVariables(prev => ({ ...prev, [v]: e.target.value }))}
+                      placeholder={`Value for ${v}`}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <ScrollArea className="flex-1 border rounded-lg min-h-[300px]">
             {selectedTemplate && (
               <div 
                 className="p-4"
                 dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(selectedTemplate.html_content, {
+                  __html: DOMPurify.sanitize(getPreviewContent(selectedTemplate.html_content, previewVariables), {
                     ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'style', 'head', 'body', 'html', 'meta', 'title'],
                     ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'style', 'charset', 'name', 'content'],
                     ALLOW_DATA_ATTR: false
