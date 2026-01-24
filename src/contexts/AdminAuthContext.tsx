@@ -82,35 +82,66 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Initialize auth state
+  // Initialize auth state - Admin panel uses separate session tracking
+  // to avoid conflicts with registration panel
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
+      async (event, currentSession) => {
+        // Only handle admin sessions (users with profiles/roles)
         if (currentSession?.user) {
-          // Defer Supabase calls
-          setTimeout(() => {
-            fetchProfileAndRole(currentSession.user.id);
-          }, 0);
+          // Check if this is an admin user by checking for profile
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", currentSession.user.id)
+            .maybeSingle();
+          
+          // Only set session for admin users
+          if (profileData) {
+            setSession(currentSession);
+            setUser(currentSession.user);
+            // Defer Supabase calls
+            setTimeout(() => {
+              fetchProfileAndRole(currentSession.user.id);
+            }, 0);
+          } else {
+            // Not an admin user - this is likely a registration user
+            // Don't change state, keep admin session separate
+          }
         } else {
-          setProfile(null);
-          setRole(null);
+          // Only clear if this was an admin logout
+          if (user && profile) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setRole(null);
+          }
         }
         setIsLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
+    const checkExistingSession = async () => {
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
       if (existingSession?.user) {
-        fetchProfileAndRole(existingSession.user.id);
+        // Verify this is an admin user
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", existingSession.user.id)
+          .maybeSingle();
+        
+        if (profileData) {
+          setSession(existingSession);
+          setUser(existingSession.user);
+          fetchProfileAndRole(existingSession.user.id);
+        }
       }
       setIsLoading(false);
-    });
+    };
+    
+    checkExistingSession();
 
     return () => subscription.unsubscribe();
   }, [fetchProfileAndRole]);
