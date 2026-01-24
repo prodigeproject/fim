@@ -81,6 +81,7 @@ const navItems: NavItem[] = [
     children: [
       { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
       { name: "Kalender Wawancara", href: "/admin/interview-calendar", icon: ClipboardList },
+      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users },
       { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings },
       { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3 },
     ]

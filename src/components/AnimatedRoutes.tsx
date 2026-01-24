@@ -53,6 +53,7 @@ import PartnersManagement from "@/pages/admin/PartnersManagement";
 import FeaturedVideosManagement from "@/pages/admin/FeaturedVideosManagement";
 import EmailTemplatesManagement from "@/pages/admin/EmailTemplatesManagement";
 import InterviewCalendar from "@/pages/admin/InterviewCalendar";
+import RecruiterAssignmentsManagement from "@/pages/admin/RecruiterAssignmentsManagement";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -137,6 +138,7 @@ const AnimatedRoutes = () => {
                 <Route path="featured-videos" element={<RequireAdmin><FeaturedVideosManagement /></RequireAdmin>} />
                 <Route path="email-templates" element={<RequireAdmin><EmailTemplatesManagement /></RequireAdmin>} />
                 <Route path="interview-calendar" element={<RequireAdmin><InterviewCalendar /></RequireAdmin>} />
+                <Route path="recruiter-assignments" element={<RequireAdmin><RecruiterAssignmentsManagement /></RequireAdmin>} />
                 
                 {/* Super Admin only routes */}
                 <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
