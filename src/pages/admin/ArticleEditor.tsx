@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSupabase as supabase } from '@/integrations/supabase/adminClient';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';

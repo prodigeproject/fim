@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useEffect } from "react";
 import { toast } from "sonner";

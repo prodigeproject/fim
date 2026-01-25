@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
 import { Loader2 } from "lucide-react";
 import Forbidden from "@/pages/admin/Forbidden";
 
