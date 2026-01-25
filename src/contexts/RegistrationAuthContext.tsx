@@ -71,16 +71,17 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
   useEffect(() => {
     let isMounted = true;
+    console.debug("[RegAuth] initializeAuth start");
     
-    // Check for existing session first
     const initializeAuth = async () => {
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
+        console.debug("[RegAuth] existing session?", !!existingSession);
         
         if (!isMounted) return;
         
         if (existingSession?.user) {
-          // Check if this is a registration user (not an admin)
+          // Check if this is a registration user (not an admin) by checking profiles table
           const { data: adminProfile } = await supabase
             .from("profiles")
             .select("id")
@@ -91,20 +92,27 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           
           // Only set session for non-admin users (registrants)
           if (!adminProfile) {
+            console.debug("[RegAuth] hydrating registrant session");
             setSession(existingSession);
             setUser(existingSession.user);
             const reg = await fetchRegistration(existingSession.user.id);
             if (isMounted) {
               setRegistration(reg);
             }
+          } else {
+            console.debug("[RegAuth] user has admin profile, clearing registrant context");
+            setSession(null);
+            setUser(null);
+            setRegistration(null);
           }
         }
         
         if (isMounted) {
+          console.debug("[RegAuth] setIsLoading(false)");
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error initializing registration auth:", error);
+        console.error("[RegAuth] initializeAuth error:", error);
         if (isMounted) {
           setIsLoading(false);
         }
@@ -117,6 +125,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, nextSession) => {
         if (!isMounted) return;
+        console.debug("[RegAuth] onAuthStateChange", event);
         
         // Handle sign out
         if (event === "SIGNED_OUT") {
@@ -139,12 +148,15 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           
           // Only set session for non-admin users
           if (!adminProfile) {
+            console.debug("[RegAuth] SIGNED_IN: hydrating registrant");
             setSession(nextSession);
             setUser(nextSession.user);
             const reg = await fetchRegistration(nextSession.user.id);
             if (isMounted) {
               setRegistration(reg);
             }
+          } else {
+            console.debug("[RegAuth] SIGNED_IN: admin user, ignoring in registrant context");
           }
         }
       }
@@ -250,6 +262,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.debug("[RegAuth] signIn start for", email);
 
       // First check if registration exists and is verified
       const { data: regCheck, error: regCheckError } = await supabase
@@ -301,12 +314,15 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           throw new Error("Akun tidak terdaftar sebagai pendaftar FIM");
         }
 
+        console.debug("[RegAuth] signIn success, hydrating");
+        setUser(data.user);
+        setSession(data.session);
         setRegistration(reg);
       }
 
       return { error: null };
     } catch (error) {
-      console.error("Signin error:", error);
+      console.error("[RegAuth] signIn error:", error);
       return { error: error as Error };
     } finally {
       setIsLoading(false);
