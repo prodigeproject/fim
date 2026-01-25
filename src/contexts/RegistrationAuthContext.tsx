@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { registrationSupabase as supabase } from "@/integrations/supabase/registrationClient";
 
 interface Registration {
   id: string;
