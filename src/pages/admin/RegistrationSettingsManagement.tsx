@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,14 +27,6 @@ interface RegistrationSettings {
   description: string | null;
   is_active: boolean;
   created_at: string;
-  // Timeline fields
-  admin_review_start_date: string | null;
-  admin_review_end_date: string | null;
-  admin_result_announcement_date: string | null;
-  interview_start_date: string | null;
-  interview_end_date: string | null;
-  final_result_announcement_date: string | null;
-  allow_edit_beyond_timeline: boolean;
 }
 
 export default function RegistrationSettingsManagement() {
@@ -48,14 +40,6 @@ export default function RegistrationSettingsManagement() {
     max_participants: "",
     registration_start_date: "",
     registration_end_date: "",
-    // Timeline fields
-    admin_review_start_date: "",
-    admin_review_end_date: "",
-    admin_result_announcement_date: "",
-    interview_start_date: "",
-    interview_end_date: "",
-    final_result_announcement_date: "",
-    allow_edit_beyond_timeline: false,
   });
 
   const { data: settings, isLoading } = useQuery({
@@ -128,13 +112,6 @@ export default function RegistrationSettingsManagement() {
           max_participants: data.max_participants ? parseInt(data.max_participants) : null,
           registration_start_date: data.registration_start_date || null,
           registration_end_date: data.registration_end_date || null,
-          admin_review_start_date: data.admin_review_start_date || null,
-          admin_review_end_date: data.admin_review_end_date || null,
-          admin_result_announcement_date: data.admin_result_announcement_date || null,
-          interview_start_date: data.interview_start_date || null,
-          interview_end_date: data.interview_end_date || null,
-          final_result_announcement_date: data.final_result_announcement_date || null,
-          allow_edit_beyond_timeline: data.allow_edit_beyond_timeline,
           is_registration_open: false,
           is_active: true,
         });
@@ -163,13 +140,6 @@ export default function RegistrationSettingsManagement() {
           max_participants: data.max_participants ? parseInt(data.max_participants) : null,
           registration_start_date: data.registration_start_date || null,
           registration_end_date: data.registration_end_date || null,
-          admin_review_start_date: data.admin_review_start_date || null,
-          admin_review_end_date: data.admin_review_end_date || null,
-          admin_result_announcement_date: data.admin_result_announcement_date || null,
-          interview_start_date: data.interview_start_date || null,
-          interview_end_date: data.interview_end_date || null,
-          final_result_announcement_date: data.final_result_announcement_date || null,
-          allow_edit_beyond_timeline: data.allow_edit_beyond_timeline,
         })
         .eq("id", id);
       
@@ -212,13 +182,6 @@ export default function RegistrationSettingsManagement() {
       max_participants: "",
       registration_start_date: "",
       registration_end_date: "",
-      admin_review_start_date: "",
-      admin_review_end_date: "",
-      admin_result_announcement_date: "",
-      interview_start_date: "",
-      interview_end_date: "",
-      final_result_announcement_date: "",
-      allow_edit_beyond_timeline: false,
     });
   };
 
@@ -231,13 +194,6 @@ export default function RegistrationSettingsManagement() {
       max_participants: setting.max_participants?.toString() || "",
       registration_start_date: setting.registration_start_date?.split("T")[0] || "",
       registration_end_date: setting.registration_end_date?.split("T")[0] || "",
-      admin_review_start_date: setting.admin_review_start_date?.split("T")[0] || "",
-      admin_review_end_date: setting.admin_review_end_date?.split("T")[0] || "",
-      admin_result_announcement_date: setting.admin_result_announcement_date?.split("T")[0] || "",
-      interview_start_date: setting.interview_start_date?.split("T")[0] || "",
-      interview_end_date: setting.interview_end_date?.split("T")[0] || "",
-      final_result_announcement_date: setting.final_result_announcement_date?.split("T")[0] || "",
-      allow_edit_beyond_timeline: setting.allow_edit_beyond_timeline || false,
     });
   };
 

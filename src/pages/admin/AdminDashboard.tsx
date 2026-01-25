@@ -81,7 +81,6 @@ const navItems: NavItem[] = [
     children: [
       { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
       { name: "Kalender Wawancara", href: "/admin/interview-calendar", icon: ClipboardList },
-      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users },
       { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings },
       { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3 },
     ]
@@ -163,33 +162,33 @@ export default function AdminDashboard() {
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
     // Wait for auth to finish loading
-    if (isLoading) {
-      console.debug("[AdminDashboard] waiting for isLoading...");
-      return;
-    }
+    if (isLoading) return;
 
     // Mark that we've done the auth check
     setAuthChecked(true);
-    console.debug("[AdminDashboard] authChecked, user:", !!user, "role:", role);
 
     // Not logged in at all - redirect to login
     if (!user) {
-      console.debug("[AdminDashboard] no user, redirecting to /admin");
       navigate("/admin", { replace: true });
       return;
     }
+  }, [user, isLoading, navigate]);
 
-    // User exists but role is null → still fetching or not admin
-    if (!role) {
-      console.debug("[AdminDashboard] user exists but no role yet, waiting...");
-      // Give profile & role fetch more time before redirecting.
+  // Separate effect for role check - only redirect if explicitly no role after sufficient time
+  useEffect(() => {
+    if (!authChecked || isLoading || !user) return;
+
+    // Only redirect if we're sure there's no role (profile loaded but no role)
+    // Don't redirect during initial load or if profile is still loading
+    if (profile && !role) {
       const timer = setTimeout(() => {
-        console.warn("[AdminDashboard] no role after timeout, redirecting to /admin");
+        console.log("No admin role found for user with loaded profile, redirecting to login");
         navigate("/admin", { replace: true });
-      }, 5000);
+      }, 3000); // Wait 3 seconds for role to load
+
       return () => clearTimeout(timer);
     }
-  }, [user, role, isLoading, navigate]);
+  }, [authChecked, user, role, profile, isLoading, navigate]);
 
   // Check if must change password
   useEffect(() => {
@@ -223,7 +222,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Show loading while role is being fetched (user exists but role is null)
+  // Show loading while role is being fetched
   if (user && !role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
@@ -235,7 +234,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Not authenticated or no role - let redirect effect handle it
+  // Not authenticated
   if (!user || !role) {
     return null;
   }
@@ -357,8 +356,8 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - lovable.dev style scroll */}
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
+        {/* Navigation - simple overflow scroll, no autoscroll */}
+        <div className="flex-1 overflow-y-auto">
           <nav className="p-2 space-y-0.5">
             {filteredNavItems.map((item) => (
               <NavItemComponent key={item.href} item={item} />

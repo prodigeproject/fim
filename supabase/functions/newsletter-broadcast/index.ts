@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,42 +43,6 @@ function buildEmailHtml(name: string | null, safeHtml: string) {
   `;
 }
 
-async function sendGmailEmail(to: string, subject: string, html: string) {
-  const gmailUser = Deno.env.get("GMAIL_USER");
-  const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-  
-  if (!gmailUser || !gmailAppPassword) {
-    throw new Error("Gmail credentials not configured");
-  }
-
-  const client = new SMTPClient({
-    connection: {
-      hostname: "smtp.gmail.com",
-      port: 465,
-      tls: true,
-      auth: {
-        username: gmailUser,
-        password: gmailAppPassword,
-      },
-    },
-  });
-
-  try {
-    await client.send({
-      from: `Forum Indonesia Muda <${gmailUser}>`,
-      to: to,
-      subject: subject,
-      content: "Please view this email in an HTML-compatible email client.",
-      html: html,
-    });
-    await client.close();
-    return { success: true };
-  } catch (error) {
-    await client.close();
-    throw error;
-  }
-}
-
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -96,6 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
@@ -157,26 +121,40 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const safeHtml = escapeHtml(content).replace(/\n/g, "<br/>");
+    const from = "Forum Indonesia Muda <onboarding@resend.dev>";
 
     // Test mode: only send to testEmail
     if (testEmail) {
       console.log(`Sending test email to: ${testEmail}`);
 
       const html = buildEmailHtml("Admin", safeHtml);
-      
-      try {
-        await sendGmailEmail(testEmail, `[TEST] ${subject}`, html);
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [testEmail],
+          subject: `[TEST] ${subject}`,
+          html,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Resend test error:", errData);
         return new Response(
-          JSON.stringify({ success: true, test: true, email: testEmail }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      } catch (error: any) {
-        console.error("Gmail test error:", error);
-        return new Response(
-          JSON.stringify({ error: "Gagal mengirim email test", details: error.message }),
+          JSON.stringify({ error: "Gagal mengirim email test", details: errData }),
           { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
+
+      return new Response(
+        JSON.stringify({ success: true, test: true, email: testEmail }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     // Full broadcast mode
@@ -205,8 +183,22 @@ const handler = async (req: Request): Promise<Response> => {
     for (const r of recipients) {
       try {
         const html = buildEmailHtml(r.name, safeHtml);
-        await sendGmailEmail(r.email, subject, html);
-        sent++;
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ from, to: [r.email], subject, html }),
+        });
+
+        if (!res.ok) {
+          failed++;
+          const errData = await res.json().catch(() => ({}));
+          console.error("Resend error:", r.email, errData);
+        } else {
+          sent++;
+        }
       } catch (e) {
         failed++;
         console.error("Send failed:", r.email, e);

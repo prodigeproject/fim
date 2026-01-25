@@ -81,9 +81,9 @@ export default function RegistrationSignup() {
         if (data) {
           setEmailError("Email ini sudah terdaftar. Silakan gunakan email lain atau login.");
         } else {
-          // Also check blocked users
+          // Also check blocked registrations
           const { data: blocked } = await supabase
-            .from("blocked_users")
+            .from("blocked_registrations")
             .select("id")
             .eq("email", formData.email.toLowerCase().trim())
             .maybeSingle();

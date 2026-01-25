@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { adminSupabase as supabase } from '@/integrations/supabase/adminClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 

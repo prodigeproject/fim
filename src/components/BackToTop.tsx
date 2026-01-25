@@ -1,8 +1,8 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const BackToTop = forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>((props, ref) => {
+const BackToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -25,18 +25,14 @@ const BackToTop = forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLB
 
   return (
     <Button
-      ref={ref}
       onClick={scrollToTop}
       size="icon"
       className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 animate-fade-in"
       aria-label="Scroll to top"
-      {...props}
     >
       <ArrowUp className="h-5 w-5" />
     </Button>
   );
-});
-
-BackToTop.displayName = "BackToTop";
+};
 
 export default BackToTop;

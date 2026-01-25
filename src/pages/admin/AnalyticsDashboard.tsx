@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export function usePushNotifications() {

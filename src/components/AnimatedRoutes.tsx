@@ -53,7 +53,6 @@ import PartnersManagement from "@/pages/admin/PartnersManagement";
 import FeaturedVideosManagement from "@/pages/admin/FeaturedVideosManagement";
 import EmailTemplatesManagement from "@/pages/admin/EmailTemplatesManagement";
 import InterviewCalendar from "@/pages/admin/InterviewCalendar";
-import RecruiterAssignmentsManagement from "@/pages/admin/RecruiterAssignmentsManagement";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -102,52 +101,59 @@ const AnimatedRoutes = () => {
         <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
         <Route path="/daftar/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
         <Route path="/daftar/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
-        
-        {/* Admin auth routes (no layout needed) */}
+        {/* Admin routes - wrapped in AdminAuthProvider */}
         <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
         <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
         <Route path="/admin/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
+        <Route path="/admin/*" element={
+          <AdminAuthProvider>
+            <Routes>
+              <Route element={<AdminDashboard />}>
+                {/* Routes accessible by all admins (moderator, admin, super_admin) */}
+                <Route path="dashboard" element={<DashboardHome />} />
+                <Route path="articles" element={<ArticlesManagement />} />
+                <Route path="articles/new" element={<ArticleEditor />} />
+                <Route path="articles/edit/:id" element={<ArticleEditor />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="approvals" element={<ArticleApprovals />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="change-password" element={<ChangePassword />} />
+                <Route path="profile" element={<ProfileSettings />} />
+                <Route path="sessions" element={<SessionsManagement />} />
+                <Route path="online" element={<OnlineAdminsDashboard />} />
+                
+                {/* Routes accessible by admin and super_admin (not moderator) */}
+                <Route path="newsletter" element={<RequireAdmin><NewsletterManagement /></RequireAdmin>} />
+                <Route path="email-settings" element={<RequireAdmin><EmailSettings /></RequireAdmin>} />
+                <Route path="clubs" element={<RequireAdmin><ClubsManagement /></RequireAdmin>} />
+                <Route path="regionals" element={<RequireAdmin><RegionalsManagement /></RequireAdmin>} />
+                <Route path="alumni" element={<RequireAdmin><AlumniManagement /></RequireAdmin>} />
+                <Route path="audit-logs" element={<RequireAdmin><AuditLogs /></RequireAdmin>} />
+                <Route path="security-dashboard" element={<RequireAdmin><SecurityDashboard /></RequireAdmin>} />
+                <Route path="registrations" element={<RequireAdmin><RegistrationsManagement /></RequireAdmin>} />
+                <Route path="registration-settings" element={<RequireAdmin><RegistrationSettingsManagement /></RequireAdmin>} />
+                <Route path="registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
+                <Route path="partners" element={<RequireAdmin><PartnersManagement /></RequireAdmin>} />
+                <Route path="featured-videos" element={<RequireAdmin><FeaturedVideosManagement /></RequireAdmin>} />
+                <Route path="email-templates" element={<RequireAdmin><EmailTemplatesManagement /></RequireAdmin>} />
+                <Route path="interview-calendar" element={<RequireAdmin><InterviewCalendar /></RequireAdmin>} />
+                
+                {/* Super Admin only routes */}
+                <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
+                <Route path="roles" element={<RequireSuperAdmin><RolesManagement /></RequireSuperAdmin>} />
+                <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
+                <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
+                <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
+                
+                <Route path="*" element={<AdminNotFound />} />
+              </Route>
+            </Routes>
+          </AdminAuthProvider>
+        } />
         
-        {/* Admin dashboard routes - using AdminDashboard as layout with Outlet */}
-        <Route element={<AdminAuthProvider><AdminDashboard /></AdminAuthProvider>}>
-          {/* Routes accessible by all admins (moderator, admin, super_admin) */}
-          <Route path="/admin/dashboard" element={<DashboardHome />} />
-          <Route path="/admin/articles" element={<ArticlesManagement />} />
-          <Route path="/admin/articles/new" element={<ArticleEditor />} />
-          <Route path="/admin/articles/edit/:id" element={<ArticleEditor />} />
-          <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
-          <Route path="/admin/approvals" element={<ArticleApprovals />} />
-          <Route path="/admin/notifications" element={<NotificationsPage />} />
-          <Route path="/admin/change-password" element={<ChangePassword />} />
-          <Route path="/admin/profile" element={<ProfileSettings />} />
-          <Route path="/admin/sessions" element={<SessionsManagement />} />
-          <Route path="/admin/online" element={<OnlineAdminsDashboard />} />
-          
-          {/* Routes accessible by admin and super_admin (not moderator) */}
-          <Route path="/admin/newsletter" element={<RequireAdmin><NewsletterManagement /></RequireAdmin>} />
-          <Route path="/admin/email-settings" element={<RequireAdmin><EmailSettings /></RequireAdmin>} />
-          <Route path="/admin/clubs" element={<RequireAdmin><ClubsManagement /></RequireAdmin>} />
-          <Route path="/admin/regionals" element={<RequireAdmin><RegionalsManagement /></RequireAdmin>} />
-          <Route path="/admin/alumni" element={<RequireAdmin><AlumniManagement /></RequireAdmin>} />
-          <Route path="/admin/audit-logs" element={<RequireAdmin><AuditLogs /></RequireAdmin>} />
-          <Route path="/admin/security-dashboard" element={<RequireAdmin><SecurityDashboard /></RequireAdmin>} />
-          <Route path="/admin/registrations" element={<RequireAdmin><RegistrationsManagement /></RequireAdmin>} />
-          <Route path="/admin/registration-settings" element={<RequireAdmin><RegistrationSettingsManagement /></RequireAdmin>} />
-          <Route path="/admin/registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
-          <Route path="/admin/partners" element={<RequireAdmin><PartnersManagement /></RequireAdmin>} />
-          <Route path="/admin/featured-videos" element={<RequireAdmin><FeaturedVideosManagement /></RequireAdmin>} />
-          <Route path="/admin/email-templates" element={<RequireAdmin><EmailTemplatesManagement /></RequireAdmin>} />
-          <Route path="/admin/interview-calendar" element={<RequireAdmin><InterviewCalendar /></RequireAdmin>} />
-          <Route path="/admin/recruiter-assignments" element={<RequireAdmin><RecruiterAssignmentsManagement /></RequireAdmin>} />
-          
-          {/* Super Admin only routes */}
-          <Route path="/admin/users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
-          <Route path="/admin/roles" element={<RequireSuperAdmin><RolesManagement /></RequireSuperAdmin>} />
-          <Route path="/admin/login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
-          <Route path="/admin/prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
-          <Route path="/admin/documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
-        </Route>
-        
+        {/* Legacy admin route redirect */}
+        <Route path="/fim-admin-portal-2024/*" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

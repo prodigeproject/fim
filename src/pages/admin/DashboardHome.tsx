@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { adminSupabase as supabase } from "@/integrations/supabase/adminClient";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Eye, Clock, CheckCircle, Users, MapPin, Mail, UserPlus } from "lucide-react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";

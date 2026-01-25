@@ -5,7 +5,6 @@ import { Target, Compass, User, Users, Briefcase, Building2, Heart, Shield, Star
 import { useTranslation } from "@/hooks/useTranslation";
 
 const Tentang = () => {
-  const { t } = useTranslation();
   const pilarKarakter = [
     { icon: Heart, name: "Cinta Kasih", desc: "Mencintai sesama dan berbagi kebaikan" },
     { icon: Shield, name: "Integritas", desc: "Konsisten dalam nilai dan tindakan" },
@@ -74,12 +73,12 @@ const Tentang = () => {
   return (
     <Layout>
       <SEO 
-        title={t("about.title")} 
-        description={t("about.subtitle")}
+        title="Tentang FIM" 
+        description="Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda. Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin sejak 2003."
       />
       <PageHero
-        title={t("about.title")}
-        subtitle={t("about.subtitle")}
+        title="Tentang Forum Indonesia Muda"
+        subtitle="Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin"
       />
 
       {/* Visi Misi Section */}
@@ -91,9 +90,12 @@ const Tentang = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
                 <Target className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.vision")}</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">Visi</h2>
               <p className="text-muted-foreground leading-relaxed">
-                {t("about.visionDesc")}
+                Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, 
+                berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. 
+                Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik 
+                dan berkepribadian dalam kebudayaan.
               </p>
             </div>
 
@@ -102,7 +104,7 @@ const Tentang = () => {
               <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6">
                 <Compass className="h-8 w-8 text-supporting" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.mission")}</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">Misi</h2>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">1.</span>

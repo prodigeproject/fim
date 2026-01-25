@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -9,42 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-async function sendGmailEmail(to: string, subject: string, html: string) {
-  const gmailUser = Deno.env.get("GMAIL_USER");
-  const gmailAppPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-  
-  if (!gmailUser || !gmailAppPassword) {
-    throw new Error("Gmail credentials not configured");
-  }
-
-  const client = new SMTPClient({
-    connection: {
-      hostname: "smtp.gmail.com",
-      port: 465,
-      tls: true,
-      auth: {
-        username: gmailUser,
-        password: gmailAppPassword,
-      },
-    },
-  });
-
-  try {
-    await client.send({
-      from: `Forum Indonesia Muda <${gmailUser}>`,
-      to: to,
-      subject: subject,
-      content: "Please view this email in an HTML-compatible email client.",
-      html: html,
-    });
-    await client.close();
-    return { success: true };
-  } catch (error) {
-    await client.close();
-    throw error;
-  }
-}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -193,11 +157,23 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
         `;
         
-        await sendGmailEmail(
-          registration.email,
-          `⏰ Reminder: Wawancara FIM Besok (${formattedDate})`,
-          emailHtml
-        );
+        const emailResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "FIM Indonesia <noreply@resend.dev>",
+            to: [registration.email],
+            subject: `⏰ Reminder: Wawancara FIM Besok (${formattedDate})`,
+            html: emailHtml,
+          }),
+        });
+        
+        if (!emailResponse.ok) {
+          throw new Error(await emailResponse.text());
+        }
         
         // Mark reminder as sent
         const { error: updateError } = await supabase

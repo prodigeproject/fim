@@ -467,42 +467,6 @@ export type Database = {
         }
         Relationships: []
       }
-      blocked_users: {
-        Row: {
-          blocked_at: string | null
-          blocked_by: string | null
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          nik: string | null
-          phone: string | null
-          reason: string | null
-        }
-        Insert: {
-          blocked_at?: string | null
-          blocked_by?: string | null
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          nik?: string | null
-          phone?: string | null
-          reason?: string | null
-        }
-        Update: {
-          blocked_at?: string | null
-          blocked_by?: string | null
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          nik?: string | null
-          phone?: string | null
-          reason?: string | null
-        }
-        Relationships: []
-      }
       dynamic_roles: {
         Row: {
           created_at: string | null
@@ -919,12 +883,10 @@ export type Database = {
           duration_minutes: number | null
           id: string
           interview_feedback: string | null
-          interviewer_ids: string[] | null
           interviewer_name: string | null
           location: string | null
           meeting_link: string | null
           notes: string | null
-          primary_interviewer_id: string | null
           registration_id: string
           reminder_sent: boolean | null
           reminder_sent_at: string | null
@@ -939,12 +901,10 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           interview_feedback?: string | null
-          interviewer_ids?: string[] | null
           interviewer_name?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
-          primary_interviewer_id?: string | null
           registration_id: string
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -959,12 +919,10 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           interview_feedback?: string | null
-          interviewer_ids?: string[] | null
           interviewer_name?: string | null
           location?: string | null
           meeting_link?: string | null
           notes?: string | null
-          primary_interviewer_id?: string | null
           registration_id?: string
           reminder_sent?: boolean | null
           reminder_sent_at?: string | null
@@ -1307,19 +1265,12 @@ export type Database = {
       }
       registration_settings: {
         Row: {
-          admin_result_announcement_date: string | null
-          admin_review_end_date: string | null
-          admin_review_start_date: string | null
-          allow_edit_beyond_timeline: boolean | null
           batch_name: string
           batch_number: number
           created_at: string
           created_by: string | null
           description: string | null
-          final_result_announcement_date: string | null
           id: string
-          interview_end_date: string | null
-          interview_start_date: string | null
           is_active: boolean
           is_registration_open: boolean
           max_participants: number | null
@@ -1328,19 +1279,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          admin_result_announcement_date?: string | null
-          admin_review_end_date?: string | null
-          admin_review_start_date?: string | null
-          allow_edit_beyond_timeline?: boolean | null
           batch_name: string
           batch_number: number
           created_at?: string
           created_by?: string | null
           description?: string | null
-          final_result_announcement_date?: string | null
           id?: string
-          interview_end_date?: string | null
-          interview_start_date?: string | null
           is_active?: boolean
           is_registration_open?: boolean
           max_participants?: number | null
@@ -1349,19 +1293,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          admin_result_announcement_date?: string | null
-          admin_review_end_date?: string | null
-          admin_review_start_date?: string | null
-          allow_edit_beyond_timeline?: boolean | null
           batch_name?: string
           batch_number?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
-          final_result_announcement_date?: string | null
           id?: string
-          interview_end_date?: string | null
-          interview_start_date?: string | null
           is_active?: boolean
           is_registration_open?: boolean
           max_participants?: number | null
