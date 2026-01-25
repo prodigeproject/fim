@@ -163,33 +163,33 @@ export default function AdminDashboard() {
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
     // Wait for auth to finish loading
-    if (isLoading) return;
+    if (isLoading) {
+      console.debug("[AdminDashboard] waiting for isLoading...");
+      return;
+    }
 
     // Mark that we've done the auth check
     setAuthChecked(true);
+    console.debug("[AdminDashboard] authChecked, user:", !!user, "role:", role);
 
     // Not logged in at all - redirect to login
     if (!user) {
+      console.debug("[AdminDashboard] no user, redirecting to /admin");
       navigate("/admin", { replace: true });
       return;
     }
-  }, [user, isLoading, navigate]);
 
-  // Separate effect for role check - only redirect if explicitly no role after sufficient time
-  useEffect(() => {
-    if (!authChecked || isLoading || !user) return;
-
-    // Only redirect if we're sure there's no role (profile loaded but no role)
-    // Don't redirect during initial load or if profile is still loading
-    if (profile && !role) {
+    // User exists but role is null → still fetching or not admin
+    if (!role) {
+      console.debug("[AdminDashboard] user exists but no role yet, waiting...");
+      // Give profile & role fetch more time before redirecting.
       const timer = setTimeout(() => {
-        console.log("No admin role found for user with loaded profile, redirecting to login");
+        console.warn("[AdminDashboard] no role after timeout, redirecting to /admin");
         navigate("/admin", { replace: true });
-      }, 3000); // Wait 3 seconds for role to load
-
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [authChecked, user, role, profile, isLoading, navigate]);
+  }, [user, role, isLoading, navigate]);
 
   // Check if must change password
   useEffect(() => {
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Show loading while role is being fetched
+  // Show loading while role is being fetched (user exists but role is null)
   if (user && !role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Not authenticated
+  // Not authenticated or no role - let redirect effect handle it
   if (!user || !role) {
     return null;
   }

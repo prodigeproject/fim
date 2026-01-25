@@ -39,7 +39,9 @@ export default function RegistrationDashboard() {
 
   // Redirect if not logged in
   useEffect(() => {
+    console.debug("[RegDashboard] isLoading:", isLoading, "user:", !!user, "registration:", !!registration);
     if (!isLoading && !user) {
+      console.debug("[RegDashboard] no user, redirecting to /daftar");
       navigate("/daftar", { replace: true });
     }
   }, [isLoading, user, navigate]);
@@ -73,6 +75,7 @@ export default function RegistrationDashboard() {
   };
 
   if (isLoading) {
+    console.debug("[RegDashboard] still loading...");
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

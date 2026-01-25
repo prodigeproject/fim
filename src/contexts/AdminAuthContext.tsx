@@ -43,6 +43,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch profile and role
   const fetchProfileAndRole = useCallback(async (userId: string): Promise<AppRole | null> => {
+    console.debug("[AdminAuth] fetchProfileAndRole for", userId);
     try {
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
@@ -52,9 +53,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError);
+        console.warn("[AdminAuth] Profile fetch error:", profileError.message);
       }
       setProfile((profileData as AdminProfile) ?? null);
+      console.debug("[AdminAuth] profile loaded:", !!profileData);
 
       // Fetch role via RPC (security definer; avoids RLS issues on user_roles)
       const [superRes, adminRes, modRes] = await Promise.all([
@@ -64,40 +66,41 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       if (superRes.error || adminRes.error || modRes.error) {
-        console.error("Error fetching role via RPC:", superRes.error || adminRes.error || modRes.error);
-        // Jangan bikin UI nge-hang karena role check gagal.
-        // Jika punya profile, anggap admin; jika tidak, anggap bukan admin.
+        console.warn("[AdminAuth] RPC role check error:", superRes.error || adminRes.error || modRes.error);
+        // Fallback: jika punya profile, anggap admin; jika tidak, bukan admin.
         const fallbackRole: AppRole | null = profileData ? "admin" : null;
         setRole(fallbackRole);
+        console.debug("[AdminAuth] role fallback:", fallbackRole);
         return fallbackRole;
       }
 
       const isSuper = Boolean(superRes.data);
       const isAdmin = Boolean(adminRes.data);
-      const isModerator = Boolean(modRes.data);
+      const isMod = Boolean(modRes.data);
 
       const resolved: AppRole | null =
-        isSuper ? "super_admin" : isAdmin ? "admin" : isModerator ? "moderator" : (profileData ? "admin" : null);
+        isSuper ? "super_admin" : isAdmin ? "admin" : isMod ? "moderator" : (profileData ? "admin" : null);
 
       setRole(resolved);
+      console.debug("[AdminAuth] role resolved:", resolved);
       return resolved;
     } catch (error) {
-      console.error("Error in fetchProfileAndRole:", error);
-      // Avoid hanging screens if anything unexpected happens.
-      setRole((prev) => prev ?? null);
-      return role ?? null;
+      console.error("[AdminAuth] fetchProfileAndRole error:", error);
+      setRole(null);
+      return null;
     }
-  }, [role]);
+  }, []);
 
   // Initialize auth state - Admin panel uses separate session tracking
   // to avoid conflicts with registration panel
   useEffect(() => {
     let isMounted = true;
+    console.debug("[AdminAuth] initializeAuth start");
     
-    // Check for existing session first
     const initializeAuth = async () => {
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
+        console.debug("[AdminAuth] existing session?", !!existingSession);
         
         if (!isMounted) return;
         
@@ -105,11 +108,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           const resolvedRole = await fetchProfileAndRole(existingSession.user.id);
           if (!isMounted) return;
 
-          // Hanya hydrate admin context kalau user memang punya role admin.
+          // Hydrate admin context only if user has admin role.
           if (resolvedRole) {
+            console.debug("[AdminAuth] hydrating admin session");
             setSession(existingSession);
             setUser(existingSession.user);
           } else {
+            console.debug("[AdminAuth] no admin role, clearing admin context");
             setSession(null);
             setUser(null);
             setProfile(null);
@@ -118,10 +123,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         if (isMounted) {
+          console.debug("[AdminAuth] setIsLoading(false)");
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
+        console.error("[AdminAuth] initializeAuth error:", error);
         if (isMounted) {
           setIsLoading(false);
         }

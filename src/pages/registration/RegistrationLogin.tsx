@@ -23,10 +23,12 @@ export default function RegistrationLogin() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user && registration) {
+    console.debug("[RegLogin] isLoading:", isLoading, "user:", !!user, "registration:", !!registration);
+    if (!isLoading && user && registration) {
+      console.debug("[RegLogin] already logged in, redirecting to /daftar/dashboard");
       navigate("/daftar/dashboard", { replace: true });
     }
-  }, [user, registration, navigate]);
+  }, [user, registration, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

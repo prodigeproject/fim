@@ -29,9 +29,10 @@ export default function AdminLogin() {
 
   // Redirect if already logged in with role
   useEffect(() => {
+    console.debug("[AdminLogin] authLoading:", authLoading, "user:", !!user, "role:", role);
     if (!authLoading && user && role) {
+      console.debug("[AdminLogin] already logged in, redirecting to /admin/dashboard");
       setRedirecting(true);
-      // Small delay to prevent flash
       const timer = setTimeout(() => {
         navigate("/admin/dashboard", { replace: true });
       }, 100);
