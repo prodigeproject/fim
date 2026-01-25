@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 
 type AppRole = "super_admin" | "admin" | "moderator";
 
@@ -43,55 +42,52 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Fetch profile and role
-  const fetchProfileAndRole = useCallback(async (userId: string) => {
+  const fetchProfileAndRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
-        setProfile(null);
-      } else {
-        setProfile(profileData as AdminProfile);
+      }
+      setProfile((profileData as AdminProfile) ?? null);
+
+      // Fetch role via RPC (security definer; avoids RLS issues on user_roles)
+      const [superRes, adminRes, modRes] = await Promise.all([
+        supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" }),
+        supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+        supabase.rpc("has_role", { _user_id: userId, _role: "moderator" }),
+      ]);
+
+      if (superRes.error || adminRes.error || modRes.error) {
+        console.error("Error fetching role via RPC:", superRes.error || adminRes.error || modRes.error);
+        // Jangan bikin UI nge-hang karena role check gagal.
+        // Jika punya profile, anggap admin; jika tidak, anggap bukan admin.
+        const fallbackRole: AppRole | null = profileData ? "admin" : null;
+        setRole(fallbackRole);
+        return fallbackRole;
       }
 
-      // If profile doesn't exist, user is not an admin.
-      if (profileError) {
-        setRole(null);
-        return;
-      }
+      const isSuper = Boolean(superRes.data);
+      const isAdmin = Boolean(adminRes.data);
+      const isModerator = Boolean(modRes.data);
 
-      // Fetch role via RPC (avoids RLS issues on user_roles)
-      const { data: isSuper, error: superError } = await supabase.rpc("has_role", {
-        _user_id: userId,
-        _role: "super_admin",
-      });
+      const resolved: AppRole | null =
+        isSuper ? "super_admin" : isAdmin ? "admin" : isModerator ? "moderator" : (profileData ? "admin" : null);
 
-      const { data: isModerator, error: modError } = await supabase.rpc("has_role", {
-        _user_id: userId,
-        _role: "moderator",
-      });
-
-      if (superError || modError) {
-        console.error("Error fetching role via RPC:", superError || modError);
-        // Avoid infinite loading loops: if profile exists but role checks fail,
-        // treat as regular admin (RBAC is enforced by page-level guards).
-        setRole("admin");
-        return;
-      }
-
-      // Default to "admin" when the user has an admin profile but isn't super_admin/moderator.
-      setRole(isSuper ? "super_admin" : isModerator ? "moderator" : "admin");
+      setRole(resolved);
+      return resolved;
     } catch (error) {
       console.error("Error in fetchProfileAndRole:", error);
       // Avoid hanging screens if anything unexpected happens.
-      setRole((prev) => prev ?? "admin");
+      setRole((prev) => prev ?? null);
+      return role ?? null;
     }
-  }, []);
+  }, [role]);
 
   // Initialize auth state - Admin panel uses separate session tracking
   // to avoid conflicts with registration panel
@@ -106,19 +102,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) return;
         
         if (existingSession?.user) {
-          // Verify this is an admin user by checking for profile
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", existingSession.user.id)
-            .maybeSingle();
-          
+          const resolvedRole = await fetchProfileAndRole(existingSession.user.id);
           if (!isMounted) return;
-          
-          if (profileData) {
+
+          // Hanya hydrate admin context kalau user memang punya role admin.
+          if (resolvedRole) {
             setSession(existingSession);
             setUser(existingSession.user);
-            await fetchProfileAndRole(existingSession.user.id);
+          } else {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setRole(null);
           }
         }
         
@@ -151,20 +146,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         
         // Handle sign in or token refresh
         if (currentSession?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-          // Check if this is an admin user by checking for profile
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", currentSession.user.id)
-            .maybeSingle();
-          
+          const resolvedRole = await fetchProfileAndRole(currentSession.user.id);
           if (!isMounted) return;
-          
-          // Only set session for admin users
-          if (profileData) {
+
+          if (resolvedRole) {
             setSession(currentSession);
             setUser(currentSession.user);
-            await fetchProfileAndRole(currentSession.user.id);
+          } else {
+            // Ini session pendaftar (atau user tanpa role admin)
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setRole(null);
           }
         }
       }
@@ -232,6 +225,17 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
+      }
+
+      // Hydrate context segera supaya UI tidak stuck menunggu listener.
+      if (data.user) setUser(data.user as User);
+      if (data.session) setSession(data.session as Session);
+      if (data.profile) setProfile(data.profile as AdminProfile);
+      if (data.role) setRole(data.role as AppRole);
+
+      // Pastikan role ter-set (fallback via RPC +/atau profile)
+      if (!data.role && data.user?.id) {
+        await fetchProfileAndRole(data.user.id);
       }
 
       return { error: null };
