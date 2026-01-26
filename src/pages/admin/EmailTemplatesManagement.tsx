@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,8 @@ import {
   Loader2,
   Code,
   FileText,
-  X,
+  Play,
+  TestTube,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -59,6 +61,8 @@ export default function EmailTemplatesManagement() {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [previewTab, setPreviewTab] = useState<"preview" | "variables">("preview");
+  const [testVariables, setTestVariables] = useState<Record<string, string>>({});
   const [editData, setEditData] = useState({
     subject: "",
     html_content: "",
@@ -130,7 +134,43 @@ export default function EmailTemplatesManagement() {
 
   const openPreviewDialog = (template: EmailTemplate) => {
     setSelectedTemplate(template);
+    // Initialize test variables with placeholder values
+    const initialVars: Record<string, string> = {};
+    template.variables?.forEach(v => {
+      initialVars[v] = getDefaultTestValue(v);
+    });
+    setTestVariables(initialVars);
+    setPreviewTab("preview");
     setIsPreviewDialogOpen(true);
+  };
+
+  const getDefaultTestValue = (varName: string): string => {
+    const defaults: Record<string, string> = {
+      name: "Ahmad Fauzi",
+      full_name: "Ahmad Fauzi",
+      email: "ahmad@example.com",
+      date: format(new Date(), "dd MMMM yyyy", { locale: localeId }),
+      time: "10:00 WIB",
+      interview_date: format(new Date(), "dd MMMM yyyy", { locale: localeId }),
+      interview_time: "10:00 WIB",
+      location: "Zoom Meeting",
+      meeting_link: "https://zoom.us/j/123456789",
+      batch_name: "FIM 28: Leadership & Innovation",
+      note: "Harap datang tepat waktu",
+      reason: "Dokumen yang dilampirkan tidak lengkap",
+      verification_link: "https://fim.or.id/verify/abc123",
+      reset_link: "https://fim.or.id/reset/abc123",
+    };
+    return defaults[varName] || `[${varName}]`;
+  };
+
+  const replaceVariables = (content: string, variables: Record<string, string>): string => {
+    let result = content;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(regex, value);
+    });
+    return result;
   };
 
   const handleSave = () => {
@@ -149,8 +189,25 @@ export default function EmailTemplatesManagement() {
       interview_scheduled: "Jadwal Wawancara",
       interview_reminder: "Reminder Wawancara",
       incomplete_reminder: "Reminder Formulir Belum Lengkap",
+      email_verification: "Verifikasi Email",
+      password_reset: "Reset Password",
+      admin_selection_passed: "Lolos Seleksi Administrasi",
+      admin_selection_failed: "Tidak Lolos Seleksi Administrasi",
+      interview_completed: "Wawancara Selesai",
+      final_result_passed: "Lolos Seleksi Akhir",
+      final_result_failed: "Tidak Lolos Seleksi Akhir",
     };
     return labels[name] || name;
+  };
+
+  const getPreviewContent = () => {
+    if (!selectedTemplate) return "";
+    return replaceVariables(selectedTemplate.html_content, testVariables);
+  };
+
+  const getPreviewSubject = () => {
+    if (!selectedTemplate) return "";
+    return replaceVariables(selectedTemplate.subject, testVariables);
   };
 
   return (
@@ -162,7 +219,7 @@ export default function EmailTemplatesManagement() {
             Manajemen Template Email
           </h1>
           <p className="text-muted-foreground mt-1">
-            Edit template email notifikasi tanpa mengubah kode
+            Edit template email notifikasi dengan preview dinamis
           </p>
         </div>
         <Button 
@@ -243,8 +300,9 @@ export default function EmailTemplatesManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => openPreviewDialog(template)}
+                          title="Preview dengan data test"
                         >
-                          <Eye className="h-4 w-4" />
+                          <TestTube className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -347,33 +405,75 @@ export default function EmailTemplatesManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog with Test Variables */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
+              <TestTube className="h-5 w-5" />
               Preview: {selectedTemplate && getTemplateLabel(selectedTemplate.name)}
             </DialogTitle>
             <DialogDescription>
-              Subject: {selectedTemplate?.subject}
+              Uji tampilan email dengan data test
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 border rounded-lg">
-            {selectedTemplate && (
-              <div 
-                className="p-4"
-                dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(selectedTemplate.html_content, {
-                    ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'style', 'head', 'body', 'html', 'meta', 'title'],
-                    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'style', 'charset', 'name', 'content'],
-                    ALLOW_DATA_ATTR: false
-                  })
-                }}
-              />
-            )}
-          </ScrollArea>
+          <Tabs value={previewTab} onValueChange={(v) => setPreviewTab(v as "preview" | "variables")} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="variables">
+                <Play className="h-4 w-4 mr-2" />
+                Edit Data Test
+              </TabsTrigger>
+              <TabsTrigger value="preview">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview Email
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="variables" className="flex-1 overflow-auto mt-4">
+              <div className="space-y-4 p-1">
+                <p className="text-sm text-muted-foreground">
+                  Ubah nilai variabel di bawah untuk melihat tampilan email yang berbeda
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {selectedTemplate?.variables?.map((varName) => (
+                    <div key={varName} className="space-y-2">
+                      <Label className="text-xs font-medium">{`{{${varName}}}`}</Label>
+                      <Input
+                        value={testVariables[varName] || ""}
+                        onChange={(e) => setTestVariables(prev => ({
+                          ...prev,
+                          [varName]: e.target.value
+                        }))}
+                        placeholder={`Nilai untuk ${varName}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="preview" className="flex-1 overflow-hidden mt-4 flex flex-col">
+              <div className="border rounded-lg p-3 bg-muted/50 mb-3">
+                <p className="text-sm">
+                  <span className="font-medium">Subject: </span>
+                  {getPreviewSubject()}
+                </p>
+              </div>
+              <ScrollArea className="flex-1 border rounded-lg">
+                <div 
+                  className="p-4"
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(getPreviewContent(), {
+                      ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'style', 'head', 'body', 'html', 'meta', 'title', 'center'],
+                      ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'style', 'charset', 'name', 'content', 'align', 'valign', 'bgcolor', 'border', 'cellpadding', 'cellspacing'],
+                      ALLOW_DATA_ATTR: false
+                    })
+                  }}
+                />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setIsPreviewDialogOpen(false)}>

@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle, Clock, FileCheck, MessageSquare, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -27,6 +29,14 @@ interface RegistrationSettings {
   description: string | null;
   is_active: boolean;
   created_at: string;
+  // Timeline fields
+  admin_review_start_date: string | null;
+  admin_review_end_date: string | null;
+  admin_result_announcement_date: string | null;
+  interview_start_date: string | null;
+  interview_end_date: string | null;
+  final_result_announcement_date: string | null;
+  allow_edit_beyond_timeline: boolean;
 }
 
 export default function RegistrationSettingsManagement() {
@@ -40,6 +50,14 @@ export default function RegistrationSettingsManagement() {
     max_participants: "",
     registration_start_date: "",
     registration_end_date: "",
+    // Timeline fields
+    admin_review_start_date: "",
+    admin_review_end_date: "",
+    admin_result_announcement_date: "",
+    interview_start_date: "",
+    interview_end_date: "",
+    final_result_announcement_date: "",
+    allow_edit_beyond_timeline: false,
   });
 
   const { data: settings, isLoading } = useQuery({
@@ -76,7 +94,6 @@ export default function RegistrationSettingsManagement() {
 
   const toggleRegistrationMutation = useMutation({
     mutationFn: async ({ id, isOpen }: { id: string; isOpen: boolean }) => {
-      // First, close all other registrations if we're opening this one
       if (isOpen) {
         await supabase
           .from("registration_settings")
@@ -112,6 +129,13 @@ export default function RegistrationSettingsManagement() {
           max_participants: data.max_participants ? parseInt(data.max_participants) : null,
           registration_start_date: data.registration_start_date || null,
           registration_end_date: data.registration_end_date || null,
+          admin_review_start_date: data.admin_review_start_date || null,
+          admin_review_end_date: data.admin_review_end_date || null,
+          admin_result_announcement_date: data.admin_result_announcement_date || null,
+          interview_start_date: data.interview_start_date || null,
+          interview_end_date: data.interview_end_date || null,
+          final_result_announcement_date: data.final_result_announcement_date || null,
+          allow_edit_beyond_timeline: data.allow_edit_beyond_timeline,
           is_registration_open: false,
           is_active: true,
         });
@@ -140,6 +164,13 @@ export default function RegistrationSettingsManagement() {
           max_participants: data.max_participants ? parseInt(data.max_participants) : null,
           registration_start_date: data.registration_start_date || null,
           registration_end_date: data.registration_end_date || null,
+          admin_review_start_date: data.admin_review_start_date || null,
+          admin_review_end_date: data.admin_review_end_date || null,
+          admin_result_announcement_date: data.admin_result_announcement_date || null,
+          interview_start_date: data.interview_start_date || null,
+          interview_end_date: data.interview_end_date || null,
+          final_result_announcement_date: data.final_result_announcement_date || null,
+          allow_edit_beyond_timeline: data.allow_edit_beyond_timeline,
         })
         .eq("id", id);
       
@@ -182,6 +213,13 @@ export default function RegistrationSettingsManagement() {
       max_participants: "",
       registration_start_date: "",
       registration_end_date: "",
+      admin_review_start_date: "",
+      admin_review_end_date: "",
+      admin_result_announcement_date: "",
+      interview_start_date: "",
+      interview_end_date: "",
+      final_result_announcement_date: "",
+      allow_edit_beyond_timeline: false,
     });
   };
 
@@ -194,6 +232,13 @@ export default function RegistrationSettingsManagement() {
       max_participants: setting.max_participants?.toString() || "",
       registration_start_date: setting.registration_start_date?.split("T")[0] || "",
       registration_end_date: setting.registration_end_date?.split("T")[0] || "",
+      admin_review_start_date: setting.admin_review_start_date?.split("T")[0] || "",
+      admin_review_end_date: setting.admin_review_end_date?.split("T")[0] || "",
+      admin_result_announcement_date: setting.admin_result_announcement_date?.split("T")[0] || "",
+      interview_start_date: setting.interview_start_date?.split("T")[0] || "",
+      interview_end_date: setting.interview_end_date?.split("T")[0] || "",
+      final_result_announcement_date: setting.final_result_announcement_date?.split("T")[0] || "",
+      allow_edit_beyond_timeline: setting.allow_edit_beyond_timeline || false,
     });
   };
 
@@ -214,6 +259,13 @@ export default function RegistrationSettingsManagement() {
 
   const activeBatch = settings?.find(s => s.is_registration_open);
 
+  const formatDateRange = (start: string | null, end: string | null) => {
+    if (!start && !end) return "Belum diatur";
+    const startStr = start ? format(new Date(start), "d MMM yyyy", { locale: id }) : "-";
+    const endStr = end ? format(new Date(end), "d MMM yyyy", { locale: id }) : "-";
+    return `${startStr} - ${endStr}`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -221,6 +273,175 @@ export default function RegistrationSettingsManagement() {
       </div>
     );
   }
+
+  const BatchFormContent = ({ isEditing = false }: { isEditing?: boolean }) => (
+    <Tabs defaultValue="basic" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="basic">Informasi Dasar</TabsTrigger>
+        <TabsTrigger value="timeline">Timeline Seleksi</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="basic" className="space-y-4 mt-4">
+        <div className="space-y-2">
+          <Label>Nama Batch *</Label>
+          <Input
+            placeholder="FIM 28: Tema Pelatihan"
+            value={formData.batch_name}
+            onChange={(e) => setFormData({ ...formData, batch_name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Nomor Batch *</Label>
+          <Input
+            type="number"
+            placeholder="28"
+            value={formData.batch_number || ""}
+            onChange={(e) => setFormData({ ...formData, batch_number: parseInt(e.target.value) || 0 })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Deskripsi</Label>
+          <Textarea
+            placeholder="Deskripsi singkat tentang batch ini"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Pendaftaran Mulai</Label>
+            <Input
+              type="date"
+              value={formData.registration_start_date}
+              onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Pendaftaran Selesai</Label>
+            <Input
+              type="date"
+              value={formData.registration_end_date}
+              onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Maks. Peserta</Label>
+          <Input
+            type="number"
+            placeholder="100"
+            value={formData.max_participants}
+            onChange={(e) => setFormData({ ...formData, max_participants: e.target.value })}
+          />
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="timeline" className="space-y-4 mt-4">
+        <Alert>
+          <Clock className="h-4 w-4" />
+          <AlertDescription>
+            Timeline menentukan kapan rekruter dapat melakukan penilaian dan kapan notifikasi otomatis dikirim.
+          </AlertDescription>
+        </Alert>
+
+        <div className="space-y-4">
+          <div className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <FileCheck className="h-4 w-4 text-blue-600" />
+              Seleksi Administrasi
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Mulai Review</Label>
+                <Input
+                  type="date"
+                  value={formData.admin_review_start_date}
+                  onChange={(e) => setFormData({ ...formData, admin_review_start_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Selesai Review</Label>
+                <Input
+                  type="date"
+                  value={formData.admin_review_end_date}
+                  onChange={(e) => setFormData({ ...formData, admin_review_end_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Tanggal Pengumuman Hasil Administrasi</Label>
+              <Input
+                type="date"
+                value={formData.admin_result_announcement_date}
+                onChange={(e) => setFormData({ ...formData, admin_result_announcement_date: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Notifikasi email hasil seleksi administrasi akan dikirim pada tanggal ini
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <MessageSquare className="h-4 w-4 text-purple-600" />
+              Seleksi Wawancara
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Mulai Wawancara</Label>
+                <Input
+                  type="date"
+                  value={formData.interview_start_date}
+                  onChange={(e) => setFormData({ ...formData, interview_start_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Selesai Wawancara</Label>
+                <Input
+                  type="date"
+                  value={formData.interview_end_date}
+                  onChange={(e) => setFormData({ ...formData, interview_end_date: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Trophy className="h-4 w-4 text-amber-600" />
+              Pengumuman Hasil Akhir
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Tanggal Pengumuman Final</Label>
+              <Input
+                type="date"
+                value={formData.final_result_announcement_date}
+                onChange={(e) => setFormData({ ...formData, final_result_announcement_date: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Notifikasi email hasil akhir seleksi akan dikirim pada tanggal ini
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-0.5">
+              <Label>Izinkan Edit di Luar Timeline</Label>
+              <p className="text-xs text-muted-foreground">
+                Rekruter dapat melakukan penilaian meski di luar periode yang ditentukan
+              </p>
+            </div>
+            <Switch
+              checked={formData.allow_edit_beyond_timeline}
+              onCheckedChange={(checked) => setFormData({ ...formData, allow_edit_beyond_timeline: checked })}
+            />
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
 
   return (
     <div className="space-y-6">
@@ -238,72 +459,15 @@ export default function RegistrationSettingsManagement() {
               Tambah Batch Baru
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Tambah Batch Baru</DialogTitle>
               <DialogDescription>
-                Buat batch pendaftaran baru untuk program pelatihan FIM
+                Buat batch pendaftaran baru dengan timeline seleksi lengkap
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="batch_name">Nama Batch *</Label>
-                <Input
-                  id="batch_name"
-                  placeholder="FIM 28: Tema Pelatihan"
-                  value={formData.batch_name}
-                  onChange={(e) => setFormData({ ...formData, batch_name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="batch_number">Nomor Batch *</Label>
-                <Input
-                  id="batch_number"
-                  type="number"
-                  placeholder="28"
-                  value={formData.batch_number || ""}
-                  onChange={(e) => setFormData({ ...formData, batch_number: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Deskripsi</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Deskripsi singkat tentang batch ini"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="registration_start_date">Tanggal Mulai</Label>
-                  <Input
-                    id="registration_start_date"
-                    type="date"
-                    value={formData.registration_start_date}
-                    onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="registration_end_date">Tanggal Selesai</Label>
-                  <Input
-                    id="registration_end_date"
-                    type="date"
-                    value={formData.registration_end_date}
-                    onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="max_participants">Maks. Peserta</Label>
-                <Input
-                  id="max_participants"
-                  type="number"
-                  placeholder="100"
-                  value={formData.max_participants}
-                  onChange={(e) => setFormData({ ...formData, max_participants: e.target.value })}
-                />
-              </div>
+              <BatchFormContent />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Batal
@@ -350,7 +514,7 @@ export default function RegistrationSettingsManagement() {
         <CardHeader>
           <CardTitle>Daftar Batch</CardTitle>
           <CardDescription>
-            Kelola batch pendaftaran dan atur status pembukaan
+            Kelola batch pendaftaran dengan timeline seleksi lengkap
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -358,7 +522,8 @@ export default function RegistrationSettingsManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Batch</TableHead>
-                <TableHead>Periode</TableHead>
+                <TableHead>Periode Pendaftaran</TableHead>
+                <TableHead>Timeline Seleksi</TableHead>
                 <TableHead>Pendaftar</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
@@ -376,14 +541,26 @@ export default function RegistrationSettingsManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {setting.registration_start_date && setting.registration_end_date ? (
-                      <div className="text-sm">
-                        {format(new Date(setting.registration_start_date), "d MMM yyyy", { locale: id })} -{" "}
-                        {format(new Date(setting.registration_end_date), "d MMM yyyy", { locale: id })}
+                    <div className="text-sm">
+                      {formatDateRange(setting.registration_start_date, setting.registration_end_date)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-1">
+                        <FileCheck className="h-3 w-3 text-blue-600" />
+                        <span className="text-muted-foreground">Adm:</span>
+                        <span>{formatDateRange(setting.admin_review_start_date, setting.admin_review_end_date)}</span>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Belum diatur</span>
-                    )}
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3 text-purple-600" />
+                        <span className="text-muted-foreground">Int:</span>
+                        <span>{formatDateRange(setting.interview_start_date, setting.interview_end_date)}</span>
+                      </div>
+                      {setting.allow_edit_beyond_timeline && (
+                        <Badge variant="outline" className="text-xs">Edit Beyond</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -440,68 +617,15 @@ export default function RegistrationSettingsManagement() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingSettings} onOpenChange={(open) => !open && setEditingSettings(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Batch</DialogTitle>
             <DialogDescription>
-              Perbarui informasi batch pendaftaran
+              Perbarui informasi batch dan timeline seleksi
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit_batch_name">Nama Batch *</Label>
-              <Input
-                id="edit_batch_name"
-                value={formData.batch_name}
-                onChange={(e) => setFormData({ ...formData, batch_name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_batch_number">Nomor Batch *</Label>
-              <Input
-                id="edit_batch_number"
-                type="number"
-                value={formData.batch_number || ""}
-                onChange={(e) => setFormData({ ...formData, batch_number: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_description">Deskripsi</Label>
-              <Textarea
-                id="edit_description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_start_date">Tanggal Mulai</Label>
-                <Input
-                  id="edit_start_date"
-                  type="date"
-                  value={formData.registration_start_date}
-                  onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit_end_date">Tanggal Selesai</Label>
-                <Input
-                  id="edit_end_date"
-                  type="date"
-                  value={formData.registration_end_date}
-                  onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit_max_participants">Maks. Peserta</Label>
-              <Input
-                id="edit_max_participants"
-                type="number"
-                value={formData.max_participants}
-                onChange={(e) => setFormData({ ...formData, max_participants: e.target.value })}
-              />
-            </div>
+            <BatchFormContent isEditing />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditingSettings(null)}>
                 Batal
