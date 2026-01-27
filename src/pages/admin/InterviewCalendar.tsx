@@ -140,22 +140,33 @@ export default function InterviewCalendar() {
     },
   });
 
-  // Fetch registrations eligible for interview (lolos administrasi)
+  // Fetch registrations eligible for interview (wawancara stage only, not yet scheduled)
   const { data: registrations } = useQuery({
     queryKey: ["registrations-for-interview"],
     queryFn: async () => {
+      // Get all registrations in wawancara stage without final result
       const { data, error } = await supabase
         .from("fim_registrations")
         .select("id, full_name, email, phone, selection_stage, selection_passed")
-        .or("selection_stage.eq.administrasi,selection_stage.eq.wawancara")
+        .eq("selection_stage", "wawancara")
         .is("final_result", null);
       
       if (error) throw error;
-      // Filter to only include those who passed administrasi or are in wawancara stage
-      return (data as (Registration & { selection_passed: boolean | null })[]).filter(
-        r => (r.selection_stage === "administrasi" && r.selection_passed === true) || 
-             r.selection_stage === "wawancara"
-      );
+      return data as Registration[];
+    },
+  });
+
+  // Fetch all existing active schedules to filter out already scheduled
+  const { data: existingSchedules } = useQuery({
+    queryKey: ["existing-active-schedules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("interview_schedules")
+        .select("registration_id")
+        .in("status", ["scheduled", "completed"]);
+      
+      if (error) throw error;
+      return new Set(data.map(s => s.registration_id));
     },
   });
 
@@ -185,6 +196,13 @@ export default function InterviewCalendar() {
   // Create schedule with interviewer name
   const createMutation = useMutation({
     mutationFn: async (data: typeof scheduleForm) => {
+      // Validate that scheduled date is not in the past
+      const scheduledDateTime = new Date(`${data.scheduled_date}T${data.scheduled_time}`);
+      const now = new Date();
+      if (scheduledDateTime < now) {
+        throw new Error("Tanggal dan waktu wawancara tidak boleh di masa lalu.");
+      }
+
       // Check for existing active schedule (duplicate prevention)
       const { data: existingSchedule } = await supabase
         .from("interview_schedules")
@@ -219,14 +237,8 @@ export default function InterviewCalendar() {
       
       if (error) throw error;
 
-      // Update registration to wawancara stage
-      await supabase
-        .from("fim_registrations")
-        .update({
-          selection_stage: "wawancara",
-          selection_passed: null,
-        })
-        .eq("id", data.registration_id);
+      // Note: Do NOT change selection_stage here - it should already be "wawancara"
+      // This prevents double-transition issues
 
       // Send notification email
       const reg = registrations?.find(r => r.id === data.registration_id);
@@ -367,6 +379,13 @@ export default function InterviewCalendar() {
   // Batch create schedules with interviewer name
   const batchCreateMutation = useMutation({
     mutationFn: async (data: typeof batchForm & { registration_ids: string[] }) => {
+      // Validate that scheduled date is not in the past
+      const scheduledDate = new Date(`${data.scheduled_date}T${data.start_time}`);
+      const now = new Date();
+      if (scheduledDate < now) {
+        throw new Error("Tanggal dan waktu wawancara tidak boleh di masa lalu.");
+      }
+
       const schedulesToCreate: Array<{
         registration_id: string;
         scheduled_date: string;
@@ -409,16 +428,7 @@ export default function InterviewCalendar() {
 
       if (error) throw error;
 
-      // Update all registrations to wawancara stage
-      for (const regId of data.registration_ids) {
-        await supabase
-          .from("fim_registrations")
-          .update({
-            selection_stage: "wawancara",
-            selection_passed: null,
-          })
-          .eq("id", regId);
-      }
+      // Note: Do NOT update selection_stage here - registrations should already be in wawancara stage
 
       // Send notification emails
       for (const schedule of schedulesToCreate) {
@@ -528,14 +538,10 @@ export default function InterviewCalendar() {
   };
 
   const selectAllRegistrations = () => {
-    if (!registrations) return;
-    // Filter out registrations that already have a schedule
-    const scheduledIds = new Set(schedules?.map(s => s.registration_id) || []);
-    const available = registrations.filter(r => !scheduledIds.has(r.id));
-    if (selectedRegistrations.length === available.length) {
+    if (selectedRegistrations.length === availableRegistrations.length) {
       setSelectedRegistrations([]);
     } else {
-      setSelectedRegistrations(available.map(r => r.id));
+      setSelectedRegistrations(availableRegistrations.map(r => r.id));
     }
   };
 
@@ -554,12 +560,11 @@ export default function InterviewCalendar() {
     }
   };
 
-  // Get registrations that don't have a schedule yet
+  // Get registrations that don't have a schedule yet (use existingSchedules from query)
   const availableRegistrations = useMemo(() => {
-    if (!registrations) return [];
-    const scheduledIds = new Set(schedules?.map(s => s.registration_id) || []);
-    return registrations.filter(r => !scheduledIds.has(r.id));
-  }, [registrations, schedules]);
+    if (!registrations || !existingSchedules) return [];
+    return registrations.filter(r => !existingSchedules.has(r.id));
+  }, [registrations, existingSchedules]);
 
   // Dashboard statistics with period filter
   const dashboardStats = useMemo(() => {
@@ -1040,13 +1045,22 @@ export default function InterviewCalendar() {
                   <SelectValue placeholder="Pilih peserta..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {registrations?.map((reg) => (
+                  {/* Only show registrations that are NOT already scheduled */}
+                  {registrations?.filter(reg => !existingSchedules?.has(reg.id)).map((reg) => (
                     <SelectItem key={reg.id} value={reg.id}>
                       {reg.full_name} ({reg.email})
                     </SelectItem>
                   ))}
+                  {registrations?.filter(reg => !existingSchedules?.has(reg.id)).length === 0 && (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Tidak ada peserta yang belum dijadwalkan
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Hanya menampilkan peserta tahap wawancara yang belum dijadwalkan
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1056,7 +1070,9 @@ export default function InterviewCalendar() {
                   type="date"
                   value={scheduleForm.scheduled_date}
                   onChange={(e) => setScheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                  min={format(new Date(), "yyyy-MM-dd")}
                 />
+                <p className="text-xs text-muted-foreground">Hanya tanggal hari ini atau setelahnya</p>
               </div>
               <div className="space-y-2">
                 <Label>Waktu</Label>
@@ -1304,7 +1320,9 @@ export default function InterviewCalendar() {
                   type="date"
                   value={batchForm.scheduled_date}
                   onChange={(e) => setBatchForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                  min={format(new Date(), "yyyy-MM-dd")}
                 />
+                <p className="text-xs text-muted-foreground">Hanya tanggal hari ini atau setelahnya</p>
               </div>
               <div className="space-y-2">
                 <Label>Waktu Mulai</Label>

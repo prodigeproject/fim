@@ -1418,6 +1418,13 @@ export default function RegistrationsManagement() {
       meetingLink?: string;
       interviewerName?: string;
     }) => {
+      // Validate that scheduled date is not in the past
+      const scheduledDateTime = new Date(`${date}T${time}`);
+      const now = new Date();
+      if (scheduledDateTime < now) {
+        throw new Error("Tanggal dan waktu wawancara tidak boleh di masa lalu.");
+      }
+
       // Check for existing active schedule (duplicate prevention)
       const { data: existingSchedule } = await supabase
         .from("interview_schedules")
@@ -2605,22 +2612,98 @@ Tim Forum Indonesia Muda
                   </Button>
                 </div>
 
-                {/* Administrasi Stage Actions */}
+                {/* Administrasi Stage Actions - Only show if training data is submitted */}
                 {selectedRegistration.selection_stage === "administrasi" && selectedRegistration.selection_passed !== true && !selectedRegistration.final_result && (
                   <div className="space-y-2 w-full">
-                    <Label className="text-sm font-medium">Review Seleksi Administrasi:</Label>
+                    {trainingData?.is_submitted ? (
+                      <>
+                        <Label className="text-sm font-medium">Review Seleksi Administrasi:</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="default"
+                            className="bg-green-600 hover:bg-green-700 flex-1"
+                            onClick={() => {
+                              updateStageMutation.mutate({
+                                id: selectedRegistration.id,
+                                stage: "lolos_administrasi",
+                                note: reviewerNote,
+                                email: selectedRegistration.email,
+                                name: selectedRegistration.full_name,
+                                sendEmail: false, // Don't send email yet - wait for batch announcement
+                                noteVisible: noteVisibleToApplicant,
+                              });
+                            }}
+                            disabled={updateStageMutation.isPending}
+                          >
+                            {updateStageMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                            )}
+                            Lolos Administrasi
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => {
+                              if (!reviewerNote.trim()) {
+                                toast.error("Mohon isi catatan alasan tidak lolos");
+                                return;
+                              }
+                              updateFinalResultMutation.mutate({
+                                id: selectedRegistration.id,
+                                result: "tidak_lolos",
+                                note: reviewerNote,
+                                email: selectedRegistration.email,
+                                name: selectedRegistration.full_name
+                              });
+                            }}
+                            disabled={updateFinalResultMutation.isPending}
+                          >
+                            {updateFinalResultMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-2" />
+                            )}
+                            Tidak Lolos Administrasi
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+                        <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <strong>Belum Dapat Direview</strong> - Pendaftar belum submit formulir pendaftaran.
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          Completion: {trainingData?.completion_percentage || 0}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Lolos Administrasi - Move to Interview Stage first, then schedule */}
+                {selectedRegistration.selection_stage === "administrasi" && selectedRegistration.selection_passed === true && !selectedRegistration.final_result && (
+                  <div className="space-y-3 w-full">
+                    <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Pendaftar ini <strong>Lolos Administrasi</strong>. Pindahkan ke tahap wawancara untuk kemudian dijadwalkan interviewnya.
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         variant="default"
-                        className="bg-green-600 hover:bg-green-700 flex-1"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
                         onClick={() => {
                           updateStageMutation.mutate({
                             id: selectedRegistration.id,
-                            stage: "lolos_administrasi",
+                            stage: "wawancara",
                             note: reviewerNote,
                             email: selectedRegistration.email,
                             name: selectedRegistration.full_name,
-                            sendEmail: true,
+                            sendEmail: false, // Don't send email yet - wait until interview is scheduled
                             noteVisible: noteVisibleToApplicant,
                           });
                         }}
@@ -2631,104 +2714,8 @@ Tim Forum Indonesia Muda
                         ) : (
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                         )}
-                        Lolos Administrasi
+                        Pindah ke Tahap Wawancara
                       </Button>
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={() => {
-                          if (!reviewerNote.trim()) {
-                            toast.error("Mohon isi catatan alasan tidak lolos");
-                            return;
-                          }
-                          updateFinalResultMutation.mutate({
-                            id: selectedRegistration.id,
-                            result: "tidak_lolos",
-                            note: reviewerNote,
-                            email: selectedRegistration.email,
-                            name: selectedRegistration.full_name
-                          });
-                        }}
-                        disabled={updateFinalResultMutation.isPending}
-                      >
-                        {updateFinalResultMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mr-2" />
-                        )}
-                        Tidak Lolos Administrasi
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Lolos Administrasi - Waiting for Interview Scheduling */}
-                {selectedRegistration.selection_stage === "administrasi" && selectedRegistration.selection_passed === true && !selectedRegistration.final_result && (
-                  <div className="space-y-3 w-full">
-                    {interviewSchedule ? (
-                      // Already scheduled - show info and option to move to wawancara stage
-                      <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                          <CalendarCheck className="h-4 w-4" />
-                          Wawancara sudah dijadwalkan. Klik tombol di bawah untuk memindahkan ke tahap wawancara.
-                        </p>
-                      </div>
-                    ) : (
-                      // Not scheduled yet - show info and schedule button
-                      <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
-                        <p className="text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Pendaftar ini sudah <strong>Lolos Administrasi</strong>. Jadwalkan wawancara terlebih dahulu.
-                        </p>
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      {!interviewSchedule && (
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setScheduleData({
-                              registration: selectedRegistration,
-                              date: "",
-                              time: "",
-                              note: reviewerNote,
-                              location: "",
-                              meetingLink: ""
-                            });
-                            setIsScheduleDialogOpen(true);
-                          }}
-                          disabled={updateStageMutation.isPending}
-                        >
-                          <CalendarPlus className="h-4 w-4 mr-2" />
-                          Jadwalkan Wawancara
-                        </Button>
-                      )}
-                      {interviewSchedule && (
-                        <Button
-                          variant="default"
-                          className="flex-1 bg-blue-600 hover:bg-blue-700"
-                          onClick={() => {
-                            updateStageMutation.mutate({
-                              id: selectedRegistration.id,
-                              stage: "wawancara",
-                              note: reviewerNote,
-                              email: selectedRegistration.email,
-                              name: selectedRegistration.full_name,
-                              sendEmail: true,
-                              noteVisible: noteVisibleToApplicant,
-                            });
-                          }}
-                          disabled={updateStageMutation.isPending}
-                        >
-                          {updateStageMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                          )}
-                          Pindah ke Tahap Wawancara
-                        </Button>
-                      )}
                     </div>
                   </div>
                 )}
