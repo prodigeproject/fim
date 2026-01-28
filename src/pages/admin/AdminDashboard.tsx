@@ -357,8 +357,11 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - simple overflow scroll, no autoscroll */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Navigation - simple overflow scroll with event isolation */}
+        <div 
+          className="flex-1 overflow-y-auto"
+          onScroll={(e) => e.stopPropagation()}
+        >
           <nav className="p-2 space-y-0.5">
             {filteredNavItems.map((item) => (
               <NavItemComponent key={item.href} item={item} />
