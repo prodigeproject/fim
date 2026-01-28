@@ -112,14 +112,18 @@ export default function RegistrationLogin() {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 {needsVerification && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="ml-2">
-                      Email Anda belum diverifikasi. Silakan cek inbox email Anda untuk link verifikasi.
+                  <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <AlertDescription className="ml-2 text-amber-800 dark:text-amber-200">
+                      <strong>Akun Belum Terverifikasi</strong>
+                      <p className="mt-1 text-sm">
+                        Email Anda sudah terdaftar, namun belum diverifikasi. 
+                        Silakan cek inbox email Anda (termasuk folder spam) untuk link verifikasi.
+                      </p>
                       <Button
                         type="button"
                         variant="link"
-                        className="p-0 h-auto ml-1 text-destructive underline"
+                        className="p-0 h-auto text-amber-700 dark:text-amber-300 underline mt-1"
                         onClick={handleResendVerification}
                         disabled={isResendingVerification}
                       >

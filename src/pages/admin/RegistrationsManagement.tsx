@@ -8,6 +8,7 @@ import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { jsPDF } from "jspdf";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { RecruiterAssignment, RecruiterAssignmentBadge } from "@/components/admin/RecruiterAssignment";
+import { InterviewerSelector } from "@/components/admin/InterviewerSelector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -2552,6 +2553,18 @@ Tim Forum Indonesia Muda
                       <Edit className="h-3 w-3 mr-1" />
                       Ubah Jadwal
                     </Button>
+                    
+                    {/* Interviewer Selector */}
+                    <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                      <InterviewerSelector
+                        registrationId={selectedRegistration.id}
+                        currentInterviewerName={interviewSchedule.interviewer_name}
+                        scheduleId={interviewSchedule.id}
+                        onUpdate={() => {
+                          queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
 
