@@ -81,6 +81,14 @@ export default function InterviewCalendar() {
   const [selectedSchedule, setSelectedSchedule] = useState<InterviewSchedule | null>(null);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
   const [interviewFeedback, setInterviewFeedback] = useState("");
+  const [isRescheduleMode, setIsRescheduleMode] = useState(false);
+  const [rescheduleForm, setRescheduleForm] = useState({
+    scheduled_date: "",
+    scheduled_time: "",
+    location: "",
+    meeting_link: "",
+    notes: "",
+  });
   
   // Dashboard filter state
   const [dashboardPeriod, setDashboardPeriod] = useState<"all" | "week" | "month" | "custom">("month");
@@ -322,11 +330,96 @@ export default function InterviewCalendar() {
       queryClient.invalidateQueries({ queryKey: ["registrations-for-interview"] });
       setIsEditDialogOpen(false);
       setInterviewFeedback("");
+      setIsRescheduleMode(false);
     },
     onError: () => {
       toast.error("Gagal memperbarui jadwal");
     },
   });
+
+  // Reschedule interview (update date/time directly without cancellation)
+  const rescheduleMutation = useMutation({
+    mutationFn: async ({ id, data, sendNotification }: { 
+      id: string; 
+      data: { 
+        scheduled_date: string; 
+        scheduled_time: string; 
+        location?: string | null;
+        meeting_link?: string | null;
+        notes?: string | null;
+      };
+      sendNotification?: boolean;
+    }) => {
+      // Validate that scheduled date is not in the past
+      const scheduledDateTime = new Date(`${data.scheduled_date}T${data.scheduled_time}`);
+      const now = new Date();
+      if (scheduledDateTime < now) {
+        throw new Error("Tanggal dan waktu wawancara tidak boleh di masa lalu.");
+      }
+
+      // Ensure time is in proper format (HH:MM:SS)
+      const formattedTime = data.scheduled_time.includes(":") && data.scheduled_time.split(":").length === 2 
+        ? `${data.scheduled_time}:00` 
+        : data.scheduled_time;
+
+      const { error } = await supabase
+        .from("interview_schedules")
+        .update({
+          scheduled_date: data.scheduled_date,
+          scheduled_time: formattedTime,
+          location: data.location || null,
+          meeting_link: data.meeting_link || null,
+          notes: data.notes || null,
+          // Reset reminder when rescheduling
+          reminder_sent: false,
+          reminder_sent_at: null,
+        })
+        .eq("id", id);
+      
+      if (error) throw error;
+
+      // Send notification email for reschedule if requested
+      if (sendNotification) {
+        const schedule = schedules?.find(s => s.id === id);
+        if (schedule) {
+          const reg = registrations?.find(r => r.id === schedule.registration_id);
+          if (reg) {
+            try {
+              await supabase.functions.invoke("notify-selection-stage", {
+                body: {
+                  registrantEmail: reg.email,
+                  registrantName: reg.full_name,
+                  stage: "interview_reschedule",
+                  interviewDate: `${data.scheduled_date} ${data.scheduled_time}`,
+                  note: data.notes || "Jadwal wawancara Anda telah diubah.",
+                },
+              });
+            } catch (emailError) {
+              console.error("Failed to send reschedule email:", emailError);
+            }
+          }
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Jadwal wawancara berhasil diubah");
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      setIsEditDialogOpen(false);
+      setIsRescheduleMode(false);
+      setRescheduleForm({
+        scheduled_date: "",
+        scheduled_time: "",
+        location: "",
+        meeting_link: "",
+        notes: "",
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Gagal mengubah jadwal wawancara");
+    },
+  });
+
 
   // Delete schedule
   const deleteMutation = useMutation({
@@ -529,7 +622,30 @@ export default function InterviewCalendar() {
 
   const openEditDialog = (schedule: InterviewSchedule) => {
     setSelectedSchedule(schedule);
+    setInterviewFeedback(schedule.interview_feedback || "");
+    setIsRescheduleMode(false);
+    // Pre-fill reschedule form with current values
+    setRescheduleForm({
+      scheduled_date: schedule.scheduled_date,
+      scheduled_time: schedule.scheduled_time.substring(0, 5), // HH:MM format
+      location: schedule.location || "",
+      meeting_link: schedule.meeting_link || "",
+      notes: schedule.notes || "",
+    });
     setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setIsRescheduleMode(false);
+    setInterviewFeedback("");
+    setRescheduleForm({
+      scheduled_date: "",
+      scheduled_time: "",
+      location: "",
+      meeting_link: "",
+      notes: "",
+    });
   };
 
   const toggleRegistrationSelection = (regId: string) => {
@@ -1164,16 +1280,18 @@ export default function InterviewCalendar() {
       </Dialog>
 
       {/* Edit Schedule Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => !open && handleCloseEditDialog()}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Detail Jadwal Wawancara</DialogTitle>
+            <DialogTitle>
+              {isRescheduleMode ? "Ubah Jadwal Wawancara" : "Detail Jadwal Wawancara"}
+            </DialogTitle>
             <DialogDescription>
               {selectedSchedule && getRegistrationById(selectedSchedule.registration_id)?.full_name}
             </DialogDescription>
           </DialogHeader>
 
-          {selectedSchedule && (
+          {selectedSchedule && !isRescheduleMode && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1222,7 +1340,6 @@ export default function InterviewCalendar() {
                   value={selectedSchedule.status}
                   onValueChange={(v) => {
                     if (v === "completed" && !interviewFeedback.trim()) {
-                      // Require feedback for completed status - handled by button
                       toast.error("Catatan wawancara wajib diisi untuk menandai selesai");
                       return;
                     }
@@ -1273,35 +1390,152 @@ export default function InterviewCalendar() {
             </div>
           )}
 
+          {/* Reschedule Mode Form */}
+          {selectedSchedule && isRescheduleMode && (
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  <strong>Jadwal Sebelumnya:</strong>{" "}
+                  {format(new Date(selectedSchedule.scheduled_date), "dd MMMM yyyy", { locale: localeId })}{" "}
+                  {selectedSchedule.scheduled_time.substring(0, 5)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tanggal Baru</Label>
+                  <Input
+                    type="date"
+                    value={rescheduleForm.scheduled_date}
+                    onChange={(e) => setRescheduleForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                    min={format(new Date(), "yyyy-MM-dd")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Waktu Baru</Label>
+                  <Input
+                    type="time"
+                    value={rescheduleForm.scheduled_time}
+                    onChange={(e) => setRescheduleForm(prev => ({ ...prev, scheduled_time: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Lokasi (opsional)</Label>
+                <Input
+                  value={rescheduleForm.location}
+                  onChange={(e) => setRescheduleForm(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Contoh: Ruang Meeting Lt. 2"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Link Meeting (opsional)</Label>
+                <Input
+                  value={rescheduleForm.meeting_link}
+                  onChange={(e) => setRescheduleForm(prev => ({ ...prev, meeting_link: e.target.value }))}
+                  placeholder="https://meet.google.com/..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Catatan (opsional)</Label>
+                <Textarea
+                  value={rescheduleForm.notes}
+                  onChange={(e) => setRescheduleForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Catatan untuk peserta..."
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                <Checkbox id="send-notification" defaultChecked />
+                <label htmlFor="send-notification" className="text-sm cursor-pointer">
+                  Kirim email notifikasi perubahan jadwal ke peserta
+                </label>
+              </div>
+            </div>
+          )}
+
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => selectedSchedule && sendReminderMutation.mutate(selectedSchedule)}
-              disabled={sendReminderMutation.isPending || selectedSchedule?.reminder_sent}
-            >
-              {sendReminderMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              {selectedSchedule?.reminder_sent ? "Reminder Terkirim" : "Kirim Reminder"}
-            </Button>
-            <div className="flex-1" />
-            <Button
-              variant="destructive"
-              onClick={() => selectedSchedule && deleteMutation.mutate(selectedSchedule.id)}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
-              )}
-              Hapus
-            </Button>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Tutup
-            </Button>
+            {!isRescheduleMode ? (
+              <>
+                {/* Show reschedule button only for scheduled interviews */}
+                {selectedSchedule?.status === "scheduled" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRescheduleMode(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Ubah Jadwal
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => selectedSchedule && sendReminderMutation.mutate(selectedSchedule)}
+                  disabled={sendReminderMutation.isPending || selectedSchedule?.reminder_sent || selectedSchedule?.status !== "scheduled"}
+                >
+                  {sendReminderMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {selectedSchedule?.reminder_sent ? "Reminder Terkirim" : "Kirim Reminder"}
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="destructive"
+                  onClick={() => selectedSchedule && deleteMutation.mutate(selectedSchedule.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Hapus
+                </Button>
+                <Button variant="outline" onClick={handleCloseEditDialog}>
+                  Tutup
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsRescheduleMode(false)}
+                >
+                  Batal
+                </Button>
+                <div className="flex-1" />
+                <Button 
+                  onClick={() => {
+                    if (!selectedSchedule) return;
+                    const sendNotificationCheckbox = document.getElementById("send-notification") as HTMLInputElement;
+                    const sendNotification = sendNotificationCheckbox?.checked ?? true;
+                    rescheduleMutation.mutate({
+                      id: selectedSchedule.id,
+                      data: {
+                        scheduled_date: rescheduleForm.scheduled_date,
+                        scheduled_time: rescheduleForm.scheduled_time,
+                        location: rescheduleForm.location || null,
+                        meeting_link: rescheduleForm.meeting_link || null,
+                        notes: rescheduleForm.notes || null,
+                      },
+                      sendNotification,
+                    });
+                  }}
+                  disabled={!rescheduleForm.scheduled_date || !rescheduleForm.scheduled_time || rescheduleMutation.isPending}
+                >
+                  {rescheduleMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                  )}
+                  Simpan Jadwal Baru
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

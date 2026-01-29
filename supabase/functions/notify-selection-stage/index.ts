@@ -11,7 +11,7 @@ const corsHeaders = {
 interface SelectionStageRequest {
   registrantEmail: string;
   registrantName: string;
-  stage: "administrasi" | "lolos_administrasi" | "wawancara" | "pengumuman";
+  stage: "administrasi" | "lolos_administrasi" | "wawancara" | "pengumuman" | "interview_reminder" | "interview_reschedule";
   passed?: boolean;
   interviewDate?: string;
   note?: string;
@@ -85,6 +85,32 @@ const handler = async (req: Request): Promise<Response> => {
           ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
         `;
       }
+    } else if (stage === "interview_reschedule") {
+      subject = "📅 Perubahan Jadwal Wawancara Forum Indonesia Muda";
+      statusColor = "#f59e0b";
+      statusEmoji = "🔄";
+      content = `
+        <p>Kami menginformasikan bahwa jadwal wawancara Anda telah <strong style="color: #f59e0b;">diubah</strong>.</p>
+        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Baru:</p>
+          <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #b45309;">${interviewDate || 'Akan dikonfirmasi'}</p>
+        </div>
+        <p>Mohon pastikan Anda hadir sesuai jadwal baru yang telah ditetapkan.</p>
+        ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
+      `;
+    } else if (stage === "interview_reminder") {
+      subject = "⏰ Pengingat Wawancara FIM - Besok!";
+      statusColor = "#8b5cf6";
+      statusEmoji = "⏰";
+      content = `
+        <p>Ini adalah <strong>pengingat</strong> untuk jadwal wawancara Anda besok.</p>
+        <div style="background-color: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Wawancara:</p>
+          <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #6d28d9;">${interviewDate || ''}</p>
+        </div>
+        <p>Pastikan Anda sudah siap dan tepat waktu. Semoga sukses!</p>
+        ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
+      `;
     } else if (stage === "pengumuman") {
       if (finalResult === "lolos") {
         subject = "🎉 Selamat! Anda Diterima di Forum Indonesia Muda";
