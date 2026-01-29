@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Target modern browsers to reduce legacy JS polyfills
-    target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
+    // Target modern browsers to eliminate legacy JS polyfills
+    target: "esnext",
     // Enable code splitting
     rollupOptions: {
       output: {
