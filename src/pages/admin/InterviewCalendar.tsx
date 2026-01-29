@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -37,11 +38,13 @@ import {
   Bell,
   Users,
   Check,
+  BarChart3,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import InterviewStatsDashboard from "@/components/admin/InterviewStatsDashboard";
 
 interface InterviewSchedule {
   id: string;
@@ -623,28 +626,42 @@ export default function InterviewCalendar() {
             Kelola jadwal wawancara peserta FIM
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button 
-            variant="outline" 
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["interview-schedules"] })}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={openBatchDialog}
-            disabled={selectedRegistrations.length === 0}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Jadwalkan Batch ({selectedRegistrations.length})
-          </Button>
-          <Button onClick={openScheduleDialog} disabled={!selectedDate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Jadwal
-          </Button>
-        </div>
       </div>
+
+      <Tabs defaultValue="calendar" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Kalender
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Statistik
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="calendar" className="space-y-6">
+          <div className="flex gap-2 flex-wrap justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["interview-schedules"] })}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={openBatchDialog}
+              disabled={selectedRegistrations.length === 0}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Jadwalkan Batch ({selectedRegistrations.length})
+            </Button>
+            <Button onClick={openScheduleDialog} disabled={!selectedDate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Jadwal
+            </Button>
+          </div>
 
       {/* Dashboard Statistics */}
       <Card>
@@ -1023,6 +1040,12 @@ export default function InterviewCalendar() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="statistics">
+          <InterviewStatsDashboard />
+        </TabsContent>
+      </Tabs>
 
       {/* Create Schedule Dialog */}
       <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
