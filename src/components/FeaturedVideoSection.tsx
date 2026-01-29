@@ -155,7 +155,9 @@ export default function FeaturedVideoSection() {
   const currentVideo = videos[activeVideoIndex];
 
   const getYouTubeThumbnail = (youtubeId: string) => {
-    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    // Use hqdefault.jpg as it's more reliably available for all YouTube videos
+    // maxresdefault.jpg returns 404 for videos without HD thumbnails
+    return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
   };
 
   return (
