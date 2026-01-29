@@ -219,6 +219,7 @@ const Index = () => {
               src={logoFim} 
               alt="Forum Indonesia Muda" 
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
+              fetchPriority="high"
             />
             <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               {t("home.hero.heading")}
