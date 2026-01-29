@@ -274,14 +274,16 @@ const Index = () => {
             <button
               onClick={scrollPrev}
               className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 rounded-full flex items-center justify-center hover:bg-background transition-colors shadow-lg"
+              aria-label="Slide sebelumnya"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
             <button
               onClick={scrollNext}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 rounded-full flex items-center justify-center hover:bg-background transition-colors shadow-lg"
+              aria-label="Slide selanjutnya"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </button>
 
             {/* Dots */}
@@ -334,9 +336,9 @@ const Index = () => {
       </section>
 
       {/* Alumni Testimonials - Social Proof */}
-      <section className="py-16 bg-secondary">
+      <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.alumniSection.title")}</h2>
+          <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.alumniSection.title")}</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
             {t("index.alumniSection.subtitle")}
           </p>
@@ -349,11 +351,11 @@ const Index = () => {
               >
                 <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4" />
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
                     <testimonial.icon className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-foreground">{testimonial.name}</h4>
+                    <h3 className="font-bold text-foreground">{testimonial.name}</h3>
                     <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
                   </div>
                 </div>
@@ -376,20 +378,20 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan Section */}
-      <section className="py-16 bg-background">
+      <section className="py-16 bg-background" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.programSection.title")}</h2>
+          <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.programSection.title")}</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.programSection.subtitle")}</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {programUnggulan.map((program, index) => (
               <Link key={program.title} to={program.link} className="group">
-                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in h-full" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <article className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in h-full" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors" aria-hidden="true">
                     <program.icon className="h-7 w-7 text-primary" />
                   </div>
                   <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">{program.title}</h3>
                   <p className="text-sm text-muted-foreground">{program.description}</p>
-                </div>
+                </article>
               </Link>
             ))}
           </div>
@@ -402,9 +404,9 @@ const Index = () => {
       </section>
 
       {/* Kabar FIM Section - Pinned Articles */}
-      <section className="py-16 bg-secondary">
+      <section className="py-16 bg-secondary" aria-labelledby="news-section-heading">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.newsSection.title")}</h2>
+          <h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.newsSection.title")}</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.newsSection.subtitle")}</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {featuredArticles?.length ? featuredArticles.map((article, index) => (
@@ -452,9 +454,9 @@ const Index = () => {
       </section>
 
       {/* Mitra Kami Section - Infinite Scroll Animation */}
-      <section className="py-12 bg-background overflow-hidden">
+      <section className="py-12 bg-background overflow-hidden" aria-labelledby="partners-section-heading">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">{t("index.partnersSection.title")}</h2>
+          <h2 id="partners-section-heading" className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">{t("index.partnersSection.title")}</h2>
           <p className="text-muted-foreground text-center text-sm mb-8">{t("index.partnersSection.subtitle")}</p>
         </div>
         <div className="relative">
@@ -510,9 +512,9 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-hero">
+      <section className="py-20 bg-gradient-hero" aria-labelledby="cta-section-heading">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("index.ctaSection.title")}</h2>
+          <h2 id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("index.ctaSection.title")}</h2>
           <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("index.ctaSection.subtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/daftar">

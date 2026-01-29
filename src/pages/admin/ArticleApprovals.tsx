@@ -446,63 +446,73 @@ export default function ArticleApprovals() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
                           asChild
+                          aria-label={`Preview artikel ${article.title}`}
                         >
                           <Link to={`/admin/articles/edit/${article.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
                             Preview
                           </Link>
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setCommentsArticle(article);
-                            setShowCommentsDialog(true);
-                          }}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Diskusi
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedArticle(article);
-                            setShowRevisionDialog(true);
-                          }}
-                        >
-                          <RotateCcw className="h-4 w-4 mr-1" />
-                          Revisi
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => approveMutation.mutate(article)}
-                          disabled={approveMutation.isPending}
-                        >
-                          {approveMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                          )}
-                          Setujui
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            setSelectedArticle(article);
-                            setShowRejectDialog(true);
-                          }}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Tolak
-                        </Button>
+                        {/* Only show action buttons for admin/super_admin */}
+                        {canApprove && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setCommentsArticle(article);
+                                setShowCommentsDialog(true);
+                              }}
+                              aria-label={`Diskusi artikel ${article.title}`}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              Diskusi
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedArticle(article);
+                                setShowRevisionDialog(true);
+                              }}
+                              aria-label={`Minta revisi artikel ${article.title}`}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" />
+                              Revisi
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => approveMutation.mutate(article)}
+                              disabled={approveMutation.isPending}
+                              aria-label={`Setujui artikel ${article.title}`}
+                            >
+                              {approveMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                              )}
+                              Setujui
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                setSelectedArticle(article);
+                                setShowRejectDialog(true);
+                              }}
+                              aria-label={`Tolak artikel ${article.title}`}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Tolak
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
