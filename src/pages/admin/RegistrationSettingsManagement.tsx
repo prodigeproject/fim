@@ -14,9 +14,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle, Clock, FileCheck, MessageSquare, Trophy } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle, Clock, FileCheck, MessageSquare, Trophy, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { BatchTimelineVisualization } from "@/components/admin/BatchTimelineVisualization";
 
 interface RegistrationSettings {
   id: string;
@@ -509,6 +511,11 @@ export default function RegistrationSettingsManagement() {
         </CardContent>
       </Card>
 
+      {/* Timeline Visualization for Active Batch */}
+      {activeBatch && (
+        <BatchTimelineVisualization batch={activeBatch} />
+      )}
+
       {/* Batch List */}
       <Card>
         <CardHeader>
@@ -517,7 +524,7 @@ export default function RegistrationSettingsManagement() {
             Kelola batch pendaftaran dengan timeline seleksi lengkap
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -615,6 +622,24 @@ export default function RegistrationSettingsManagement() {
         </CardContent>
       </Card>
 
+      {/* Collapsible Timeline Views for each batch */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Visualisasi Timeline per Batch
+          </CardTitle>
+          <CardDescription>
+            Klik nama batch untuk melihat timeline lengkap
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {settings?.map((setting) => (
+            <BatchTimelineCollapsible key={setting.id} batch={setting} />
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Edit Dialog */}
       <Dialog open={!!editingSettings} onOpenChange={(open) => !open && setEditingSettings(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -639,5 +664,35 @@ export default function RegistrationSettingsManagement() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// Collapsible component for individual batch timeline
+function BatchTimelineCollapsible({ batch }: { batch: RegistrationSettings }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" className="w-full justify-between h-auto py-3 px-4 hover:bg-muted">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4 text-primary" />
+            <div className="text-left">
+              <div className="font-medium">{batch.batch_name}</div>
+              <div className="text-xs text-muted-foreground">Angkatan {batch.batch_number}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {batch.is_registration_open && (
+              <Badge className="bg-green-500">Aktif</Badge>
+            )}
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-2">
+        <BatchTimelineVisualization batch={batch} />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

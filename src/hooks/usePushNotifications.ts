@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export function usePushNotifications() {
-  const { isSuperAdmin, user } = useAdminAuth();
-
+  const { isSuperAdmin, user, role } = useAdminAuth();
+  const isAdmin = role === "super_admin" || (role as string) === "admin" || role === "moderator";
   // Request notification permission
   const requestPermission = useCallback(async () => {
     if (!("Notification" in window)) {
@@ -135,6 +135,126 @@ export function usePushNotifications() {
       supabase.removeChannel(channel);
     };
   }, [isSuperAdmin, user, requestPermission, showNotification]);
+
+  // Listen to new registrations for all admins
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+
+    requestPermission();
+
+    const channel = supabase
+      .channel("new-registrations-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "fim_registrations",
+        },
+        (payload) => {
+          const newData = payload.new as { 
+            full_name?: string;
+            email?: string;
+            id?: string;
+          };
+
+          showNotification("Pendaftar Baru", {
+            body: `${newData.full_name} (${newData.email}) telah mendaftar`,
+            tag: `registration-${newData.id}`,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, user, requestPermission, showNotification]);
+
+  // Listen to interview schedules for all admins
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+
+    const channel = supabase
+      .channel("interview-schedule-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "interview_schedules",
+        },
+        async (payload) => {
+          const newData = payload.new as { 
+            registration_id?: string;
+            scheduled_date?: string;
+            scheduled_time?: string;
+            id?: string;
+          };
+
+          // Fetch registrant info
+          let registrantName = "Peserta";
+          if (newData.registration_id) {
+            const { data: registration } = await supabase
+              .from("fim_registrations")
+              .select("full_name")
+              .eq("id", newData.registration_id)
+              .single();
+            
+            if (registration) {
+              registrantName = registration.full_name;
+            }
+          }
+
+          showNotification("Wawancara Dijadwalkan", {
+            body: `${registrantName} - ${newData.scheduled_date} pukul ${newData.scheduled_time}`,
+            tag: `interview-${newData.id}`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "interview_schedules",
+        },
+        async (payload) => {
+          const oldData = payload.old as { status?: string };
+          const newData = payload.new as { 
+            registration_id?: string;
+            status?: string;
+            id?: string;
+          };
+
+          // Notify on status change to completed
+          if (oldData.status !== "completed" && newData.status === "completed") {
+            let registrantName = "Peserta";
+            if (newData.registration_id) {
+              const { data: registration } = await supabase
+                .from("fim_registrations")
+                .select("full_name")
+                .eq("id", newData.registration_id)
+                .single();
+              
+              if (registration) {
+                registrantName = registration.full_name;
+              }
+            }
+
+            showNotification("Wawancara Selesai", {
+              body: `Wawancara ${registrantName} telah selesai`,
+              tag: `interview-completed-${newData.id}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, user, showNotification]);
 
   return { requestPermission, showNotification };
 }
