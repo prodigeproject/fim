@@ -65,14 +65,20 @@ export default function FeaturedVideoSection() {
     };
   }, [queryClient]);
 
-  // Load YouTube IFrame API
+  // Load YouTube IFrame API - deferred to avoid blocking initial render
   useEffect(() => {
     if (window.YT) return;
 
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    // Defer script loading to after initial paint
+    const timeoutId = setTimeout(() => {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      tag.async = true;
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Initialize YouTube player when playing
