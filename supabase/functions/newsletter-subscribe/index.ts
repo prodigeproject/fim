@@ -146,6 +146,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send welcome email using Gmail SMTP
+    const siteUrl = Deno.env.get("SITE_URL") || "https://fim.lovable.app";
+    const unsubscribeUrl = `${siteUrl}/unsubscribe?email=${encodeURIComponent(normalizedEmail)}`;
+
     try {
       const emailHtml = `
         <!DOCTYPE html>
@@ -179,8 +182,12 @@ const handler = async (req: Request): Promise<Response> => {
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
           
           <p style="color: #666; font-size: 12px;">
-            Anda menerima email ini karena mendaftar newsletter FIM. 
-            Jika tidak ingin menerima email lagi, silakan hubungi kami.
+            Anda menerima email ini karena mendaftar newsletter FIM.
+          </p>
+          
+          <p style="color: #666; font-size: 12px;">
+            Jika tidak ingin menerima email lagi, 
+            <a href="${unsubscribeUrl}" style="color: #666;">klik di sini untuk berhenti berlangganan</a>.
           </p>
           
           <p style="color: #666; font-size: 12px;">
