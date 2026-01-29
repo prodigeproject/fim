@@ -58,6 +58,7 @@ import RecruiterAssignmentsManagement from "@/pages/admin/RecruiterAssignmentsMa
 import ToolsSettings from "@/pages/admin/ToolsSettings";
 import ArticleSchedulingCalendar from "@/pages/admin/ArticleSchedulingCalendar";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
+import RegistrationLanding from "@/pages/registration/RegistrationLanding";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
 import RegistrationDashboard from "@/pages/registration/RegistrationDashboard";
@@ -96,7 +97,8 @@ const AnimatedRoutes = () => {
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
         {/* Registration routes */}
-        <Route path="/daftar" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
+        <Route path="/daftar" element={<RegistrationLanding />} />
+        <Route path="/daftar/login" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
         <Route path="/daftar/signup" element={<RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate>} />
         <Route path="/daftar/closed" element={<RegistrationClosed />} />
         <Route path="/daftar/success" element={<RegistrationSuccess />} />
