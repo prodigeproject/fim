@@ -187,7 +187,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Sign in with username instead of email
-  // Uses generic error message to prevent username enumeration attacks
   const signInWithUsername = async (username: string, password: string) => {
     try {
       // First, look up the email by username
@@ -198,22 +197,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileError || !profileData) {
-        // Use generic error message to prevent username enumeration
-        return { error: new Error("Username atau password salah") };
+        return { error: new Error("Username tidak ditemukan") };
       }
 
       // Now sign in with the email
-      const result = await signIn(profileData.email, password);
-      
-      // Normalize error message to prevent email enumeration via different error messages
-      if (result.error) {
-        return { error: new Error("Username atau password salah") };
-      }
-      
-      return result;
+      return signIn(profileData.email, password);
     } catch (err) {
-      // Generic error for any failures
-      return { error: new Error("Username atau password salah") };
+      return { error: err as Error };
     }
   };
 

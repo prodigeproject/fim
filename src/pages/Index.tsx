@@ -219,7 +219,6 @@ const Index = () => {
               src={logoFim} 
               alt="Forum Indonesia Muda" 
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
-              fetchPriority="high"
             />
             <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               {t("home.hero.heading")}
@@ -264,8 +263,6 @@ const Index = () => {
                     <img
                       src={image.src}
                       alt={image.alt}
-                      width={1200}
-                      height={400}
                       className="w-full h-48 md:h-64 lg:h-80 object-cover"
                     />
                   </div>
@@ -423,8 +420,6 @@ const Index = () => {
                   <img 
                     src={article.featured_image_url || "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop"} 
                     alt={article.title} 
-                    width={400}
-                    height={160}
                     className="w-full h-40 object-cover" 
                   />
                   <div className="p-5">
@@ -487,8 +482,6 @@ const Index = () => {
                         src={partner.logo_url} 
                         alt={partner.name} 
                         loading="lazy"
-                        width={104}
-                        height={40}
                         className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" 
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
@@ -507,8 +500,6 @@ const Index = () => {
                         src={logo} 
                         alt={`Partner ${(index % partnerLogos.length) + 1}`} 
                         loading="lazy"
-                        width={104}
-                        height={40}
                         className="max-h-full max-w-full object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all" 
                       />
                     </div>

@@ -65,20 +65,14 @@ export default function FeaturedVideoSection() {
     };
   }, [queryClient]);
 
-  // Load YouTube IFrame API - deferred to avoid blocking initial render
+  // Load YouTube IFrame API
   useEffect(() => {
     if (window.YT) return;
 
-    // Defer script loading to after initial paint
-    const timeoutId = setTimeout(() => {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      tag.async = true;
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
   }, []);
 
   // Initialize YouTube player when playing
@@ -155,9 +149,7 @@ export default function FeaturedVideoSection() {
   const currentVideo = videos[activeVideoIndex];
 
   const getYouTubeThumbnail = (youtubeId: string) => {
-    // Use hqdefault.jpg as it's more reliably available for all YouTube videos
-    // maxresdefault.jpg returns 404 for videos without HD thumbnails
-    return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
   };
 
   return (
@@ -228,14 +220,12 @@ export default function FeaturedVideoSection() {
                   <button
                     onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
                     className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
-                    aria-label="Video sebelumnya"
                   >
                     <ChevronLeft className="h-5 w-5 text-white" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); goToNext(); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
-                    aria-label="Video berikutnya"
                   >
                     <ChevronRight className="h-5 w-5 text-white" />
                   </button>
@@ -288,7 +278,6 @@ export default function FeaturedVideoSection() {
                               ? "flex-1 bg-primary" 
                               : "w-6 bg-muted hover:bg-muted-foreground/50"
                           }`}
-                          aria-label={`Putar video ${index + 1}: ${video.title}`}
                         />
                       ))}
                     </div>
