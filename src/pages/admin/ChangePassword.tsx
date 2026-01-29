@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +22,7 @@ const passwordSchema = z.object({
 });
 
 export default function ChangePassword() {
-  const navigate = useNavigate();
-  const { updatePassword, profile } = useAdminAuth();
+  const { updatePassword, signOut, profile } = useAdminAuth();
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -51,10 +50,9 @@ export default function ChangePassword() {
       if (updateError) {
         setError(updateError.message);
       } else {
+        // Sign out after password change and redirect to login
+        await signOut();
         setSuccess(true);
-        setTimeout(() => {
-          navigate("/admin/dashboard");
-        }, 2000);
       }
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
@@ -72,16 +70,21 @@ export default function ChangePassword() {
 
   if (success) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-screen bg-muted p-4">
         <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
             <h2 className="text-xl font-bold mb-2">Password Berhasil Diubah</h2>
             <p className="text-muted-foreground">
-              Mengalihkan ke dashboard...
+              Silakan login kembali dengan password baru Anda.
             </p>
+            <Link to="/admin">
+              <Button className="w-full mt-4">
+                Ke Halaman Login
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

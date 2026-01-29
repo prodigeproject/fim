@@ -19,6 +19,7 @@ export default function RegistrationLogin() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
 
   // Redirect if already logged in
@@ -38,6 +39,7 @@ export default function RegistrationLogin() {
 
     setIsSubmitting(true);
     setNeedsVerification(false);
+    setIsBlocked(false);
 
     const { error } = await signIn(email, password);
     
@@ -45,6 +47,14 @@ export default function RegistrationLogin() {
       // Check for unverified email error
       if (error.message === "UNVERIFIED_EMAIL") {
         setNeedsVerification(true);
+        setIsBlocked(false);
+        setIsSubmitting(false);
+        return;
+      }
+      // Check for blocked account
+      if (error.message.includes("diblokir") || error.message.includes("blocked")) {
+        setIsBlocked(true);
+        setNeedsVerification(false);
         setIsSubmitting(false);
         return;
       }
@@ -129,6 +139,19 @@ export default function RegistrationLogin() {
                       >
                         {isResendingVerification ? "Mengirim..." : "Kirim ulang email verifikasi"}
                       </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {isBlocked && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="ml-2">
+                      <strong>Akun Diblokir</strong>
+                      <p className="mt-1 text-sm">
+                        Akun Anda telah diblokir oleh administrator. 
+                        Jika Anda merasa ini adalah kesalahan, silakan hubungi tim FIM.
+                      </p>
                     </AlertDescription>
                   </Alert>
                 )}
