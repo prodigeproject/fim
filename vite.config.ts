@@ -18,6 +18,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Target modern browsers to eliminate legacy JS polyfills
     target: "esnext",
+    // Generate source maps for debugging
+    sourcemap: true,
     // Enable code splitting
     rollupOptions: {
       output: {
