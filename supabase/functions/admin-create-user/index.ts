@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-type AppRole = "super_admin" | "moderator";
+type AppRole = "super_admin" | "admin" | "moderator";
 
 interface CreateAdminUserRequest {
   email: string;
@@ -17,7 +17,7 @@ interface CreateAdminUserRequest {
 }
 
 function isValidRole(role: unknown): role is AppRole {
-  return role === "super_admin" || role === "moderator";
+  return role === "super_admin" || role === "admin" || role === "moderator";
 }
 
 function usernameFromEmail(email: string) {
