@@ -68,11 +68,18 @@ const navItems: NavItem[] = [
       { name: "Email Settings", href: "/admin/email-settings", icon: Settings },
     ]
   },
-  { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
-  { name: "Regional", href: "/admin/regionals", icon: MapPin },
-  { name: "Alumni", href: "/admin/alumni", icon: Users },
+  { 
+    name: "Data Organisasi", 
+    href: "/admin/clubs", 
+    icon: UsersRound,
+    children: [
+      { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
+      { name: "Regional", href: "/admin/regionals", icon: MapPin },
+      { name: "Alumni", href: "/admin/alumni", icon: Users },
+      { name: "Mitra", href: "/admin/partners", icon: Handshake },
+    ]
+  },
   { name: "Video Featured", href: "/admin/featured-videos", icon: Video },
-  { name: "Mitra", href: "/admin/partners", icon: Handshake },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 

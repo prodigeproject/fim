@@ -382,7 +382,8 @@ export default function ArticleEditor() {
     
     // Moderator needs approval, Super Admin can publish directly
     if (!isSuperAdmin) {
-      saveMutation.mutate({ formData, needsApproval: true });
+      // Set status to needs_approval with status showing as "requested" in the UI
+      saveMutation.mutate({ formData, needsApproval: true, newStatus: 'draft' });
     } else {
       saveMutation.mutate({ formData, newStatus: 'published' });
     }
@@ -430,6 +431,11 @@ export default function ArticleEditor() {
   }, []);
 
   const statusBadge = useMemo(() => {
+    // Show "Requested" for articles pending approval
+    if (article?.needs_approval && formData.status === 'draft') {
+      return <Badge variant="outline" className="border-amber-500 text-amber-700">Menunggu Persetujuan</Badge>;
+    }
+    
     const statusConfig: Record<ArticleStatus, { label: string; variant: 'secondary' | 'outline' | 'default' | 'destructive' }> = {
       draft: { label: 'Draft', variant: 'secondary' },
       scheduled: { label: 'Terjadwal', variant: 'outline' },
@@ -439,7 +445,7 @@ export default function ArticleEditor() {
     };
     const config = statusConfig[formData.status] || statusConfig.draft;
     return <Badge variant={config.variant}>{config.label}</Badge>;
-  }, [formData.status]);
+  }, [formData.status, article?.needs_approval]);
 
   if (isLoadingArticle) {
     return (

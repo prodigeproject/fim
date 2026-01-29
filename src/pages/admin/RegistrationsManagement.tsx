@@ -1078,7 +1078,6 @@ export default function RegistrationsManagement() {
 
   // Get status badge based on registration status and training submission
   const getStatusBadge = (registration: Registration, training?: TrainingData | null) => {
-    const status = registration.registration_status;
     const isSubmitted = training?.is_submitted;
     const stage = registration.selection_stage;
     const passed = registration.selection_passed;
@@ -1104,6 +1103,7 @@ export default function RegistrationsManagement() {
       if (!isSubmitted) {
         return <Badge variant="secondary" className="gap-1"><AlertCircle className="h-3 w-3" />Belum Selesai</Badge>;
       }
+      // Submitted but not yet reviewed - show "Selesai Submit" 
       return <Badge variant="default" className="gap-1"><CheckCircle className="h-3 w-3" />Selesai Submit</Badge>;
     }
     
