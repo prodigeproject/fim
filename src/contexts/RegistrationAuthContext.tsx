@@ -41,6 +41,8 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   const [session, setSession] = useState<Session | null>(null);
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Flag to prevent auto-redirect during signup process
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const fetchRegistration = useCallback(async (userId: string) => {
     try {
@@ -73,7 +75,13 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     // Set up auth state listener FIRST (avoid deadlocks)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // Skip processing if we're in the middle of signup
+      if (isSigningUp) {
+        console.log("Skipping auth state change during signup");
+        return;
+      }
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
@@ -93,6 +101,12 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     supabase.auth
       .getSession()
       .then(({ data: { session: existingSession } }) => {
+        // Skip if we're signing up
+        if (isSigningUp) {
+          setIsLoading(false);
+          return;
+        }
+
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
 
@@ -107,11 +121,12 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchRegistration]);
+  }, [fetchRegistration, isSigningUp]);
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     try {
       setIsLoading(true);
+      setIsSigningUp(true); // Prevent auth state listener from triggering
 
       // Fetch current open batch
       const { data: batchData } = await supabase
@@ -121,7 +136,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         .eq("is_active", true)
         .maybeSingle();
 
-      // Sign up with Auth but don't auto-sign in
+      // Sign up with Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -187,6 +202,8 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       // Sign out immediately after signup - user should login manually
       await supabase.auth.signOut();
+      
+      // Clear state manually
       setUser(null);
       setSession(null);
       setRegistration(null);
@@ -197,6 +214,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       return { error: error as Error };
     } finally {
       setIsLoading(false);
+      setIsSigningUp(false); // Re-enable auth state listener
     }
   };
 
@@ -204,12 +222,16 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
+      console.log("Starting signIn for:", email);
+
       // First check if registration exists and is verified
       const { data: regCheck, error: regCheckError } = await supabase
         .from("fim_registrations")
         .select("id, email_verified, auth_user_id")
         .eq("email", email.toLowerCase().trim())
         .maybeSingle();
+
+      console.log("Registration check result:", { regCheck, regCheckError });
 
       if (regCheckError && regCheckError.code !== "PGRST116") {
         throw new Error("Gagal memeriksa data pendaftaran");
@@ -221,14 +243,19 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       // Check email verification status BEFORE signing in
       if (!regCheck.email_verified) {
+        console.log("Email not verified, throwing UNVERIFIED_EMAIL");
         throw new Error("UNVERIFIED_EMAIL");
       }
+
+      console.log("Email verified, proceeding with signInWithPassword");
 
       // Now do the actual sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      console.log("SignInWithPassword result:", { data: data ? "success" : null, error });
 
       if (error) throw error;
 
