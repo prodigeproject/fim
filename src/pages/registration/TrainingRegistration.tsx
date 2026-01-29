@@ -377,12 +377,95 @@ export default function TrainingRegistration() {
     toast.success("Data tersimpan");
   };
 
+  // Find missing required fields and their step
+  const getMissingFields = useCallback(() => {
+    const missing: { field: string; label: string; step: number }[] = [];
+
+    // Step 1: Biodata
+    const biodataRequired: { key: keyof TrainingFormData; label: string }[] = [
+      { key: "birth_date", label: "Tanggal Lahir" },
+      { key: "birth_place", label: "Tempat Lahir" },
+      { key: "gender", label: "Jenis Kelamin" },
+      { key: "nik", label: "NIK" },
+      { key: "address", label: "Alamat" },
+      { key: "city", label: "Kota" },
+      { key: "province", label: "Provinsi" },
+      { key: "education", label: "Pendidikan" },
+      { key: "institution", label: "Institusi" },
+      { key: "major", label: "Jurusan" },
+      { key: "graduation_year", label: "Tahun Lulus" },
+      { key: "occupation", label: "Pekerjaan" },
+    ];
+    biodataRequired.forEach(({ key, label }) => {
+      if (!formData[key]) missing.push({ field: key, label, step: 1 });
+    });
+
+    // Step 2: Organizational experience (at least 1 complete)
+    const hasCompleteExperience = formData.organizational_experience.some(
+      exp => exp.organization && exp.position && exp.year
+    );
+    if (!hasCompleteExperience) {
+      missing.push({ field: "organizational_experience", label: "Pengalaman Organisasi (min. 1 lengkap)", step: 2 });
+    }
+
+    // Step 3: Achievements (all 5 must have title and year)
+    formData.achievements.forEach((ach, idx) => {
+      if (!ach.title || !ach.year) {
+        missing.push({ field: `achievements_${idx}`, label: `Prestasi ke-${idx + 1}`, step: 3 });
+      }
+    });
+
+    // Step 4: Motivasi
+    if (!formData.motivation) missing.push({ field: "motivation", label: "Motivasi", step: 4 });
+    if (!formData.how_did_you_know) missing.push({ field: "how_did_you_know", label: "Dari Mana Mengetahui FIM", step: 4 });
+    if (!formData.why_join_fim) missing.push({ field: "why_join_fim", label: "Alasan Bergabung FIM", step: 4 });
+
+    // Step 5: Kepedulian Sosial
+    if (!formData.social_issue_concern) missing.push({ field: "social_issue_concern", label: "Isu Sosial yang Dipedulikan", step: 5 });
+    if (!formData.social_contribution_experience) missing.push({ field: "social_contribution_experience", label: "Pengalaman Kontribusi Sosial", step: 5 });
+
+    // Step 6: Kontribusi Strategis
+    if (!formData.strategic_contribution_plan) missing.push({ field: "strategic_contribution_plan", label: "Rencana Kontribusi Strategis", step: 6 });
+    if (!formData.impact_expected) missing.push({ field: "impact_expected", label: "Dampak yang Diharapkan", step: 6 });
+
+    // Step 7: Rekomendasi
+    if (!formData.recommender_name) missing.push({ field: "recommender_name", label: "Nama Pemberi Rekomendasi", step: 7 });
+    if (!formData.recommender_duration) missing.push({ field: "recommender_duration", label: "Lama Mengenal", step: 7 });
+    if (!formData.recommender_position) missing.push({ field: "recommender_position", label: "Jabatan Pemberi Rekomendasi", step: 7 });
+    if (!formData.recommendation_file_url) missing.push({ field: "recommendation_file_url", label: "File Surat Rekomendasi", step: 7 });
+
+    return missing;
+  }, [formData]);
+
   const handleSubmit = () => {
-    const completion = calculateCompletion();
-    if (completion < 80) {
-      toast.error("Lengkapi minimal 80% data sebelum mengirim");
+    const missingFields = getMissingFields();
+    
+    if (missingFields.length > 0) {
+      // Group missing fields by step
+      const groupedByStep = missingFields.reduce((acc, field) => {
+        if (!acc[field.step]) acc[field.step] = [];
+        acc[field.step].push(field.label);
+        return acc;
+      }, {} as Record<number, string[]>);
+
+      // Find first step with missing fields
+      const firstIncompleteStep = Math.min(...Object.keys(groupedByStep).map(Number));
+      const stepTitle = STEPS[firstIncompleteStep - 1].title;
+      const fieldsInStep = groupedByStep[firstIncompleteStep];
+
+      toast.error(
+        `Formulir belum lengkap 100%. Silakan lengkapi bagian "${stepTitle}": ${fieldsInStep.slice(0, 3).join(", ")}${fieldsInStep.length > 3 ? `, dan ${fieldsInStep.length - 3} lainnya` : ""}`,
+        {
+          duration: 6000,
+          action: {
+            label: "Buka Halaman",
+            onClick: () => setCurrentStep(firstIncompleteStep),
+          },
+        }
+      );
       return;
     }
+    
     setIsSubmitDialogOpen(true);
   };
 
