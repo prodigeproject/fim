@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Upload, FileSpreadsheet, Download, CheckCircle, XCircle, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -32,10 +33,17 @@ interface DynamicRole {
 interface ImportResult {
   email: string;
   full_name: string;
+  role: string;
   success: boolean;
   error?: string;
   password?: string;
 }
+
+const SYSTEM_ROLES = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  moderator: "Moderator",
+};
 
 function generateSecurePassword(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
@@ -64,6 +72,15 @@ async function extractFunctionErrorMessage(err: any): Promise<string> {
   return err?.message || "Terjadi kesalahan";
 }
 
+function parseRole(roleStr: string | undefined): "super_admin" | "moderator" | "admin" | null {
+  if (!roleStr) return null;
+  const normalized = roleStr.toLowerCase().trim().replace(/\s+/g, "_");
+  if (normalized === "super_admin" || normalized === "superadmin") return "super_admin";
+  if (normalized === "admin") return "admin";
+  if (normalized === "moderator") return "moderator";
+  return null;
+}
+
 export default function BulkUserImport() {
   const { toast } = useToast();
   const { user } = useAdminAuth();
@@ -73,6 +90,7 @@ export default function BulkUserImport() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"super_admin" | "moderator" | "admin">("moderator");
   const [selectedDynamicRoleId, setSelectedDynamicRoleId] = useState<string>("");
+  const [useRolePerRow, setUseRolePerRow] = useState(false);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState<string>("");
@@ -92,7 +110,7 @@ export default function BulkUserImport() {
 
   // Import mutation
   const importMutation = useMutation({
-    mutationFn: async (users: { email: string; full_name: string }[]) => {
+    mutationFn: async (users: { email: string; full_name: string; role: "super_admin" | "moderator" | "admin" }[]) => {
       const results: ImportResult[] = [];
 
       for (const u of users) {
@@ -109,7 +127,7 @@ export default function BulkUserImport() {
               email: u.email.trim().toLowerCase(),
               password,
               full_name: u.full_name.trim() || u.email.split("@")[0],
-              role: selectedRole,
+              role: u.role,
             },
           });
 
@@ -184,7 +202,10 @@ export default function BulkUserImport() {
         throw new Error("File tidak memiliki sheet");
       }
 
-      const users: { email: string; full_name: string }[] = [];
+      const users: { email: string; full_name: string; role: "super_admin" | "moderator" | "admin" }[] = [];
+
+      // Check if there's a Role column (column C)
+      const hasRoleColumn = useRolePerRow;
 
       worksheet.eachRow((row, rowNumber) => {
         // Skip header row
@@ -192,9 +213,20 @@ export default function BulkUserImport() {
 
         const email = row.getCell(1).text?.trim() || "";
         const fullName = row.getCell(2).text?.trim() || email.split("@")[0] || "";
+        
+        let role: "super_admin" | "moderator" | "admin" = selectedRole;
+        
+        // If using role per row, try to parse from column C
+        if (hasRoleColumn) {
+          const roleCell = row.getCell(3).text?.trim();
+          const parsedRole = parseRole(roleCell);
+          if (parsedRole) {
+            role = parsedRole;
+          }
+        }
 
         if (email && email.includes("@")) {
-          users.push({ email, full_name: fullName });
+          users.push({ email, full_name: fullName, role });
         }
       });
 
@@ -223,15 +255,28 @@ export default function BulkUserImport() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Users");
 
-    worksheet.columns = [
+    const columns = [
       { header: "Email", key: "email", width: 30 },
       { header: "Nama Lengkap", key: "full_name", width: 30 },
     ];
 
+    // Add Role column if using role per row
+    if (useRolePerRow) {
+      columns.push({ header: "Role", key: "role", width: 15 });
+    }
+
+    worksheet.columns = columns;
+
     // Add example rows
-    worksheet.addRow({ email: "user1@example.com", full_name: "User Satu" });
-    worksheet.addRow({ email: "user2@example.com", full_name: "User Dua" });
-    worksheet.addRow({ email: "user3@example.com", full_name: "User Tiga" });
+    if (useRolePerRow) {
+      worksheet.addRow({ email: "user1@example.com", full_name: "User Satu", role: "admin" });
+      worksheet.addRow({ email: "user2@example.com", full_name: "User Dua", role: "moderator" });
+      worksheet.addRow({ email: "user3@example.com", full_name: "User Tiga", role: "super_admin" });
+    } else {
+      worksheet.addRow({ email: "user1@example.com", full_name: "User Satu" });
+      worksheet.addRow({ email: "user2@example.com", full_name: "User Dua" });
+      worksheet.addRow({ email: "user3@example.com", full_name: "User Tiga" });
+    }
 
     // Style header
     worksheet.getRow(1).font = { bold: true };
@@ -241,6 +286,13 @@ export default function BulkUserImport() {
       fgColor: { argb: "FFE0E0E0" },
     };
 
+    // Add note about roles if using role per row
+    if (useRolePerRow) {
+      const noteRow = worksheet.addRow({});
+      noteRow.getCell(1).value = "Catatan: Role yang valid adalah 'super_admin', 'admin', atau 'moderator'";
+      noteRow.getCell(1).font = { italic: true, color: { argb: "FF666666" } };
+    }
+
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -248,7 +300,7 @@ export default function BulkUserImport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "template-import-users.xlsx";
+    a.download = useRolePerRow ? "template-import-users-with-role.xlsx" : "template-import-users.xlsx";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -256,7 +308,7 @@ export default function BulkUserImport() {
   const copyAllPasswords = async () => {
     const successResults = importResults.filter((r) => r.success && r.password);
     const text = successResults
-      .map((r) => `${r.email}\t${r.full_name}\t${r.password}`)
+      .map((r) => `${r.email}\t${r.full_name}\t${r.role}\t${r.password}`)
       .join("\n");
     await navigator.clipboard.writeText(text);
     toast({ title: "Data tersalin ke clipboard" });
@@ -283,7 +335,7 @@ export default function BulkUserImport() {
         <DialogHeader>
           <DialogTitle>Import Pengguna dari XLSX</DialogTitle>
           <DialogDescription>
-            Upload file Excel dengan kolom Email (A) dan Nama Lengkap (B)
+            Upload file Excel dengan kolom Email (A), Nama Lengkap (B), dan opsional Role (C)
           </DialogDescription>
         </DialogHeader>
 
@@ -293,7 +345,7 @@ export default function BulkUserImport() {
             <div>
               <p className="text-sm font-medium">Download Template</p>
               <p className="text-xs text-muted-foreground">
-                Format: Kolom A = Email, Kolom B = Nama Lengkap
+                Format: Kolom A = Email, Kolom B = Nama{useRolePerRow ? ", Kolom C = Role" : ""}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={downloadTemplate}>
@@ -302,26 +354,68 @@ export default function BulkUserImport() {
             </Button>
           </div>
 
-          {/* Role Selection */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Role Sistem</Label>
-              <Select
-                value={selectedRole}
-                onValueChange={(v) => setSelectedRole(v as "super_admin" | "moderator" | "admin")}
+          {/* Role per row option */}
+          <div className="flex items-center space-x-2 p-3 border rounded-lg">
+            <Checkbox
+              id="useRolePerRow"
+              checked={useRolePerRow}
+              onCheckedChange={(checked) => setUseRolePerRow(checked === true)}
+            />
+            <div className="grid gap-1">
+              <label
+                htmlFor="useRolePerRow"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="moderator">Moderator</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
-                </SelectContent>
-              </Select>
+                Gunakan Role per Baris
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Jika diaktifkan, kolom C akan dibaca sebagai role untuk setiap pengguna
+              </p>
             </div>
+          </div>
+
+          {/* Role Selection - only show if not using role per row */}
+          {!useRolePerRow && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Role Sistem (untuk semua)</Label>
+                <Select
+                  value={selectedRole}
+                  onValueChange={(v) => setSelectedRole(v as "super_admin" | "moderator" | "admin")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="moderator">Moderator</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Role Dinamis (opsional)</Label>
+                <Select value={selectedDynamicRoleId} onValueChange={setSelectedDynamicRoleId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tidak ada</SelectItem>
+                    {dynamicRoles?.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Role for all (when using role per row) */}
+          {useRolePerRow && (
             <div className="space-y-2">
-              <Label>Role Dinamis (opsional)</Label>
+              <Label>Role Dinamis (opsional, untuk semua pengguna)</Label>
               <Select value={selectedDynamicRoleId} onValueChange={setSelectedDynamicRoleId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih role..." />
@@ -336,7 +430,7 @@ export default function BulkUserImport() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          )}
 
           {/* File Upload */}
           <div className="space-y-2">
@@ -388,6 +482,7 @@ export default function BulkUserImport() {
                       <th className="p-2 text-left">Status</th>
                       <th className="p-2 text-left">Email</th>
                       <th className="p-2 text-left">Nama</th>
+                      <th className="p-2 text-left">Role</th>
                       <th className="p-2 text-left">Password / Error</th>
                     </tr>
                   </thead>
@@ -406,6 +501,7 @@ export default function BulkUserImport() {
                         </td>
                         <td className="p-2 font-mono">{result.email}</td>
                         <td className="p-2">{result.full_name}</td>
+                        <td className="p-2">{SYSTEM_ROLES[result.role as keyof typeof SYSTEM_ROLES] || result.role}</td>
                         <td className="p-2 font-mono">
                           {result.success ? (
                             <span className="text-green-700 dark:text-green-300">

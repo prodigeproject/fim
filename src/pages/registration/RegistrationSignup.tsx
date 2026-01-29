@@ -11,6 +11,8 @@ import { Loader2, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, Eye, E
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 import PhoneInput from "@/components/PhoneInput";
+import { ReCaptcha } from "@/components/ReCaptcha";
+import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
 
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -31,6 +33,7 @@ const checkPasswordStrength = (password: string) => {
 export default function RegistrationSignup() {
   const navigate = useNavigate();
   const { signUp, isLoading, user, registration } = useRegistrationAuth();
+  const { data: recaptchaConfig } = useRecaptchaConfig();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -46,6 +49,7 @@ export default function RegistrationSignup() {
   const [emailError, setEmailError] = useState("");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [signupCompleted, setSignupCompleted] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   // Only redirect if already logged in AND not during/after signup process
   useEffect(() => {
@@ -143,6 +147,29 @@ export default function RegistrationSignup() {
     if (formData.password !== formData.confirmPassword) {
       toast.error("Password dan konfirmasi password tidak cocok");
       return;
+    }
+
+    // Validate reCAPTCHA if enabled
+    if (recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key) {
+      if (!recaptchaToken) {
+        toast.error("Silakan verifikasi reCAPTCHA");
+        return;
+      }
+
+      // Verify token with backend
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-recaptcha", {
+          body: { token: recaptchaToken },
+        });
+        if (error || !data?.success) {
+          toast.error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
+          setRecaptchaToken(null);
+          return;
+        }
+      } catch (err) {
+        toast.error("Gagal memverifikasi reCAPTCHA");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -340,10 +367,18 @@ export default function RegistrationSignup() {
               </CardContent>
 
               <CardFooter className="flex flex-col gap-4">
+                {recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key && (
+                  <ReCaptcha
+                    siteKey={recaptchaConfig.site_key}
+                    onVerify={(token) => setRecaptchaToken(token)}
+                    onExpire={() => setRecaptchaToken(null)}
+                    onError={() => setRecaptchaToken(null)}
+                  />
+                )}
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail}
+                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail || (recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key && !recaptchaToken)}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

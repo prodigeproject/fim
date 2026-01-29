@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { z } from "zod";
+import { ReCaptcha } from "@/components/ReCaptcha";
+import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
@@ -18,6 +21,7 @@ const loginSchema = z.object({
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { signIn, user, role, isLoading: authLoading } = useAdminAuth();
+  const { data: recaptchaConfig } = useRecaptchaConfig();
   
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +30,7 @@ export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [redirecting, setRedirecting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   // Redirect if already logged in with role
   useEffect(() => {
@@ -57,6 +62,31 @@ export default function AdminLogin() {
     }
 
     setIsLoading(true);
+
+    // Validate reCAPTCHA if enabled
+    if (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key) {
+      if (!recaptchaToken) {
+        setError("Silakan verifikasi reCAPTCHA");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-recaptcha", {
+          body: { token: recaptchaToken },
+        });
+        if (error || !data?.success) {
+          setError("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
+          setRecaptchaToken(null);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        setError("Gagal memverifikasi reCAPTCHA");
+        setIsLoading(false);
+        return;
+      }
+    }
 
     try {
       // Sign in with email only
@@ -184,10 +214,19 @@ export default function AdminLogin() {
                 </div>
               </div>
 
+              {recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key && (
+                <ReCaptcha
+                  siteKey={recaptchaConfig.site_key}
+                  onVerify={(token) => setRecaptchaToken(token)}
+                  onExpire={() => setRecaptchaToken(null)}
+                  onError={() => setRecaptchaToken(null)}
+                />
+              )}
+
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || attempts >= 5}
+                disabled={isLoading || attempts >= 5 || (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key && !recaptchaToken)}
               >
                 {isLoading ? (
                   <>

@@ -9,11 +9,15 @@ import { toast } from "sonner";
 import { Loader2, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
+import { ReCaptcha } from "@/components/ReCaptcha";
+import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
 
 export default function RegistrationForgotPassword() {
+  const { data: recaptchaConfig } = useRecaptchaConfig();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +28,31 @@ export default function RegistrationForgotPassword() {
     }
 
     setIsSubmitting(true);
+
+    // Validate reCAPTCHA if enabled
+    if (recaptchaConfig?.enabled_forgot_password && recaptchaConfig?.site_key) {
+      if (!recaptchaToken) {
+        toast.error("Silakan verifikasi reCAPTCHA");
+        setIsSubmitting(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-recaptcha", {
+          body: { token: recaptchaToken },
+        });
+        if (error || !data?.success) {
+          toast.error("Verifikasi reCAPTCHA gagal. Silakan coba lagi.");
+          setRecaptchaToken(null);
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        toast.error("Gagal memverifikasi reCAPTCHA");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       // First check if email exists in fim_registrations table (registered applicant accounts)
@@ -127,11 +156,19 @@ export default function RegistrationForgotPassword() {
                   </div>
                 </CardContent>
 
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-3">
+                  {recaptchaConfig?.enabled_forgot_password && recaptchaConfig?.site_key && (
+                    <ReCaptcha
+                      siteKey={recaptchaConfig.site_key}
+                      onVerify={(token) => setRecaptchaToken(token)}
+                      onExpire={() => setRecaptchaToken(null)}
+                      onError={() => setRecaptchaToken(null)}
+                    />
+                  )}
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (recaptchaConfig?.enabled_forgot_password && recaptchaConfig?.site_key && !recaptchaToken)}
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
