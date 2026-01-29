@@ -9,6 +9,8 @@ import { jsPDF } from "jspdf";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { RecruiterAssignment, RecruiterAssignmentBadge } from "@/components/admin/RecruiterAssignment";
 import { InterviewerSelector } from "@/components/admin/InterviewerSelector";
+import { BulkImportRegistrants } from "@/components/admin/BulkImportRegistrants";
+import { BatchAnnouncementTrigger } from "@/components/admin/BatchAnnouncementTrigger";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1805,7 +1807,9 @@ Tim Forum Indonesia Muda
             Kelola dan review pendaftaran peserta FIM
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <BulkImportRegistrants />
+          <BatchAnnouncementTrigger />
           <Button variant="outline" onClick={() => setIsBlockedListOpen(true)}>
             <ListX className="h-4 w-4 mr-2" />
             Daftar Blokir
