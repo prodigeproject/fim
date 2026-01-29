@@ -228,12 +228,14 @@ export default function FeaturedVideoSection() {
                   <button
                     onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
                     className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Video sebelumnya"
                   >
                     <ChevronLeft className="h-5 w-5 text-white" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); goToNext(); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Video berikutnya"
                   >
                     <ChevronRight className="h-5 w-5 text-white" />
                   </button>
@@ -286,6 +288,7 @@ export default function FeaturedVideoSection() {
                               ? "flex-1 bg-primary" 
                               : "w-6 bg-muted hover:bg-muted-foreground/50"
                           }`}
+                          aria-label={`Putar video ${index + 1}: ${video.title}`}
                         />
                       ))}
                     </div>
