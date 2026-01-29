@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
@@ -61,7 +62,7 @@ export function usePermission(permissionKey: string) {
       };
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 10, // 10 seconds for more responsive updates
     refetchOnWindowFocus: true,
   });
 
@@ -76,6 +77,7 @@ export function usePermission(permissionKey: string) {
 
 export function useAllPermissions() {
   const { user, isSuperAdmin } = useAdminAuth();
+  const queryClient = useQueryClient();
 
   const { data: permissions, isLoading, refetch } = useQuery({
     queryKey: ["all-user-permissions", user?.id],
@@ -129,10 +131,47 @@ export function useAllPermissions() {
       return permissionMap;
     },
     enabled: !!user?.id && !isSuperAdmin,
-    staleTime: 1000 * 30, // 30 seconds for more real-time updates
+    staleTime: 1000 * 10, // 10 seconds for more real-time updates
     refetchOnWindowFocus: true,
-    refetchInterval: 1000 * 60, // Refetch every minute
+    refetchInterval: 1000 * 30, // Refetch every 30 seconds
   });
+
+  // Supabase Realtime subscription for permission changes
+  useEffect(() => {
+    if (!user?.id || isSuperAdmin) return;
+
+    const channel = supabase
+      .channel('role-permissions-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'role_permissions' },
+        () => {
+          // Refetch permissions when any change occurs
+          queryClient.invalidateQueries({ queryKey: ["all-user-permissions", user.id] });
+          queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_dynamic_roles' },
+        (payload) => {
+          // Refetch when user's role assignment changes
+          if (payload.new && (payload.new as any).user_id === user.id) {
+            queryClient.invalidateQueries({ queryKey: ["all-user-permissions", user.id] });
+            queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+          }
+          if (payload.old && (payload.old as any).user_id === user.id) {
+            queryClient.invalidateQueries({ queryKey: ["all-user-permissions", user.id] });
+            queryClient.invalidateQueries({ queryKey: ["user-permissions"] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, isSuperAdmin, queryClient]);
 
   const hasPermission = (key: string, action: "view" | "create" | "edit" | "delete" = "view") => {
     if (isSuperAdmin) return true;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermission } from "@/hooks/usePermission";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
   ArrowDown,
   Play,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 
 interface FeaturedVideo {
@@ -59,6 +61,7 @@ interface FeaturedVideo {
 
 export default function FeaturedVideosManagement() {
   const queryClient = useQueryClient();
+  const { canCreate, canEdit, canDelete } = usePermission("featured_videos");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<FeaturedVideo | null>(null);
   const [deleteVideo, setDeleteVideo] = useState<FeaturedVideo | null>(null);
@@ -231,10 +234,12 @@ export default function FeaturedVideosManagement() {
           </h1>
           <p className="text-muted-foreground">Kelola video pilihan di homepage</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Tambah Video
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Video
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -314,12 +319,20 @@ export default function FeaturedVideosManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(video)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteVideo(video)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {canEdit ? (
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(video)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" title="Lihat">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteVideo(video)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
