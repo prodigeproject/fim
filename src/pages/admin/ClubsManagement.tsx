@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +49,7 @@ import {
   Download,
   ArrowUpAZ,
   ArrowDownZA,
+  Eye,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +71,7 @@ interface Club {
 
 export default function ClubsManagement() {
   const { isSuperAdmin, user } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("clubs");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -384,27 +387,32 @@ export default function ClubsManagement() {
             onChange={handleCSVImport}
             className="hidden"
           />
-          <Button variant="outline" onClick={exportToCSV} disabled={!clubs?.length}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Import CSV
-          </Button>
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Club
+          {canCreate && (
+            <>
+              <Button variant="outline" onClick={exportToCSV} disabled={!clubs?.length}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
               </Button>
-            </DialogTrigger>
+              <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+            </>
+          )}
+          {canCreate && (
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tambah Club
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingClub ? "Edit Club" : "Tambah Club Baru"}</DialogTitle>
@@ -530,6 +538,7 @@ export default function ClubsManagement() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -609,10 +618,16 @@ export default function ClubsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(club)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {isSuperAdmin && (
+                          {canEdit ? (
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(club)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" title="Lihat detail">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="sm">

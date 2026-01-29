@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -41,7 +42,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet, Download, ArrowUpAZ, ArrowDownZA } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Loader2, MapPin, Upload, Image, FileSpreadsheet, Download, ArrowUpAZ, ArrowDownZA, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -69,6 +70,7 @@ const ISLANDS = [
 
 export default function RegionalsManagement() {
   const { isSuperAdmin, user } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("regionals");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -374,27 +376,32 @@ export default function RegionalsManagement() {
             onChange={handleCSVImport}
             className="hidden"
           />
-          <Button variant="outline" onClick={exportToCSV} disabled={!regionals?.length}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Import CSV
-          </Button>
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Regional
+          {canCreate && (
+            <>
+              <Button variant="outline" onClick={exportToCSV} disabled={!regionals?.length}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
               </Button>
-            </DialogTrigger>
+              <Button variant="outline" onClick={() => csvInputRef.current?.click()}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+            </>
+          )}
+          {canCreate && (
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tambah Regional
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingRegional ? "Edit Regional" : "Tambah Regional Baru"}</DialogTitle>
@@ -516,6 +523,7 @@ export default function RegionalsManagement() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -606,10 +614,16 @@ export default function RegionalsManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(regional)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {isSuperAdmin && (
+                          {canEdit ? (
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(regional)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" title="Lihat">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="sm">
