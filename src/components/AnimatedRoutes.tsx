@@ -14,6 +14,7 @@ import BlogDetail from "@/pages/BlogDetail";
 import Donasi from "@/pages/Donasi";
 import FAQ from "@/pages/FAQ";
 import NotFound from "@/pages/NotFound";
+import NewsletterUnsubscribe from "@/pages/NewsletterUnsubscribe";
 
 // Admin imports
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
@@ -86,6 +87,7 @@ const AnimatedRoutes = () => {
         <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
         <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
         <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+        <Route path="/unsubscribe" element={<PageTransition><NewsletterUnsubscribe /></PageTransition>} />
         
         {/* Legacy routes redirect */}
         <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
