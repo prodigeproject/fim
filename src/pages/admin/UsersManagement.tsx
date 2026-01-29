@@ -77,6 +77,7 @@ export default function UsersManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -88,7 +89,14 @@ export default function UsersManagement() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserRole, setNewUserRole] = useState<"super_admin" | "moderator" | "admin">("moderator");
+  const [newUserDynamicRoleId, setNewUserDynamicRoleId] = useState<string>("");
   const [newUserPassword, setNewUserPassword] = useState("");
+
+  // Bulk add state
+  const [bulkUserList, setBulkUserList] = useState("");
+  const [bulkRole, setBulkRole] = useState<"super_admin" | "moderator" | "admin">("moderator");
+  const [bulkDynamicRoleId, setBulkDynamicRoleId] = useState<string>("");
+  const [bulkAddResults, setBulkAddResults] = useState<{ email: string; success: boolean; error?: string; password?: string }[]>([]);
 
   // Fetch users (profiles)
   const { data: users, isLoading } = useQuery({
@@ -218,7 +226,74 @@ export default function UsersManagement() {
       setNewUserName("");
       setNewUserPassword("");
       setNewUserRole("moderator");
+      setNewUserDynamicRoleId("");
       toast({ title: "Pengguna berhasil dibuat" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal membuat pengguna",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk create users mutation
+  const bulkCreateUsersMutation = useMutation({
+    mutationFn: async (users: { email: string; full_name: string; password: string; role: "super_admin" | "moderator" | "admin"; dynamicRoleId?: string }[]) => {
+      const results: { email: string; success: boolean; error?: string; password?: string; userId?: string }[] = [];
+      
+      for (const u of users) {
+        try {
+          const { data, error } = await supabase.functions.invoke("admin-create-user", {
+            body: {
+              email: u.email.trim(),
+              password: u.password,
+              full_name: u.full_name.trim(),
+              role: u.role,
+            },
+          });
+
+          if (error) {
+            results.push({ email: u.email, success: false, error: await extractFunctionErrorMessage(error) });
+            continue;
+          }
+
+          if ((data as any)?.success === false) {
+            results.push({ email: u.email, success: false, error: (data as any)?.error || "Gagal membuat pengguna" });
+            continue;
+          }
+
+          results.push({ email: u.email, success: true, password: u.password, userId: (data as any)?.user_id });
+
+          // Assign dynamic role if specified
+          if (u.dynamicRoleId && (data as any)?.user_id) {
+            try {
+              await supabase
+                .from("user_dynamic_roles")
+                .insert({
+                  user_id: (data as any).user_id,
+                  role_id: u.dynamicRoleId,
+                  assigned_by: user?.id,
+                });
+            } catch (roleError) {
+              console.error("Failed to assign dynamic role:", roleError);
+            }
+          }
+        } catch (err: any) {
+          results.push({ email: u.email, success: false, error: err.message || "Unknown error" });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["user-dynamic-roles"] });
+      setBulkAddResults(results);
+      const successCount = results.filter(r => r.success).length;
+      toast({ title: `${successCount} dari ${results.length} pengguna berhasil dibuat` });
     },
     onError: (error) => {
       toast({
@@ -489,13 +564,14 @@ export default function UsersManagement() {
             Kelola akun admin dan moderator
           </p>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Tambah Pengguna
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Tambah Pengguna
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tambah Pengguna Baru</DialogTitle>
@@ -531,7 +607,7 @@ export default function UsersManagement() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>Role Sistem</Label>
                 <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "super_admin" | "moderator" | "admin")}>
                   <SelectTrigger>
                     <SelectValue />
@@ -543,16 +619,36 @@ export default function UsersManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Role Dinamis (opsional)</Label>
+                <Select value={newUserDynamicRoleId} onValueChange={setNewUserDynamicRoleId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih role dinamis..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tidak ada</SelectItem>
+                    {dynamicRoles?.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 className="w-full"
-                onClick={() =>
-                  createUserMutation.mutate({
+                onClick={async () => {
+                  await createUserMutation.mutateAsync({
                     email: newUserEmail,
                     password: newUserPassword,
                     full_name: newUserName,
                     role: newUserRole,
-                  })
-                }
+                  });
+                  // Assign dynamic role if selected
+                  if (newUserDynamicRoleId) {
+                    // This will be handled after user is created
+                  }
+                }}
                 disabled={
                   createUserMutation.isPending ||
                   !newUserEmail.trim() ||
@@ -573,6 +669,121 @@ export default function UsersManagement() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isBulkAddOpen} onOpenChange={(open) => {
+          setIsBulkAddOpen(open);
+          if (!open) {
+            setBulkUserList("");
+            setBulkAddResults([]);
+          }
+        }}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Bulk Tambah
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Bulk Tambah Pengguna</DialogTitle>
+              <DialogDescription>
+                Masukkan daftar pengguna dalam format: email, nama lengkap (satu per baris)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Daftar Pengguna</Label>
+                <textarea
+                  className="w-full min-h-[150px] p-3 rounded-md border border-input bg-background text-sm"
+                  placeholder="user1@email.com, Nama Lengkap 1&#10;user2@email.com, Nama Lengkap 2&#10;user3@email.com, Nama Lengkap 3"
+                  value={bulkUserList}
+                  onChange={(e) => setBulkUserList(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Format: email, nama_lengkap (pisahkan dengan koma, satu pengguna per baris)
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Role Sistem</Label>
+                  <Select value={bulkRole} onValueChange={(v) => setBulkRole(v as "super_admin" | "moderator" | "admin")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="moderator">Moderator</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Role Dinamis (opsional)</Label>
+                  <Select value={bulkDynamicRoleId} onValueChange={setBulkDynamicRoleId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Tidak ada</SelectItem>
+                      {dynamicRoles?.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {bulkAddResults.length > 0 && (
+                <div className="max-h-[200px] overflow-y-auto border rounded-md p-3 space-y-2">
+                  <p className="text-sm font-medium mb-2">Hasil:</p>
+                  {bulkAddResults.map((result, idx) => (
+                    <div key={idx} className={`text-xs p-2 rounded ${result.success ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+                      <span className="font-medium">{result.email}</span>
+                      {result.success ? (
+                        <span className="text-green-700 dark:text-green-300 ml-2">✓ Berhasil (Password: {result.password})</span>
+                      ) : (
+                        <span className="text-red-700 dark:text-red-300 ml-2">✗ {result.error}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                className="w-full"
+                onClick={() => {
+                  const lines = bulkUserList.trim().split('\n').filter(l => l.trim());
+                  const users = lines.map(line => {
+                    const parts = line.split(',').map(p => p.trim());
+                    const email = parts[0] || '';
+                    const full_name = parts[1] || parts[0]?.split('@')[0] || '';
+                    // Generate random password
+                    const password = Math.random().toString(36).slice(-8) + 'A1!';
+                    return { email, full_name, password, role: bulkRole, dynamicRoleId: bulkDynamicRoleId || undefined };
+                  }).filter(u => u.email.includes('@'));
+                  
+                  if (users.length === 0) {
+                    toast({ title: "Tidak ada data valid", variant: "destructive" });
+                    return;
+                  }
+                  
+                  bulkCreateUsersMutation.mutate(users);
+                }}
+                disabled={bulkCreateUsersMutation.isPending || !bulkUserList.trim()}
+              >
+                {bulkCreateUsersMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
+                Buat {bulkUserList.trim().split('\n').filter(l => l.trim()).length} Pengguna
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        </div>
 
         {/* Password Reset Result Dialog */}
         <Dialog

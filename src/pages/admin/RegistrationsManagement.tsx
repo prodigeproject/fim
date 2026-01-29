@@ -183,7 +183,6 @@ export default function RegistrationsManagement() {
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [reviewerNote, setReviewerNote] = useState("");
-  const [interviewDate, setInterviewDate] = useState("");
   const [noteVisibleToApplicant, setNoteVisibleToApplicant] = useState(false);
   const [interviewFeedbackNote, setInterviewFeedbackNote] = useState("");
   const [isInterviewCompletedDialogOpen, setIsInterviewCompletedDialogOpen] = useState(false);
@@ -600,39 +599,24 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Delete registration mutation
+  // Delete registration mutation - uses edge function to also delete auth user
   const deleteRegistrationMutation = useMutation({
     mutationFn: async (registration: Registration) => {
-      // Delete training data first
-      await supabase
-        .from("fim_training_registrations")
-        .delete()
-        .eq("registration_id", registration.id);
-      
-      // Delete interview schedules
-      await supabase
-        .from("interview_schedules")
-        .delete()
-        .eq("registration_id", registration.id);
-      
-      // Delete registration
-      const { error } = await supabase
-        .from("fim_registrations")
-        .delete()
-        .eq("id", registration.id);
-      
+      // Call edge function to delete auth user and all related data
+      const { data, error } = await supabase.functions.invoke("delete-registrant-auth-user", {
+        body: {
+          auth_user_id: registration.auth_user_id,
+          registration_id: registration.id,
+        },
+      });
+
       if (error) throw error;
-      
-      // Delete auth user if exists
-      if (registration.auth_user_id) {
-        // Note: This requires admin privileges - may not work without service role
-        console.log("Auth user deletion would require service role:", registration.auth_user_id);
-      }
+      if (data?.error) throw new Error(data.error);
       
       return registration;
     },
     onSuccess: (reg) => {
-      toast.success(`Data pendaftar ${reg.full_name} berhasil dihapus`);
+      toast.success(`Data pendaftar ${reg.full_name} berhasil dihapus. Email dapat digunakan untuk pendaftaran baru.`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setIsDeleteDialogOpen(false);
       setRegistrationToDelete(null);
@@ -1251,7 +1235,6 @@ export default function RegistrationsManagement() {
       toast.success(`Tahap seleksi berhasil diubah ke ${stageText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setReviewerNote("");
-      setInterviewDate("");
       setIsScheduleDialogOpen(false);
       // Update selected registration state with correct stage value
       if (selectedRegistration?.id === variables.id) {
@@ -3196,22 +3179,8 @@ Tim Forum Indonesia Muda
                     interviewerName: profile?.full_name || profile?.username || undefined,
                   });
 
-                  const formattedDate = new Date(`${scheduleData.date}T${scheduleData.time}`).toLocaleDateString('id-ID', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  }) + ` pukul ${scheduleData.time} WIB`;
-
-                  // Update registration stage
-                  await updateStageMutation.mutateAsync({
-                    id: scheduleData.registration.id,
-                    stage: "wawancara",
-                    note: scheduleData.note,
-                    interviewDate: formattedDate,
-                    email: scheduleData.registration.email,
-                    name: scheduleData.registration.full_name,
-                  });
+                  // The createInterviewScheduleMutation already updates registration stage
+                  // No need to call updateStageMutation again - this was causing timestamp errors
 
                   toast.success("Jadwal wawancara berhasil dibuat dan disinkronkan dengan kalender");
                   setIsScheduleDialogOpen(false);
