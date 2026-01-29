@@ -116,7 +116,7 @@ const Navbar = () => {
             <SearchDialog />
             <ThemeToggle />
             <LanguageSwitcher />
-            <Link to="/daftar">
+            <Link to="/portal">
               <Button variant="outline" className="font-semibold">
                 {t("nav.register")}
               </Button>
@@ -199,7 +199,7 @@ const Navbar = () => {
                 <LanguageSwitcher />
                 <span className="text-sm text-muted-foreground">{t("common.selectLanguage")}</span>
               </div>
-              <Link to="/daftar" onClick={() => setIsOpen(false)}>
+              <Link to="/portal" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="w-full">
                   {t("nav.register")}
                 </Button>

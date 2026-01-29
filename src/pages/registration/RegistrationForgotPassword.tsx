@@ -75,7 +75,7 @@ export default function RegistrationForgotPassword() {
 
       // Email exists in registrations, proceed with password reset
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/daftar/reset-password`,
+        redirectTo: `${window.location.origin}/portal/reset-password`,
       });
 
       if (error) throw error;
@@ -184,7 +184,7 @@ export default function RegistrationForgotPassword() {
 
           <div className="text-center mt-6">
             <Link
-              to="/daftar"
+              to="/portal/login"
               className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
             >
               <ArrowLeft className="h-4 w-4" />

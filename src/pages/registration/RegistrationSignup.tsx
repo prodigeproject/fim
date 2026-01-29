@@ -54,7 +54,7 @@ export default function RegistrationSignup() {
   // Only redirect if already logged in AND not during/after signup process
   useEffect(() => {
     if (user && registration && !signupCompleted && !isSubmitting) {
-      navigate("/daftar/dashboard", { replace: true });
+      navigate("/portal/dashboard", { replace: true });
     }
   }, [user, registration, navigate, signupCompleted, isSubmitting]);
 
@@ -192,7 +192,7 @@ export default function RegistrationSignup() {
       // Mark signup as completed to prevent redirect loops
       setSignupCompleted(true);
       // Redirect to success page with message, then user logs in manually
-      navigate("/daftar/success", { replace: true });
+      navigate("/portal/success", { replace: true });
     }
   };
 
@@ -391,7 +391,7 @@ export default function RegistrationSignup() {
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Sudah punya akun? </span>
                   <Link 
-                    to="/daftar" 
+                    to="/portal/login" 
                     className="text-primary hover:underline font-medium"
                   >
                     Masuk di sini

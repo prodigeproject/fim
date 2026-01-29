@@ -26,10 +26,15 @@ export default function RegistrationLogin() {
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
+  // Dynamic error state
+  const [errorType, setErrorType] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && registration) {
-      navigate("/daftar/dashboard", { replace: true });
+      navigate("/portal/dashboard", { replace: true });
     }
   }, [user, registration, navigate]);
 
@@ -44,6 +49,9 @@ export default function RegistrationLogin() {
     setIsSubmitting(true);
     setNeedsVerification(false);
     setIsBlocked(false);
+    setErrorType(null);
+    setErrorMessage("");
+    setRemainingAttempts(null);
 
     // Validate reCAPTCHA if enabled
     if (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key) {
@@ -77,6 +85,7 @@ export default function RegistrationLogin() {
       if (error.message === "UNVERIFIED_EMAIL") {
         setNeedsVerification(true);
         setIsBlocked(false);
+        setErrorType("unverified");
         setIsSubmitting(false);
         return;
       }
@@ -84,14 +93,38 @@ export default function RegistrationLogin() {
       if (error.message.includes("diblokir") || error.message.includes("blocked")) {
         setIsBlocked(true);
         setNeedsVerification(false);
+        setErrorType("blocked");
         setIsSubmitting(false);
         return;
       }
-      toast.error("Login gagal: " + error.message);
+      // Check for invalid credentials
+      if (error.message.includes("salah") || error.message.includes("Invalid login credentials")) {
+        setErrorType("invalid_credentials");
+        setErrorMessage("Email atau password salah. Silakan periksa kembali.");
+        setIsSubmitting(false);
+        return;
+      }
+      // Check for not registered
+      if (error.message.includes("tidak terdaftar")) {
+        setErrorType("not_registered");
+        setErrorMessage(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+      // Check for admin account
+      if (error.message.includes("admin")) {
+        setErrorType("admin_account");
+        setErrorMessage(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+      // Generic error
+      setErrorType("generic");
+      setErrorMessage(error.message);
       setIsSubmitting(false);
     } else {
       toast.success("Login berhasil!");
-      navigate("/daftar/dashboard");
+      navigate("/portal/dashboard");
     }
   };
 
@@ -150,7 +183,8 @@ export default function RegistrationLogin() {
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
-                {needsVerification && (
+                {/* Unverified email alert */}
+                {errorType === "unverified" && (
                   <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
                     <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <AlertDescription className="ml-2 text-amber-800 dark:text-amber-200">
@@ -172,7 +206,8 @@ export default function RegistrationLogin() {
                   </Alert>
                 )}
 
-                {isBlocked && (
+                {/* Blocked account alert */}
+                {errorType === "blocked" && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="ml-2">
@@ -181,6 +216,62 @@ export default function RegistrationLogin() {
                         Akun Anda telah diblokir oleh administrator. 
                         Jika Anda merasa ini adalah kesalahan, silakan hubungi tim FIM.
                       </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Invalid credentials alert */}
+                {errorType === "invalid_credentials" && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="ml-2">
+                      <strong>Login Gagal</strong>
+                      <p className="mt-1 text-sm">{errorMessage}</p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Not registered alert */}
+                {errorType === "not_registered" && (
+                  <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                    <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="ml-2 text-blue-800 dark:text-blue-200">
+                      <strong>Email Tidak Terdaftar</strong>
+                      <p className="mt-1 text-sm">{errorMessage}</p>
+                      <Link 
+                        to="/portal/signup" 
+                        className="inline-block mt-2 text-blue-700 dark:text-blue-300 underline font-medium"
+                      >
+                        Daftar sekarang →
+                      </Link>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Admin account alert */}
+                {errorType === "admin_account" && (
+                  <Alert className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950">
+                    <AlertCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <AlertDescription className="ml-2 text-purple-800 dark:text-purple-200">
+                      <strong>Akun Admin Terdeteksi</strong>
+                      <p className="mt-1 text-sm">{errorMessage}</p>
+                      <a 
+                        href="/admin" 
+                        className="inline-block mt-2 text-purple-700 dark:text-purple-300 underline font-medium"
+                      >
+                        Login sebagai admin →
+                      </a>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Generic error alert */}
+                {errorType === "generic" && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="ml-2">
+                      <strong>Terjadi Kesalahan</strong>
+                      <p className="mt-1 text-sm">{errorMessage}</p>
                     </AlertDescription>
                   </Alert>
                 )}
@@ -219,7 +310,7 @@ export default function RegistrationLogin() {
 
                 <div className="flex justify-end">
                   <Link
-                    to="/daftar/forgot-password"
+                    to="/portal/forgot-password"
                     className="text-sm text-primary hover:underline"
                   >
                     Lupa password?
@@ -252,7 +343,7 @@ export default function RegistrationLogin() {
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Belum punya akun? </span>
                   <Link 
-                    to="/daftar/signup" 
+                    to="/portal/signup" 
                     className="text-primary hover:underline font-medium"
                   >
                     Daftar sekarang
