@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-type AppRole = "super_admin" | "moderator";
+type AppRole = "super_admin" | "admin" | "moderator";
 
 interface AdminProfile {
   id: string;
@@ -22,6 +22,7 @@ interface AdminAuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   isModerator: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithUsername: (username: string, password: string) => Promise<{ error: Error | null }>;
@@ -65,18 +66,23 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         _role: "super_admin",
       });
 
+      const { data: isAdminRole, error: adminError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+
       const { data: isModerator, error: modError } = await supabase.rpc("has_role", {
         _user_id: userId,
         _role: "moderator",
       });
 
-      if (superError || modError) {
-        console.error("Error fetching role via RPC:", superError || modError);
+      if (superError || adminError || modError) {
+        console.error("Error fetching role via RPC:", superError || adminError || modError);
         setRole(null);
         return;
       }
 
-      setRole(isSuper ? "super_admin" : isModerator ? "moderator" : null);
+      setRole(isSuper ? "super_admin" : isAdminRole ? "admin" : isModerator ? "moderator" : null);
     } catch (error) {
       console.error("Error in fetchProfileAndRole:", error);
     }
@@ -268,6 +274,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     role,
     isLoading,
     isSuperAdmin: role === "super_admin",
+    isAdmin: role === "admin",
     isModerator: role === "moderator",
     signIn,
     signInWithUsername,
