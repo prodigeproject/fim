@@ -257,7 +257,13 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       console.log("SignInWithPassword result:", { data: data ? "success" : null, error });
 
-      if (error) throw error;
+      if (error) {
+        // Provide more specific error messages
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Email atau password salah. Silakan periksa kembali.");
+        }
+        throw error;
+      }
 
       // Check if this user has an admin role - admins should use /admin
       if (data.user) {

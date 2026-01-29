@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
@@ -131,6 +131,10 @@ export default function AdminDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  
+  // Refs to preserve scroll position when toggling menus
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositionRef = useRef(0);
 
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
@@ -211,11 +215,25 @@ export default function AdminDashboard() {
   };
 
   const toggleMenu = (name: string) => {
+    // Save scroll position before toggle
+    if (sidebarScrollRef.current) {
+      scrollPositionRef.current = sidebarScrollRef.current.scrollTop;
+    }
+    
     setOpenMenus(prev => 
       prev.includes(name) 
         ? prev.filter(n => n !== name)
         : [...prev, name]
     );
+    
+    // Restore scroll position after DOM update using double rAF for reliable timing
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (sidebarScrollRef.current) {
+          sidebarScrollRef.current.scrollTop = scrollPositionRef.current;
+        }
+      });
+    });
   };
 
   // Show loading while auth is being checked
@@ -364,9 +382,10 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - simple overflow scroll with event isolation */}
+        {/* Navigation - scroll container with position preservation */}
         <div 
-          className="flex-1 overflow-y-auto"
+          ref={sidebarScrollRef}
+          className="flex-1 overflow-y-auto overscroll-contain"
           onScroll={(e) => e.stopPropagation()}
         >
           <nav className="p-2 space-y-0.5">

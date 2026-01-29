@@ -629,34 +629,57 @@ export default function RegistrationsManagement() {
     },
   });
 
-  // Bulk delete mutation
+  // Bulk delete mutation - now properly deletes auth users so emails can be reused
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      for (const id of ids) {
-        // Delete training data first
-        await supabase
-          .from("fim_training_registrations")
-          .delete()
-          .eq("registration_id", id);
-        
-        // Delete interview schedules
-        await supabase
-          .from("interview_schedules")
-          .delete()
-          .eq("registration_id", id);
-        
-        // Delete registration
-        const { error } = await supabase
-          .from("fim_registrations")
-          .delete()
-          .eq("id", id);
-        
-        if (error) throw error;
+      // Get registrations with auth_user_id
+      const { data: regs, error: fetchError } = await supabase
+        .from("fim_registrations")
+        .select("id, auth_user_id, full_name")
+        .in("id", ids);
+      
+      if (fetchError) throw fetchError;
+      if (!regs || regs.length === 0) {
+        throw new Error("Tidak ada data pendaftar ditemukan");
       }
-      return ids.length;
+
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const reg of regs) {
+        try {
+          // Call edge function to properly delete auth user and all data
+          const { error } = await supabase.functions.invoke("delete-registrant-auth-user", {
+            body: {
+              auth_user_id: reg.auth_user_id,
+              registration_id: reg.id,
+            },
+          });
+
+          if (error) {
+            console.error(`Failed to delete ${reg.full_name}:`, error);
+            errors.push(reg.full_name);
+            continue;
+          }
+          successCount++;
+        } catch (err) {
+          console.error(`Error deleting ${reg.full_name}:`, err);
+          errors.push(reg.full_name);
+        }
+      }
+      
+      if (errors.length > 0 && successCount === 0) {
+        throw new Error(`Gagal menghapus semua data: ${errors.join(", ")}`);
+      }
+
+      return { successCount, errors };
     },
-    onSuccess: (count) => {
-      toast.success(`${count} data pendaftar berhasil dihapus`);
+    onSuccess: ({ successCount, errors }) => {
+      if (errors.length > 0) {
+        toast.warning(`${successCount} berhasil dihapus, ${errors.length} gagal: ${errors.slice(0, 3).join(", ")}${errors.length > 3 ? "..." : ""}`);
+      } else {
+        toast.success(`${successCount} data pendaftar berhasil dihapus. Email dapat digunakan untuk pendaftaran baru.`);
+      }
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setSelectedIds(new Set());
       setIsBulkDeleteDialogOpen(false);
