@@ -1,232 +1,256 @@
 
-# Rencana Perbaikan Komprehensif
+# Rencana Implementasi: Menu Admin Dinamis Sesuai Role Permission
 
-Berdasarkan analisis mendalam kode dan database, berikut adalah masalah yang ditemukan beserta solusinya:
-
----
-
-## 1. Perbaikan Fitur Import XLSX, Tambah Pengguna, dan Bulk Tambah
-
-### Masalah Ditemukan
-1. **Fitur "Bulk Tambah"** (`UsersManagement.tsx` baris 703-816) menggunakan format teks manual yang tidak praktis
-2. **Import XLSX** (`BulkUserImport.tsx`) sudah ada dan berfungsi dengan baik
-3. Ada tumpang tindih karena keduanya memiliki fungsi yang sama
-
-### Solusi
-1. **Hapus tombol "Bulk Tambah" secara terpisah** - gunakan hanya "Import XLSX" untuk bulk operations
-2. **Pertahankan tombol "Tambah Pengguna"** untuk menambah satu user saja
-3. **Perbaiki BulkUserImport** untuk menambahkan opsi "Role per Baris" agar lebih fleksibel
-
-### Perubahan File
-
-| File | Perubahan |
-|------|-----------|
-| `src/pages/admin/UsersManagement.tsx` | Hapus tombol "Bulk Tambah" dan dialog terkait (baris 703-830); hanya tampilkan "Import XLSX" dan "Tambah Pengguna" |
-| `src/components/admin/BulkUserImport.tsx` | Tambahkan kolom opsional untuk Role per baris di template XLSX |
+## Ringkasan
+Implementasi menu admin panel yang sepenuhnya dinamis berdasarkan permission dari database, dengan real-time update dan mode view-only untuk user yang hanya memiliki privilege lihat.
 
 ---
 
-## 2. Perbaikan Halaman Penugasan Rekruter dengan Checklist Table
+## Permasalahan Saat Ini
 
-### Masalah Ditemukan
-Halaman `/admin/recruiter-assignments` saat ini hanya support:
-- Menambah 1 penugasan per aksi (1 rekruter + 1 pendaftar)
-- Tidak ada bulk assignment
-- Sulit untuk mengelola puluhan rekruter dengan ratusan peserta
+### 1. Menu Navigation Hybrid
+- `AdminDashboard.tsx` masih menggunakan kombinasi hardcoded flags (`superAdminOnly`, `adminOnly`, `hideFromModerator`) bersama dengan `permissionKey`
+- Ini membuat perubahan permission di database tidak selalu tercermin di menu
 
-### Solusi: Redesign dengan Bulk Assignment Matrix
+### 2. Permission Check Tidak Konsisten
+- Beberapa halaman tidak memiliki permission check sama sekali
+- Tombol CRUD (tambah/edit/hapus) muncul untuk semua user yang bisa akses halaman
 
-#### Komponen Baru
-1. **Recruiter Selection Panel** - Pilih satu rekruter terlebih dahulu
-2. **Assignment Type Selection** - Pilih tahap (Administrasi/Wawancara/Keduanya)
-3. **Participant Checklist Table** - Tabel dengan checkbox untuk memilih multiple peserta sekaligus
-4. **Bulk Actions** - Assign/Unassign semua peserta yang dipilih ke rekruter tersebut
+### 3. Real-time Belum Optimal
+- `staleTime` 30 detik dan `refetchInterval` 1 menit masih lambat
+- Tidak ada Supabase Realtime subscription untuk perubahan permission
 
-#### UI Layout
+### 4. Mapping Permission Key Tidak Lengkap
+Permission keys di database sudah lengkap (30 keys), tapi mapping di navItems belum complete:
+- `article_scheduling` - sudah ada
+- `article_collaboration` - belum dimapping ke menu
+- `seo_settings` - belum dimapping (sekarang pakai `tools_settings`)
+- `partners` - sudah ada
+
+---
+
+## Solusi Teknis
+
+### Fase 1: Refactor Navigation Filter (AdminDashboard.tsx)
+
+**Perubahan utama:**
+1. Hapus flag legacy (`superAdminOnly`, `adminOnly`, `hideFromModerator`) 
+2. Gunakan HANYA `permissionKey` untuk filtering
+3. Tambahkan fallback: menu tanpa `permissionKey` = akses semua (default dashboard)
+4. Super admin tetap bypass semua check
+
+**Mapping permissionKey yang diupdate:**
+```text
+Menu                     | permissionKey
+-------------------------|------------------
+Dashboard                | (tidak ada - default akses)
+Manajemen Artikel        | articles
+Persetujuan              | article_approvals
+Kalender Jadwal          | article_scheduling  
+Analytics                | article_analytics
+Newsletter Subscribers   | newsletter
+Email Settings           | email_settings
+FIM Club                 | clubs
+Regional                 | regionals  
+Alumni                   | alumni
+Mitra                    | partners
+Video Featured           | featured_videos
+Data Pendaftar           | registrations
+Penugasan Rekruter       | recruiter_assignments
+Kalender Wawancara       | interview_calendar
+Pengaturan Batch         | registration_settings
+Statistik                | registration_stats
+Template Email           | email_templates
+Manajemen User           | users
+Manajemen Role           | roles
+Admin Online             | online_admins
+Login Monitoring         | login_monitoring
+Sesi Aktif               | sessions
+Audit Log                | audit_logs
+Security                 | security
+PRD & Docs               | prd_docs
+Technical Docs           | technical_docs
+SEO & reCAPTCHA          | tools_settings + seo_settings
 ```
-┌───────────────────────────────────────────────────────────┐
-│ Penugasan Rekruter                                        │
-├───────────────────────────────────────────────────────────┤
-│ ┌─────────────────────┐ ┌──────────────────────────────┐  │
-│ │ Pilih Rekruter:     │ │ Tahap: [Administrasi ▼]      │  │
-│ │ [Select Dropdown ▼] │ └──────────────────────────────┘  │
-│ └─────────────────────┘                                   │
-├───────────────────────────────────────────────────────────┤
-│ [✓] Pilih Semua  │  3 peserta dipilih  │ [Assign] [Hapus] │
-├───────────────────────────────────────────────────────────┤
-│ │ ✓ │ Nama Peserta    │ Email           │ Stage   │Status│ │
-│ │ ✓ │ Ahmad Fauzi     │ ahmad@...       │ Admin   │  ✓   │ │
-│ │   │ Budi Santoso    │ budi@...        │ -       │      │ │
-│ │ ✓ │ Citra Dewi      │ citra@...       │ Wawanc. │  ✓   │ │
-│ └───┴─────────────────┴─────────────────┴─────────┴──────┘ │
-└───────────────────────────────────────────────────────────┘
-```
 
-### Perubahan File
+### Fase 2: Real-time Permission Updates (usePermission.ts)
 
-| File | Perubahan |
-|------|-----------|
-| `src/pages/admin/RecruiterAssignmentsManagement.tsx` | Redesign total dengan checklist table, bulk select, dan matrix view |
+**Perubahan:**
+1. Tambahkan Supabase Realtime subscription ke tabel `role_permissions`
+2. Kurangi `staleTime` menjadi 10 detik
+3. Refetch otomatis saat ada perubahan di database
+4. Cleanup subscription saat komponen unmount
 
----
-
-## 3. Perbaikan Login Akun Terverifikasi
-
-### Masalah Ditemukan
-Berdasarkan query database, akun dengan `email_verified: true` seharusnya bisa login. Namun:
-1. **Data sudah benar** - ada 5+ akun dengan `email_verified: true`
-2. **Kemungkinan masalah**: Password yang salah ATAU auth user tidak terinkronisasi dengan registration
-
-### Root Cause Analysis
-Setelah cek `RegistrationAuthContext.tsx`:
-1. Login flow sudah benar - cek `email_verified` sebelum `signInWithPassword`
-2. Error handling sudah ada untuk "Invalid login credentials"
-3. **Kemungkinan besar**: User lupa password karena di-set saat signup dan tidak dicatat
-
-### Solusi
-1. **Tambahkan fitur "Forgot Password"** yang sudah ada link-nya di login page
-2. **Pastikan error message lebih jelas** - sudah dilakukan
-3. **Test login dengan akun yang password-nya diketahui**
-
-Untuk memastikan login benar-benar bisa berfungsi, perlu ditambahkan **logging sementara** untuk debugging:
-
-### Perubahan File
-| File | Perubahan |
-|------|-----------|
-| `src/contexts/RegistrationAuthContext.tsx` | Sudah benar, tidak perlu perubahan |
-| `src/pages/registration/RegistrationLogin.tsx` | Tambahkan visual feedback lebih jelas saat login gagal |
-
-**Catatan**: Jika user tetap tidak bisa login meskipun akun terverifikasi, kemungkinan besar masalahnya adalah **lupa password**. Solusinya adalah menggunakan fitur "Forgot Password".
-
----
-
-## 4. Penjadwalan Ulang Wawancara Langsung di Detail Pendaftar
-
-### Masalah Ditemukan
-Di halaman detail pendaftar (`RegistrationsManagement.tsx`), untuk mengubah jadwal wawancara yang sudah terjadwal, admin harus:
-1. Membatalkan jadwal saat ini → status otomatis "Tidak Lolos"
-2. Membuat jadwal baru
-
-Ini tidak praktis karena pembatalan = Tidak Lolos.
-
-### Solusi
-Tambahkan tombol **"Ubah Jadwal"** yang langsung memperbarui tanggal/waktu tanpa membatalkan (sama seperti di `InterviewCalendar.tsx` yang sudah punya `rescheduleMutation`).
-
-#### Fitur Baru di Detail View
-1. Tombol "Ubah Jadwal" di sebelah info jadwal wawancara
-2. Dialog reschedule dengan form tanggal/waktu baru
-3. Opsi kirim notifikasi email jadwal baru
-4. Tidak mengubah status interview
-
-### Perubahan File
-
-| File | Perubahan |
-|------|-----------|
-| `src/pages/admin/RegistrationsManagement.tsx` | Tambah state, mutation, dan UI untuk reschedule interview langsung |
-
----
-
-## 5. Perbaikan reCAPTCHA Tidak Muncul
-
-### Masalah Ditemukan
-Berdasarkan analisis:
-1. **Database sudah benar** - `recaptcha_settings` sudah ada dengan:
-   - `site_key`: "6Lf9kFMsAAAAAKpNUXjDFZ1ngh03qOLUOIWG7ELj"
-   - `secret_key_encrypted`: sudah terisi
-   - `enabled_signup/login/forgot_password/admin_login`: semua `true`
-
-2. **Komponen `ReCaptcha.tsx`** sudah dibuat dengan benar
-
-3. **MASALAH UTAMA**: reCAPTCHA **TIDAK DIINTEGRASIKAN** ke halaman login/signup!
-   - `RegistrationLogin.tsx`: Tidak ada import atau penggunaan `ReCaptcha` component
-   - `RegistrationSignup.tsx`: Tidak ada import atau penggunaan `ReCaptcha` component
-   - `AdminLogin.tsx`: Tidak ada import atau penggunaan `ReCaptcha` component
-   - `RegistrationForgotPassword.tsx`: Tidak ada import atau penggunaan `ReCaptcha` component
-
-### Solusi
-Integrasikan komponen `ReCaptcha` ke semua halaman yang dikonfigurasi.
-
-### Implementasi per Halaman
-
-#### A. Registration Signup (`/daftar/signup`)
 ```typescript
-import { ReCaptcha } from "@/components/ReCaptcha";
-import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
+// Pseudo-code untuk realtime subscription
+useEffect(() => {
+  if (!user?.id || isSuperAdmin) return;
+  
+  const channel = supabase
+    .channel('role-permissions-changes')
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'role_permissions' },
+      () => refetch()
+    )
+    .subscribe();
+    
+  return () => supabase.removeChannel(channel);
+}, [user?.id]);
+```
 
-// Di dalam komponen:
-const { data: recaptchaConfig } = useRecaptchaConfig();
-const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+### Fase 3: View-Only Mode di Halaman Admin
 
-// Di form, sebelum tombol submit:
-{recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key && (
-  <ReCaptcha
-    siteKey={recaptchaConfig.site_key}
-    onVerify={(token) => setRecaptchaToken(token)}
-    onExpire={() => setRecaptchaToken(null)}
-  />
+Buat reusable component `PermissionGuard` dan update setiap halaman admin untuk menyembunyikan tombol CRUD berdasarkan permission.
+
+**Pola implementasi:**
+```tsx
+// Di setiap halaman admin
+const { canView, canCreate, canEdit, canDelete } = usePermission("clubs");
+
+// Tombol Tambah
+{canCreate && (
+  <Button><Plus /> Tambah Club</Button>
 )}
 
-// Di handleSubmit, validasi token sebelum signup:
-if (recaptchaConfig?.enabled_signup && !recaptchaToken) {
-  toast.error("Silakan verifikasi reCAPTCHA");
-  return;
-}
+// Tombol Edit 
+{canEdit && (
+  <Button><Pencil /> Edit</Button>
+)}
 
-// Kirim token ke backend untuk verifikasi:
-await supabase.functions.invoke("verify-recaptcha", {
-  body: { token: recaptchaToken }
-});
+// Tombol Hapus
+{canDelete && (
+  <AlertDialog>...</AlertDialog>
+)}
 ```
 
-#### B. Registration Login (`/daftar`)
-Logika sama dengan signup, menggunakan `enabled_login`
-
-#### C. Forgot Password (`/daftar/forgot-password`)
-Logika sama, menggunakan `enabled_forgot_password`
-
-#### D. Admin Login (`/admin`)
-Logika sama, menggunakan `enabled_admin_login`
-
-### Perubahan File
-
-| File | Perubahan |
-|------|-----------|
-| `src/pages/registration/RegistrationSignup.tsx` | Import dan integrasikan ReCaptcha component |
-| `src/pages/registration/RegistrationLogin.tsx` | Import dan integrasikan ReCaptcha component |
-| `src/pages/registration/RegistrationForgotPassword.tsx` | Import dan integrasikan ReCaptcha component |
-| `src/pages/admin/AdminLogin.tsx` | Import dan integrasikan ReCaptcha component |
+**Halaman yang perlu diupdate (prioritas tinggi):**
+1. `ClubsManagement.tsx` - permissionKey: `clubs`
+2. `RegionalsManagement.tsx` - permissionKey: `regionals`
+3. `AlumniManagement.tsx` - permissionKey: `alumni`
+4. `PartnersManagement.tsx` - permissionKey: `partners`
+5. `FeaturedVideosManagement.tsx` - permissionKey: `featured_videos`
+6. `NewsletterManagement.tsx` - permissionKey: `newsletter`
+7. `RegistrationsManagement.tsx` - permissionKey: `registrations`
+8. `ArticlesManagement.tsx` - permissionKey: `articles`
+9. `EmailTemplatesManagement.tsx` - permissionKey: `email_templates`
+10. `SessionsManagement.tsx` - permissionKey: `sessions`
+11. `AuditLogs.tsx` - permissionKey: `audit_logs`
+12. `InterviewCalendar.tsx` - permissionKey: `interview_calendar`
+13. `ArticleSchedulingCalendar.tsx` - permissionKey: `article_scheduling`
+14. `ToolsSettings.tsx` - permissionKey: `tools_settings`
 
 ---
 
-## Ringkasan Perubahan
+## File yang Akan Dimodifikasi
 
-| No | File | Perubahan | Kompleksitas |
-|----|------|-----------|--------------|
-| 1 | `UsersManagement.tsx` | Hapus Bulk Tambah dialog, hanya gunakan Import XLSX | Rendah |
-| 2 | `BulkUserImport.tsx` | Tambah kolom Role per baris di template | Sedang |
-| 3 | `RecruiterAssignmentsManagement.tsx` | Redesign dengan bulk checklist table | Tinggi |
-| 4 | `RegistrationsManagement.tsx` | Tambah tombol reschedule di detail view | Sedang |
-| 5 | `RegistrationSignup.tsx` | Integrasikan ReCaptcha | Sedang |
-| 6 | `RegistrationLogin.tsx` | Integrasikan ReCaptcha | Sedang |
-| 7 | `RegistrationForgotPassword.tsx` | Integrasikan ReCaptcha | Sedang |
-| 8 | `AdminLogin.tsx` | Integrasikan ReCaptcha | Sedang |
+### 1. `src/hooks/usePermission.ts`
+- Tambah Supabase Realtime subscription
+- Kurangi staleTime untuk lebih responsif
+- Tambah helper function `usePermissionGate`
+
+### 2. `src/pages/admin/AdminDashboard.tsx`
+- Refactor `navItems` - hapus legacy flags, tambah permissionKey di semua menu
+- Simplify `filterNavItems` - hanya gunakan permissionKey
+- Loading state saat permission loading
+
+### 3. Halaman Admin (14 file)
+Update untuk menggunakan `usePermission` dan menyembunyikan tombol CRUD:
+- ClubsManagement.tsx
+- RegionalsManagement.tsx
+- AlumniManagement.tsx
+- PartnersManagement.tsx
+- FeaturedVideosManagement.tsx
+- NewsletterManagement.tsx
+- RegistrationsManagement.tsx
+- ArticlesManagement.tsx
+- EmailTemplatesManagement.tsx
+- SessionsManagement.tsx
+- AuditLogs.tsx
+- InterviewCalendar.tsx
+- ArticleSchedulingCalendar.tsx
+- ToolsSettings.tsx
 
 ---
 
-## Urutan Implementasi
+## Alur Permission yang Baru
 
-1. **Fase 1**: Integrasi reCAPTCHA (paling mendesak karena security feature)
-2. **Fase 2**: Perbaikan UsersManagement (hapus Bulk Tambah, perbaiki Import XLSX)
-3. **Fase 3**: Tambah fitur reschedule di RegistrationsManagement
-4. **Fase 4**: Redesign RecruiterAssignmentsManagement
+```text
+User Login
+    │
+    ▼
+useAllPermissions() dipanggil
+    │
+    ├─── Super Admin? ──► Bypass semua, akses penuh
+    │
+    ▼
+Query role_permissions dari database
+    │
+    ├─── Subscribe realtime changes
+    │
+    ▼
+filterNavItems() di AdminDashboard
+    │
+    ├─── Cek permissionKey setiap menu
+    ├─── can_view = true → Tampilkan menu
+    ├─── can_view = false → Sembunyikan menu
+    │
+    ▼
+User buka halaman
+    │
+    ▼
+usePermission(permissionKey) di halaman
+    │
+    ├─── can_create = true → Tampilkan tombol Tambah
+    ├─── can_edit = true → Tampilkan tombol Edit
+    ├─── can_delete = true → Tampilkan tombol Hapus
+    ├─── Semua false → View-only mode
+```
 
 ---
 
-## Testing Checklist
+## Detail Teknis
 
-- [ ] Test Import XLSX dengan file berisi email, nama, dan role
-- [ ] Test penambahan satu user baru
-- [ ] Test login dengan akun terverifikasi (gunakan forgot password jika lupa)
-- [ ] Test reCAPTCHA muncul di semua halaman yang dikonfigurasi
-- [ ] Test reschedule wawancara langsung dari detail pendaftar
-- [ ] Test bulk assignment rekruter dengan multiple peserta
+### Struktur Permission di Database
+```text
+role_permissions:
+  - permission_key: "clubs"
+  - can_view: boolean    → Bisa lihat menu & halaman
+  - can_create: boolean  → Bisa tambah data baru
+  - can_edit: boolean    → Bisa edit data
+  - can_delete: boolean  → Bisa hapus data
+```
+
+### Contoh Konfigurasi Role "Rekruter"
+- `registrations`: can_view=true, can_create=false, can_edit=true, can_delete=false
+  - Bisa lihat data pendaftar
+  - Bisa edit (update status wawancara)
+  - Tidak bisa tambah/hapus
+
+### View-Only Mode
+Jika user hanya punya `can_view=true`:
+- Halaman tetap bisa diakses
+- Semua tombol aksi (Tambah/Edit/Hapus/Import/Export) disembunyikan
+- Data bisa dilihat dalam mode read-only
+- Form tidak muncul
+
+---
+
+## Keuntungan Implementasi
+
+1. **Fleksibilitas** - Permission bisa diatur per-fitur tanpa deploy ulang
+2. **Real-time** - Perubahan permission langsung berlaku tanpa refresh
+3. **Konsistensi** - Satu sumber kebenaran (database) untuk semua access control
+4. **Keamanan** - Double validation: menu tersembunyi + tombol tersembunyi + RLS di database
+5. **Maintainability** - Tidak perlu update code saat menambah role baru
+
+---
+
+## Estimasi Perubahan
+
+| File | Jenis Perubahan | Kompleksitas |
+|------|-----------------|--------------|
+| usePermission.ts | Tambah realtime subscription | Sedang |
+| AdminDashboard.tsx | Refactor filterNavItems | Sedang |
+| 14 halaman admin | Tambah permission checks | Rendah (repetitif) |
+
+Total: ~16 file dimodifikasi
