@@ -350,9 +350,37 @@ export default function RegistrationsManagement() {
     },
   });
 
+  // Fetch all training data for list view (to show submit status)
+  const { data: allTrainingData } = useQuery({
+    queryKey: ["all-training-data"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fim_training_registrations")
+        .select("id, registration_id, is_submitted, completion_percentage, submitted_at");
+
+      if (error) throw error;
+      return data as Array<{
+        id: string;
+        registration_id: string;
+        is_submitted: boolean;
+        completion_percentage: number;
+        submitted_at: string | null;
+      }>;
+    },
+  });
+
   // Helper to get interview schedule for a registration
   const getInterviewScheduleForRegistration = (registrationId: string) => {
     return allInterviewSchedules?.find(s => s.registration_id === registrationId);
+  };
+
+  // Helper to get training data for a registration in list view
+  const getTrainingDataForRegistration = (registrationId: string) => {
+    const training = allTrainingData?.find(t => t.registration_id === registrationId);
+    return training ? {
+      is_submitted: training.is_submitted,
+      completion_percentage: training.completion_percentage,
+    } as TrainingData : null;
   };
 
   // Fetch training data for selected registration
@@ -1090,6 +1118,7 @@ export default function RegistrationsManagement() {
   // Get status badge based on registration status and training submission
   const getStatusBadge = (registration: Registration, training?: TrainingData | null) => {
     const isSubmitted = training?.is_submitted;
+    const completionPercentage = training?.completion_percentage || 0;
     const stage = registration.selection_stage;
     const passed = registration.selection_passed;
     const finalResult = registration.final_result;
@@ -1111,11 +1140,17 @@ export default function RegistrationsManagement() {
         return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Tidak Lolos</Badge>;
       }
       // Not yet reviewed - check submission status
-      if (!isSubmitted) {
-        return <Badge variant="secondary" className="gap-1"><AlertCircle className="h-3 w-3" />Belum Selesai</Badge>;
+      if (isSubmitted) {
+        // Submitted - show "Selesai Submit" with green styling
+        return <Badge className="gap-1 bg-blue-600"><CheckCircle className="h-3 w-3" />Selesai Submit</Badge>;
       }
-      // Submitted but not yet reviewed - show "Selesai Submit" 
-      return <Badge variant="default" className="gap-1"><CheckCircle className="h-3 w-3" />Selesai Submit</Badge>;
+      // Not submitted yet - show progress
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Belum Selesai ({completionPercentage}%)
+        </Badge>
+      );
     }
     
     // For wawancara stage
@@ -2191,7 +2226,7 @@ Tim Forum Indonesia Muda
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
-                            {getStatusBadge(reg) || getInterviewStatusBadge(reg, schedule)}
+                            {getStatusBadge(reg, getTrainingDataForRegistration(reg.id)) || getInterviewStatusBadge(reg, schedule)}
                           </div>
                         </TableCell>
                         <TableCell>{getStageBadge(reg.selection_stage || 'administrasi', reg.selection_passed)}</TableCell>
