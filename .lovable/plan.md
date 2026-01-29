@@ -1,139 +1,214 @@
 
+# Rencana Implementasi Perbaikan
 
-# Rencana Debugging dan Perbaikan Fitur
+## Ringkasan Masalah yang Ditemukan
 
-Berdasarkan analisis mendalam, berikut adalah temuan masalah dan rencana perbaikannya:
+Berdasarkan analisis mendalam kode dan database, berikut adalah masalah yang perlu diperbaiki:
 
 ---
 
-## Ringkasan Temuan
+## 1. Bulk Add Account untuk Admin/Moderator
 
-### 1. ✅ Fitur yang Sudah Berfungsi dengan Baik
-- **Newsletter Subscription** - Log menunjukkan berhasil subscribe dan kirim email (contoh: `tlaganga@gasa.co` berhasil subscribe)
-- **Email Verification** - Sistem verifikasi email berjalan dengan baik
-- **Registration Flow to Success Page** - User diarahkan ke `/daftar/success` setelah signup
+### Status: SUDAH DIPERBAIKI (edge function)
+Edge function `admin-create-user` sudah diupdate untuk menerima role "admin" pada edit sebelumnya. Perlu verifikasi apakah sudah di-deploy.
 
-### 2. ❌ Bug Kritis #1: Role "admin" Tidak Valid di Edge Function
-**File:** `supabase/functions/admin-create-user/index.ts` (Baris 10-11, 19-21)
+### Tindakan
+- Deploy ulang edge function `admin-create-user` untuk memastikan perubahan aktif
 
-**Masalah:**
-```typescript
-type AppRole = "super_admin" | "moderator"; // ❌ TIDAK termasuk "admin"
+---
 
-function isValidRole(role: unknown): role is AppRole {
-  return role === "super_admin" || role === "moderator"; // ❌ TIDAK termasuk "admin"
-}
-```
+## 2. Akun Pendaftaran Terverifikasi Tidak Bisa Login
 
-**Dampak:** Bulk create dengan role "admin" akan SELALU gagal dengan error "Role tidak valid"
+### Masalah Ditemukan
+Berdasarkan kode di `RegistrationAuthContext.tsx` (baris 221-294), flow login sudah benar:
+1. Cek registration exists
+2. Cek email_verified
+3. Sign in dengan password
+4. Cek bukan admin
+5. Fetch registration data
 
-**Solusi:**
-```typescript
-type AppRole = "super_admin" | "admin" | "moderator";
+### Kemungkinan Masalah
+- **Password salah** - User mungkin lupa password
+- **Supabase auth error** - Error dari `signInWithPassword` tidak di-handle dengan benar
 
-function isValidRole(role: unknown): role is AppRole {
-  return role === "super_admin" || role === "admin" || role === "moderator";
-}
-```
+### Solusi
+1. Tambahkan handling error yang lebih spesifik untuk `Invalid login credentials`
+2. Perbaiki pesan error agar user tahu pasti penyebabnya (password salah vs email tidak ditemukan)
 
-### 3. ❌ Bug Kritis #2: AdminAuthContext Tidak Mengenali Role "admin"
-**File:** `src/contexts/AdminAuthContext.tsx` (Baris 6, 79)
-
-**Masalah:**
-```typescript
-type AppRole = "super_admin" | "moderator"; // ❌ TIDAK termasuk "admin"
-
-// Pada baris 79:
-setRole(isSuper ? "super_admin" : isModerator ? "moderator" : null); // ❌ admin diabaikan
-```
-
-**Dampak:** User dengan role "admin" akan terdeteksi sebagai `role: null` dan tidak bisa akses fitur
-
-**Solusi:**
-```typescript
-type AppRole = "super_admin" | "admin" | "moderator";
-
-// Tambahkan pengecekan role admin:
-const { data: isAdmin } = await supabase.rpc("has_role", {
-  _user_id: userId,
-  _role: "admin",
-});
-
-setRole(isSuper ? "super_admin" : isAdmin ? "admin" : isModerator ? "moderator" : null);
-```
-
-### 4. ⚠️ Potensi Masalah: Session Isolation
-**File:** `src/contexts/RegistrationAuthContext.tsx` dan `src/contexts/AdminAuthContext.tsx`
-
-**Masalah:** Keduanya menggunakan Supabase client yang sama (`supabase` dari `client.ts`), yang berarti session bisa saling overlap.
-
-**Dampak Potensial:** 
-- Login sebagai admin di `/admin` bisa mempengaruhi session pendaftar
-- Login sebagai pendaftar bisa mempengaruhi session admin
-
-**Catatan:** Berdasarkan memori, seharusnya sudah ada session isolation dengan storage key berbeda, tetapi kode saat ini tidak menunjukkan implementasi tersebut.
-
-### 5. ❌ Bug: Signup Auto-Login Race Condition
+### Perubahan File
 **File:** `src/contexts/RegistrationAuthContext.tsx`
-
-**Status:** Sudah ada perbaikan dengan `isSigningUp` flag, tetapi berdasarkan auth logs, terlihat pattern:
-```
-signup -> login (immediate_login_after_signup: true) -> logout
-```
-
-Ini menunjukkan Supabase auto-confirm menyebabkan login otomatis sebelum signOut dipanggil. Perlu dipastikan timing signOut sudah benar.
-
----
-
-## Rencana Perbaikan
-
-### Fase 1: Perbaikan Role "admin" di Edge Function
-1. Update `supabase/functions/admin-create-user/index.ts`:
-   - Tambahkan "admin" ke type `AppRole`
-   - Tambahkan "admin" ke fungsi `isValidRole()`
-
-### Fase 2: Perbaikan Role "admin" di Frontend
-2. Update `src/contexts/AdminAuthContext.tsx`:
-   - Tambahkan "admin" ke type `AppRole`
-   - Tambahkan pengecekan `has_role` untuk "admin"
-   - Update logic `setRole()` untuk include admin
-
-### Fase 3: Perbaikan Properti `isAdmin`
-3. Tambahkan `isAdmin` computed property di AdminAuthContext:
 ```typescript
-const value = {
-  // ...existing
-  isAdmin: role === "admin",
-};
+// Di signIn function, setelah signInWithPassword
+if (error) {
+  if (error.message.includes("Invalid login credentials")) {
+    throw new Error("Email atau password salah. Silakan periksa kembali.");
+  }
+  throw error;
+}
 ```
 
-### Fase 4: Verifikasi Registration Flow
-4. Review dan pastikan signup flow:
-   - `signUp()` → create registration → send verification → `signOut()` → redirect ke `/daftar/success`
-   - Tidak ada auto-login yang tersisa
+---
+
+## 3. Bulk Delete Tidak Menghapus Auth User
+
+### Masalah Kritis
+**File:** `src/pages/admin/RegistrationsManagement.tsx` (baris 632-667)
+
+`bulkDeleteMutation` hanya menghapus:
+- `fim_training_registrations`
+- `interview_schedules`
+- `fim_registrations`
+
+**TIDAK** menghapus auth user, sehingga email tidak bisa didaftarkan ulang.
+
+### Solusi
+Update `bulkDeleteMutation` untuk memanggil edge function `delete-registrant-auth-user` per registrasi (sama seperti `deleteRegistrationMutation`).
+
+### Perubahan File
+**File:** `src/pages/admin/RegistrationsManagement.tsx`
+```typescript
+// Update bulkDeleteMutation
+const bulkDeleteMutation = useMutation({
+  mutationFn: async (ids: string[]) => {
+    // Get registrations with auth_user_id
+    const { data: regs } = await supabase
+      .from("fim_registrations")
+      .select("id, auth_user_id, full_name")
+      .in("id", ids);
+    
+    if (!regs || regs.length === 0) {
+      throw new Error("No registrations found");
+    }
+
+    let successCount = 0;
+    for (const reg of regs) {
+      try {
+        // Call edge function to properly delete auth user and all data
+        const { data, error } = await supabase.functions.invoke("delete-registrant-auth-user", {
+          body: {
+            auth_user_id: reg.auth_user_id,
+            registration_id: reg.id,
+          },
+        });
+
+        if (error) {
+          console.error(`Failed to delete ${reg.full_name}:`, error);
+          continue;
+        }
+        successCount++;
+      } catch (err) {
+        console.error(`Error deleting ${reg.full_name}:`, err);
+      }
+    }
+    
+    return successCount;
+  },
+  onSuccess: (count) => {
+    toast.success(`${count} data pendaftar berhasil dihapus. Email dapat digunakan untuk pendaftaran baru.`);
+    queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+    setSelectedIds(new Set());
+    setIsBulkDeleteDialogOpen(false);
+  },
+  onError: (error: any) => {
+    toast.error(`Gagal menghapus data: ${error.message}`);
+  },
+});
+```
 
 ---
 
-## Detail Teknis
+## 4. Menu Admin Panel Autoscroll
 
-### File yang Perlu Dimodifikasi
+### Masalah
+Menu admin di sidebar autoscroll saat toggle dropdown, menyulitkan navigasi.
 
-| File | Perubahan |
-|------|-----------|
-| `supabase/functions/admin-create-user/index.ts` | Tambah "admin" ke AppRole dan isValidRole |
-| `src/contexts/AdminAuthContext.tsx` | Tambah "admin" role detection dan isAdmin property |
+### Akar Masalah
+Saat `CollapsibleContent` expand/collapse, konten berubah tinggi dan browser mungkin auto-scroll untuk menjaga focus.
 
-### Testing yang Diperlukan
-1. Test bulk create user dengan role "admin" di Admin → Manajemen Pengguna
-2. Test login dengan akun role "admin" dan verifikasi akses dashboard
-3. Test signup baru di `/daftar/signup` → pastikan redirect ke success page, bukan dashboard
-4. Test login dengan akun yang sudah terverifikasi manual
+### Solusi
+1. Simpan posisi scroll sebelum toggle
+2. Restore posisi scroll setelah toggle menggunakan `requestAnimationFrame`
+3. Tambahkan CSS `overscroll-behavior: contain` untuk mencegah scroll propagation
+
+### Perubahan File
+**File:** `src/pages/admin/AdminDashboard.tsx`
+
+```typescript
+import { useEffect, useState, useCallback, useRef } from "react";
+
+// Dalam komponen AdminDashboard:
+const sidebarScrollRef = useRef<HTMLDivElement>(null);
+const scrollPositionRef = useRef(0);
+
+const toggleMenu = (name: string) => {
+  // Simpan posisi scroll sebelum toggle
+  if (sidebarScrollRef.current) {
+    scrollPositionRef.current = sidebarScrollRef.current.scrollTop;
+  }
+  
+  setOpenMenus(prev => 
+    prev.includes(name) 
+      ? prev.filter(n => n !== name)
+      : [...prev, name]
+  );
+  
+  // Restore scroll position setelah DOM update
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (sidebarScrollRef.current) {
+        sidebarScrollRef.current.scrollTop = scrollPositionRef.current;
+      }
+    });
+  });
+};
+
+// Update div container navigasi:
+<div 
+  ref={sidebarScrollRef}
+  className="flex-1 overflow-y-auto overscroll-contain"
+  onScroll={(e) => e.stopPropagation()}
+>
+```
 
 ---
 
-## Prioritas Perbaikan
+## 5. Validasi Re-registrasi dengan Data Blocked
 
-1. **TINGGI** - Bug role "admin" di edge function (menyebabkan bulk add gagal)
-2. **TINGGI** - Bug role "admin" di AdminAuthContext (user admin tidak bisa akses)
-3. **SEDANG** - Verifikasi registration flow (memastikan tidak auto-login)
+### Status: SUDAH BENAR
+Berdasarkan analisis:
+- Signup di `RegistrationSignup.tsx` sudah mengecek `blocked_registrations` table
+- Block registrant di `RegistrationsManagement.tsx` memasukkan data ke `blocked_registrations`
+- Edge function `delete-registrant-auth-user` menghapus auth user sehingga email bisa digunakan ulang
 
+### Tidak Perlu Perubahan
+Sistem sudah benar - akun yang dihapus (tanpa block) bisa re-register, akun yang di-block tidak bisa.
+
+---
+
+## Ringkasan Perubahan
+
+| No | File | Perubahan |
+|----|------|-----------|
+| 1 | `src/contexts/RegistrationAuthContext.tsx` | Perbaiki error message untuk password salah |
+| 2 | `src/pages/admin/RegistrationsManagement.tsx` | Update bulkDeleteMutation untuk menghapus auth user |
+| 3 | `src/pages/admin/AdminDashboard.tsx` | Perbaiki autoscroll dengan save/restore scroll position |
+| 4 | Edge Function | Deploy ulang `admin-create-user` |
+
+---
+
+## Testing Checklist
+
+- [ ] Test bulk add user dengan role admin, moderator, super_admin di /admin/users
+- [ ] Test login dengan akun pendaftar yang sudah terverifikasi manual
+- [ ] Test bulk delete registrant → coba daftar ulang dengan email yang sama (harus bisa)
+- [ ] Test blokir registrant → coba daftar ulang dengan email yang sama (harus gagal)
+- [ ] Test menu admin dengan semua dropdown terbuka (tidak boleh autoscroll)
+
+---
+
+## Urutan Implementasi
+
+1. **Fase 1**: Update `RegistrationAuthContext.tsx` - perbaiki error message login
+2. **Fase 2**: Update `RegistrationsManagement.tsx` - perbaiki bulkDeleteMutation
+3. **Fase 3**: Update `AdminDashboard.tsx` - perbaiki autoscroll
+4. **Fase 4**: Deploy edge function `admin-create-user`
