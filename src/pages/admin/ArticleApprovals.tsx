@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,8 +69,12 @@ export default function ArticleApprovals() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if user can approve (admin or super_admin)
-  const canApprove = isSuperAdmin || (role as string) === "admin";
+  // Use dynamic permission check for article approvals
+  const { canCreate, canEdit, canDelete, isLoading: isPermissionLoading } = usePermission("article_approvals");
+  
+  // Check if user can approve: must have create, edit, or delete permissions (not just view)
+  // This ensures only admin/super_admin with proper privileges can approve
+  const canApprove = isSuperAdmin || canCreate || canEdit || canDelete;
 
   const [selectedArticle, setSelectedArticle] = useState<PendingArticle | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -357,8 +362,8 @@ export default function ArticleApprovals() {
     });
   };
 
-  // Moderators can view but not approve
-  const isViewOnly = role === "moderator";
+  // View-only mode: users without create/edit/delete permissions can only preview
+  const isViewOnly = !canApprove;
 
   return (
     <div className="space-y-6">

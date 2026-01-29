@@ -33,6 +33,8 @@ import { TipTapEditor } from '@/components/admin/TipTapEditor';
 import { ImageUploader, uploadImageToStorage } from '@/components/admin/ImageUploader';
 import { ArticlePreview } from '@/components/admin/ArticlePreview';
 import { ArticleVersionHistory } from '@/components/admin/ArticleVersionHistory';
+import { ArticleCollaborators } from '@/components/admin/ArticleCollaborators';
+import { ArticleInlineComments } from '@/components/admin/ArticleInlineComments';
 import {
   Dialog,
   DialogContent,
@@ -49,7 +51,8 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, XCircle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, XCircle, RotateCcw, Users, MessageSquareText } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ArticleStatus = 'draft' | 'scheduled' | 'published' | 'archived' | 'rejected';
 type ArticleCategory = 'pengumuman' | 'prestasi' | 'kegiatan' | 'sosial' | 'opini' | 'tips';
@@ -798,6 +801,34 @@ export default function ArticleEditor() {
                 </div>
               )}
             </div>
+
+            {/* Collaboration Section - only show when editing */}
+            {isEditing && id && (
+              <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4" />
+                  <Label className="text-base font-medium">Kolaborasi</Label>
+                </div>
+                <Tabs defaultValue="collaborators" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="collaborators" className="text-xs">
+                      <Users className="h-3 w-3 mr-1" />
+                      Co-Authors
+                    </TabsTrigger>
+                    <TabsTrigger value="comments" className="text-xs">
+                      <MessageSquareText className="h-3 w-3 mr-1" />
+                      Review
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="collaborators" className="mt-3">
+                    <ArticleCollaborators articleId={id} />
+                  </TabsContent>
+                  <TabsContent value="comments" className="mt-3">
+                    <ArticleInlineComments articleId={id} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </div>
         </div>
       )}
