@@ -216,6 +216,8 @@ export default function RegistrationsManagement() {
 
   // Interview scheduling state
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [currentScheduleId, setCurrentScheduleId] = useState<string | null>(null);
   const [scheduleData, setScheduleData] = useState<{
     registration: Registration | null;
     date: string;
@@ -1496,6 +1498,105 @@ export default function RegistrationsManagement() {
     },
   });
 
+  // Reschedule interview mutation - updates existing schedule without canceling
+  const rescheduleInterviewMutation = useMutation({
+    mutationFn: async ({
+      scheduleId,
+      registrationId,
+      date,
+      time,
+      note,
+      location,
+      meetingLink,
+      sendNotification = true,
+    }: {
+      scheduleId: string;
+      registrationId: string;
+      date: string;
+      time: string;
+      note?: string;
+      location?: string;
+      meetingLink?: string;
+      sendNotification?: boolean;
+    }) => {
+      // Validate that scheduled date is not in the past
+      const scheduledDateTime = new Date(`${date}T${time}`);
+      const now = new Date();
+      if (scheduledDateTime < now) {
+        throw new Error("Tanggal dan waktu wawancara tidak boleh di masa lalu.");
+      }
+
+      // Format time properly
+      const formattedTime = time.includes(":") && time.split(":").length === 2 ? `${time}:00` : time;
+
+      // Update existing schedule
+      const { error: scheduleError } = await supabase
+        .from("interview_schedules")
+        .update({
+          scheduled_date: date,
+          scheduled_time: formattedTime,
+          notes: note || null,
+          location: location || null,
+          meeting_link: meetingLink || null,
+          reminder_sent: false, // Reset reminder so new notification can be sent
+        })
+        .eq("id", scheduleId);
+
+      if (scheduleError) throw scheduleError;
+
+      // Send notification email if requested
+      if (sendNotification) {
+        const { data: regData } = await supabase
+          .from("fim_registrations")
+          .select("email, full_name")
+          .eq("id", registrationId)
+          .single();
+
+        if (regData) {
+          try {
+            const formattedDate = new Date(date).toLocaleDateString('id-ID', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+
+            // Use the interview schedule notification with reschedule info
+            await supabase.functions.invoke("send-interview-reminder", {
+              body: {
+                registrantEmail: regData.email,
+                registrantName: regData.full_name,
+                interviewDate: formattedDate,
+                interviewTime: time,
+                location: location || null,
+                meetingLink: meetingLink || null,
+                isReschedule: true, // Flag to indicate this is a reschedule
+              },
+            });
+          } catch (emailError) {
+            console.error("Failed to send reschedule notification:", emailError);
+          }
+        }
+      }
+
+      return { scheduleId, registrationId };
+    },
+    onSuccess: () => {
+      toast.success("Jadwal wawancara berhasil diubah");
+      queryClient.invalidateQueries({ queryKey: ["interview-schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["all-interview-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
+      setIsScheduleDialogOpen(false);
+      setIsRescheduling(false);
+      setCurrentScheduleId(null);
+    },
+    onError: (error: any) => {
+      console.error("Failed to reschedule interview:", error);
+      toast.error(error.message || "Gagal mengubah jadwal wawancara");
+    },
+  });
+
   // Email preview helper
   const generateEmailPreview = (action: "approve" | "reject", name: string, note: string) => {
     if (action === "approve") {
@@ -2549,10 +2650,12 @@ Tim Forum Indonesia Muda
                       size="sm"
                       className="mt-2"
                       onClick={() => {
+                        setIsRescheduling(true);
+                        setCurrentScheduleId(interviewSchedule.id);
                         setScheduleData({
                           registration: selectedRegistration,
                           date: interviewSchedule.scheduled_date,
-                          time: interviewSchedule.scheduled_time,
+                          time: interviewSchedule.scheduled_time.substring(0, 5), // Remove seconds
                           note: interviewSchedule.notes || "",
                           location: interviewSchedule.location || "",
                           meetingLink: interviewSchedule.meeting_link || ""
@@ -3097,22 +3200,39 @@ Tim Forum Indonesia Muda
         </DialogContent>
       </Dialog>
 
-      {/* Interview Schedule Dialog */}
-      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+      {/* Interview Schedule Dialog - supports both create and reschedule */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={(open) => {
+        setIsScheduleDialogOpen(open);
+        if (!open) {
+          setIsRescheduling(false);
+          setCurrentScheduleId(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarPlus className="h-5 w-5" />
-              Jadwalkan Wawancara
+              {isRescheduling ? "Ubah Jadwal Wawancara" : "Jadwalkan Wawancara"}
             </DialogTitle>
             <DialogDescription>
               {scheduleData.registration && (
-                <>Jadwalkan wawancara untuk <strong>{scheduleData.registration.full_name}</strong></>
+                <>
+                  {isRescheduling ? "Ubah jadwal wawancara untuk" : "Jadwalkan wawancara untuk"} <strong>{scheduleData.registration.full_name}</strong>
+                </>
               )}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
+            {isRescheduling && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Anda akan mengubah jadwal wawancara. Notifikasi akan dikirimkan ke peserta.</span>
+                </p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="schedule-date">Tanggal</Label>
@@ -3184,7 +3304,11 @@ Tim Forum Indonesia Muda
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsScheduleDialogOpen(false);
+              setIsRescheduling(false);
+              setCurrentScheduleId(null);
+            }}>
               Batal
             </Button>
             <Button
@@ -3195,34 +3319,47 @@ Tim Forum Indonesia Muda
                 }
                 
                 try {
-                  // Create interview schedule in database with interviewer name
-                  await createInterviewScheduleMutation.mutateAsync({
-                    registrationId: scheduleData.registration.id,
-                    date: scheduleData.date,
-                    time: scheduleData.time,
-                    note: scheduleData.note,
-                    location: scheduleData.location,
-                    meetingLink: scheduleData.meetingLink,
-                    interviewerName: profile?.full_name || profile?.username || undefined,
-                  });
-
-                  // The createInterviewScheduleMutation already updates registration stage
-                  // No need to call updateStageMutation again - this was causing timestamp errors
-
-                  toast.success("Jadwal wawancara berhasil dibuat dan disinkronkan dengan kalender");
+                  if (isRescheduling && currentScheduleId) {
+                    // Update existing schedule
+                    await rescheduleInterviewMutation.mutateAsync({
+                      scheduleId: currentScheduleId,
+                      registrationId: scheduleData.registration.id,
+                      date: scheduleData.date,
+                      time: scheduleData.time,
+                      note: scheduleData.note,
+                      location: scheduleData.location,
+                      meetingLink: scheduleData.meetingLink,
+                      sendNotification: true,
+                    });
+                    toast.success("Jadwal wawancara berhasil diubah dan notifikasi dikirim");
+                  } else {
+                    // Create new schedule
+                    await createInterviewScheduleMutation.mutateAsync({
+                      registrationId: scheduleData.registration.id,
+                      date: scheduleData.date,
+                      time: scheduleData.time,
+                      note: scheduleData.note,
+                      location: scheduleData.location,
+                      meetingLink: scheduleData.meetingLink,
+                      interviewerName: profile?.full_name || profile?.username || undefined,
+                    });
+                    toast.success("Jadwal wawancara berhasil dibuat dan disinkronkan dengan kalender");
+                  }
                   setIsScheduleDialogOpen(false);
+                  setIsRescheduling(false);
+                  setCurrentScheduleId(null);
                 } catch (error: any) {
-                  toast.error(`Gagal menjadwalkan wawancara: ${error.message}`);
+                  toast.error(`Gagal ${isRescheduling ? 'mengubah' : 'menjadwalkan'} wawancara: ${error.message}`);
                 }
               }}
-              disabled={updateStageMutation.isPending || createInterviewScheduleMutation.isPending || !scheduleData.date || !scheduleData.time}
+              disabled={updateStageMutation.isPending || createInterviewScheduleMutation.isPending || rescheduleInterviewMutation.isPending || !scheduleData.date || !scheduleData.time}
             >
-              {(updateStageMutation.isPending || createInterviewScheduleMutation.isPending) ? (
+              {(updateStageMutation.isPending || createInterviewScheduleMutation.isPending || rescheduleInterviewMutation.isPending) ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Send className="h-4 w-4 mr-2" />
               )}
-              Kirim Undangan
+              {isRescheduling ? "Simpan Perubahan" : "Kirim Undangan"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -41,8 +41,8 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   superAdminOnly?: boolean;
-  adminOnly?: boolean; // New: accessible to admin but not moderator
-  hideFromAdmin?: boolean; // New: hide from admin role (user management)
+  adminOnly?: boolean; // Accessible to admin and super_admin but not moderator
+  hideFromModerator?: boolean; // Hide from moderator role
   children?: NavItem[];
   badgeKey?: string;
 }
@@ -56,22 +56,24 @@ const navItems: NavItem[] = [
     children: [
       { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
       { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, badgeKey: "pendingArticles" },
-      { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+      { name: "Analytics", href: "/admin/analytics", icon: BarChart3, adminOnly: true },
     ]
   },
   { 
     name: "Newsletter", 
     href: "/admin/newsletter", 
     icon: Mail,
+    adminOnly: true, // Only admin and super_admin can access
     children: [
       { name: "Subscribers", href: "/admin/newsletter", icon: Mail },
-      { name: "Email Settings", href: "/admin/email-settings", icon: Settings },
+      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true },
     ]
   },
   { 
     name: "Data Organisasi", 
     href: "/admin/clubs", 
     icon: UsersRound,
+    adminOnly: true, // Only admin and super_admin
     children: [
       { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
       { name: "Regional", href: "/admin/regionals", icon: MapPin },
@@ -79,29 +81,30 @@ const navItems: NavItem[] = [
       { name: "Mitra", href: "/admin/partners", icon: Handshake },
     ]
   },
-  { name: "Video Featured", href: "/admin/featured-videos", icon: Video },
+  { name: "Video Featured", href: "/admin/featured-videos", icon: Video, adminOnly: true },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 
     icon: ClipboardList, 
     badgeKey: "newRegistrations",
+    adminOnly: true, // Only admin and super_admin for full access
     children: [
       { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
-      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users },
+      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users, superAdminOnly: true },
       { name: "Kalender Wawancara", href: "/admin/interview-calendar", icon: ClipboardList },
-      { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings },
-      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3 },
+      { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings, superAdminOnly: true },
+      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, superAdminOnly: true },
     ]
   },
-  { name: "Template Email", href: "/admin/email-templates", icon: Mail },
+  { name: "Template Email", href: "/admin/email-templates", icon: Mail, superAdminOnly: true },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
     icon: Users,
-    superAdminOnly: true,
+    superAdminOnly: true, // Only super_admin
     children: [
-      { name: "Manajemen User", href: "/admin/users", icon: Users, superAdminOnly: true },
-      { name: "Manajemen Role", href: "/admin/roles", icon: ShieldAlert, superAdminOnly: true },
+      { name: "Manajemen User", href: "/admin/users", icon: Users },
+      { name: "Manajemen Role", href: "/admin/roles", icon: ShieldAlert },
       { name: "Admin Online", href: "/admin/online", icon: Monitor },
       { name: "Login Monitoring", href: "/admin/login-monitoring", icon: ShieldAlert },
     ]
@@ -110,14 +113,16 @@ const navItems: NavItem[] = [
     name: "Sesi Aktif", 
     href: "/admin/sessions", 
     icon: Monitor,
+    hideFromModerator: true, // Hide from moderator
   },
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
     icon: ClipboardList,
+    adminOnly: true, // Admin and super_admin only
     children: [
       { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList },
-      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert },
+      { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, superAdminOnly: true },
       { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
       { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
     ]
@@ -290,10 +295,10 @@ export default function AdminDashboard() {
       .filter(item => {
         // superAdminOnly means only super_admin can see it
         if (item.superAdminOnly && !isSuperAdmin) return false;
-        // hideFromAdmin means admin role cannot see it (only super_admin)
-        if (item.hideFromAdmin && (role as string) === "admin") return false;
         // adminOnly means super_admin and admin can see, but not moderator
         if (item.adminOnly && role === "moderator") return false;
+        // hideFromModerator means admin role and moderator cannot see it (only super_admin)
+        if (item.hideFromModerator && role === "moderator") return false;
         return true;
       })
       .map(item => ({
