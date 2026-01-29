@@ -117,7 +117,7 @@ export default function ArticlesManagement() {
     };
   }, [queryClient]);
 
-  // Fetch articles
+  // Fetch articles with approved_by info
   const { data: articles, isLoading } = useQuery({
     queryKey: ["admin-articles", statusFilter, categoryFilter],
     queryFn: async () => {
@@ -134,7 +134,9 @@ export default function ArticlesManagement() {
           view_count,
           created_at,
           published_at,
-          author_id
+          author_id,
+          approved_by,
+          approved_at
         `
         )
         .order("created_at", { ascending: false });
@@ -163,6 +165,28 @@ export default function ArticlesManagement() {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Fetch approver profiles (for approved_by display)
+  const { data: approverProfiles } = useQuery({
+    queryKey: ["article-approvers", articles?.filter(a => a.approved_by).map(a => a.approved_by)],
+    queryFn: async () => {
+      if (!articles?.length) return {};
+      const approverIds = [...new Set(articles.filter(a => a.approved_by).map(a => a.approved_by))];
+      if (approverIds.length === 0) return {};
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, full_name")
+        .in("id", approverIds);
+      
+      const profileMap: Record<string, { username: string; full_name: string | null }> = {};
+      data?.forEach(p => {
+        profileMap[p.id] = { username: p.username, full_name: p.full_name };
+      });
+      return profileMap;
+    },
+    enabled: !!articles?.length,
   });
 
   // Fetch author profiles separately
@@ -642,6 +666,7 @@ export default function ArticlesManagement() {
                     <TableHead>Kategori</TableHead>
                     <TableHead>Penulis</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Disetujui</TableHead>
                     <TableHead>Views</TableHead>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Aksi</TableHead>
@@ -688,6 +713,24 @@ export default function ArticlesManagement() {
                         <Badge className={statusColors[article.status]}>
                           {article.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {article.approved_by ? (
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium">
+                              {approverProfiles?.[article.approved_by]?.full_name || 
+                               approverProfiles?.[article.approved_by]?.username || 
+                               "Admin"}
+                            </span>
+                            {article.approved_at && (
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(article.approved_at).toLocaleDateString("id-ID")}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {article.view_count || 0}

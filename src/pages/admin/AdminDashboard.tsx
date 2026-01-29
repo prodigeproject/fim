@@ -5,6 +5,7 @@ import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotificat
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePendingArticlesCount } from "@/hooks/usePendingArticlesCount";
 import { useNewRegistrationsCount } from "@/hooks/useNewRegistrationsCount";
+import { useAllPermissions } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,6 +46,7 @@ interface NavItem {
   hideFromModerator?: boolean; // Hide from moderator role
   children?: NavItem[];
   badgeKey?: string;
+  permissionKey?: string; // Dynamic permission key for fine-grained access control
 }
 
 const navItems: NavItem[] = [
@@ -55,49 +57,49 @@ const navItems: NavItem[] = [
     icon: FileText,
     children: [
       { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
-      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, badgeKey: "pendingArticles" },
-      { name: "Kalender Jadwal", href: "/admin/article-calendar", icon: ClipboardList, adminOnly: true },
-      { name: "Analytics", href: "/admin/analytics", icon: BarChart3, adminOnly: true },
+      { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, badgeKey: "pendingArticles", permissionKey: "article_approvals" },
+      { name: "Kalender Jadwal", href: "/admin/article-calendar", icon: ClipboardList, permissionKey: "article_scheduling" },
+      { name: "Analytics", href: "/admin/analytics", icon: BarChart3, permissionKey: "article_analytics" },
     ]
   },
   { 
     name: "Newsletter", 
     href: "/admin/newsletter", 
     icon: Mail,
-    adminOnly: true,
+    permissionKey: "newsletter",
     children: [
-      { name: "Subscribers", href: "/admin/newsletter", icon: Mail },
-      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true },
+      { name: "Subscribers", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter" },
+      { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true, permissionKey: "email_settings" },
     ]
   },
   { 
     name: "Data Organisasi", 
     href: "/admin/clubs", 
     icon: UsersRound,
-    adminOnly: true,
+    permissionKey: "organization_data",
     children: [
-      { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
-      { name: "Regional", href: "/admin/regionals", icon: MapPin },
-      { name: "Alumni", href: "/admin/alumni", icon: Users },
-      { name: "Mitra", href: "/admin/partners", icon: Handshake },
+      { name: "FIM Club", href: "/admin/clubs", icon: UsersRound, permissionKey: "clubs" },
+      { name: "Regional", href: "/admin/regionals", icon: MapPin, permissionKey: "regionals" },
+      { name: "Alumni", href: "/admin/alumni", icon: Users, permissionKey: "alumni" },
+      { name: "Mitra", href: "/admin/partners", icon: Handshake, permissionKey: "partners" },
     ]
   },
-  { name: "Video Featured", href: "/admin/featured-videos", icon: Video, adminOnly: true },
+  { name: "Video Featured", href: "/admin/featured-videos", icon: Video, permissionKey: "featured_videos" },
   { 
     name: "Registrasi FIM", 
     href: "/admin/registrations", 
     icon: ClipboardList, 
     badgeKey: "newRegistrations",
-    adminOnly: true,
+    permissionKey: "registrations",
     children: [
-      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
-      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users, superAdminOnly: true },
-      { name: "Kalender Wawancara", href: "/admin/interview-calendar", icon: ClipboardList },
-      { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings, superAdminOnly: true },
-      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, superAdminOnly: true },
+      { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations", permissionKey: "registrations" },
+      { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users, superAdminOnly: true, permissionKey: "recruiter_assignments" },
+      { name: "Kalender Wawancara", href: "/admin/interview-calendar", icon: ClipboardList, permissionKey: "interview_calendar" },
+      { name: "Pengaturan Batch", href: "/admin/registration-settings", icon: Settings, superAdminOnly: true, permissionKey: "registration_settings" },
+      { name: "Statistik", href: "/admin/registration-stats", icon: BarChart3, superAdminOnly: true, permissionKey: "registration_stats" },
     ]
   },
-  { name: "Template Email", href: "/admin/email-templates", icon: Mail, superAdminOnly: true },
+  { name: "Template Email", href: "/admin/email-templates", icon: Mail, superAdminOnly: true, permissionKey: "email_templates" },
   { 
     name: "Pengguna", 
     href: "/admin/users", 
@@ -106,26 +108,26 @@ const navItems: NavItem[] = [
     children: [
       { name: "Manajemen User", href: "/admin/users", icon: Users },
       { name: "Manajemen Role", href: "/admin/roles", icon: ShieldAlert },
-      { name: "Admin Online", href: "/admin/online", icon: Monitor },
-      { name: "Login Monitoring", href: "/admin/login-monitoring", icon: ShieldAlert },
+      { name: "Admin Online", href: "/admin/online", icon: Monitor, permissionKey: "online_admins" },
+      { name: "Login Monitoring", href: "/admin/login-monitoring", icon: ShieldAlert, permissionKey: "login_monitoring" },
     ]
   },
   { 
     name: "Sesi Aktif", 
     href: "/admin/sessions", 
     icon: Monitor,
-    hideFromModerator: true,
+    permissionKey: "active_sessions",
   },
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
     icon: ClipboardList,
-    adminOnly: true,
+    permissionKey: "audit_logs",
     children: [
-      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList },
+      { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList, permissionKey: "audit_logs" },
       { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, superAdminOnly: true },
       { name: "PRD & Docs", href: "/admin/prd", icon: BookOpen, superAdminOnly: true },
-      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
+      { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true, permissionKey: "technical_docs" },
     ]
   },
   {
@@ -133,8 +135,9 @@ const navItems: NavItem[] = [
     href: "/admin/tools",
     icon: Settings,
     superAdminOnly: true,
+    permissionKey: "tools_settings",
     children: [
-      { name: "SEO & reCAPTCHA", href: "/admin/tools", icon: Settings },
+      { name: "SEO & reCAPTCHA", href: "/admin/tools", icon: Settings, permissionKey: "tools_settings" },
     ]
   },
 ];
@@ -154,6 +157,9 @@ export default function AdminDashboard() {
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
   const newRegistrationsCount = useNewRegistrationsCount();
+  
+  // Get dynamic permissions for menu visibility
+  const { hasPermission, isLoading: isPermissionLoading } = useAllPermissions();
 
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
@@ -161,7 +167,7 @@ export default function AdminDashboard() {
   // Enable push notifications for super admins
   usePushNotifications();
 
-  // Check if user is admin (has admin role) - note: "admin" role needs DB migration to take effect
+  // Check if user is admin (has admin role)
   const isAdmin = role === "super_admin" || (role as string) === "admin";
 
   // Auto-expand parent menu if child is active - only on mount
@@ -303,6 +309,14 @@ export default function AdminDashboard() {
         if (item.adminOnly && role === "moderator") return false;
         // hideFromModerator means admin role and moderator cannot see it (only super_admin)
         if (item.hideFromModerator && role === "moderator") return false;
+        
+        // Dynamic permission check: if permissionKey is set, check if user has view permission
+        // This allows real-time permission updates to reflect in the menu
+        if (item.permissionKey && !isSuperAdmin) {
+          const canView = hasPermission(item.permissionKey, "view");
+          if (!canView) return false;
+        }
+        
         return true;
       })
       .map(item => ({
