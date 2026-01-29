@@ -21,12 +21,57 @@ export default defineConfig(({ mode }) => ({
     // Enable code splitting
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks for better caching
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "ui-vendor": ["framer-motion", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
-          "query-vendor": ["@tanstack/react-query"],
-          "supabase-vendor": ["@supabase/supabase-js"],
+        manualChunks(id) {
+          // Core React ecosystem - loaded on every page
+          if (id.includes("node_modules/react/") || 
+              id.includes("node_modules/react-dom/") || 
+              id.includes("node_modules/react-router")) {
+            return "react-core";
+          }
+          // Framer Motion - used for animations
+          if (id.includes("node_modules/framer-motion")) {
+            return "framer";
+          }
+          // Radix UI components - UI library
+          if (id.includes("node_modules/@radix-ui")) {
+            return "radix-ui";
+          }
+          // TanStack Query - data fetching
+          if (id.includes("node_modules/@tanstack")) {
+            return "tanstack";
+          }
+          // Supabase - backend
+          if (id.includes("node_modules/@supabase")) {
+            return "supabase";
+          }
+          // Charts - admin only (recharts)
+          if (id.includes("node_modules/recharts") || 
+              id.includes("node_modules/d3-")) {
+            return "charts";
+          }
+          // Editor - admin only (tiptap)
+          if (id.includes("node_modules/@tiptap") || 
+              id.includes("node_modules/prosemirror")) {
+            return "editor";
+          }
+          // Diagrams - admin only (mermaid)
+          if (id.includes("node_modules/mermaid")) {
+            return "mermaid";
+          }
+          // Export utilities - admin only
+          if (id.includes("node_modules/exceljs") || 
+              id.includes("node_modules/jspdf") ||
+              id.includes("node_modules/jszip")) {
+            return "export-utils";
+          }
+          // Date utilities
+          if (id.includes("node_modules/date-fns")) {
+            return "date-utils";
+          }
+          // Other vendor modules
+          if (id.includes("node_modules")) {
+            return "vendor";
+          }
         },
       },
     },
