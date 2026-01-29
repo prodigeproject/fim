@@ -1,33 +1,54 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Linkedin, Youtube, Mail, Phone, Send } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Youtube, Mail, Phone, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import logoFim from "@/assets/logo-fim.png";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    
-    // Store in localStorage as placeholder (would connect to backend in production)
-    const subscribers = JSON.parse(localStorage.getItem("fim-newsletter") || "[]");
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-      localStorage.setItem("fim-newsletter", JSON.stringify(subscribers));
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      toast({
+        title: "Email tidak valid",
+        description: "Masukkan alamat email yang benar.",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    toast({
-      title: t("footer.subscribeSuccess"),
-      description: t("footer.subscribeSuccessDesc"),
-    });
-    setEmail("");
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("newsletter-subscribe", {
+        body: { email: normalizedEmail },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t("footer.subscribeSuccess"),
+        description: data?.message || t("footer.subscribeSuccessDesc"),
+      });
+      setEmail("");
+    } catch (err: any) {
+      console.error("Footer newsletter subscribe error:", err);
+      toast({
+        title: "Gagal berlangganan",
+        description: err?.message || "Terjadi kesalahan. Silakan coba lagi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const quickLinks = [
@@ -65,10 +86,19 @@ const Footer = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-background/10 border-background/20 text-background placeholder:text-background/50"
                 required
+                disabled={isLoading}
               />
-              <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Send className="h-4 w-4 mr-2" />
-                {t("footer.subscribe")}
+              <Button
+                type="submit"
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {isLoading ? "Memproses..." : t("footer.subscribe")}
               </Button>
             </form>
           </div>
