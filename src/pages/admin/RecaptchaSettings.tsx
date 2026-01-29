@@ -226,7 +226,7 @@ export default function RecaptchaSettings() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Pendaftaran Peserta (/daftar/signup)</Label>
+              <Label>Pendaftaran Peserta (/portal/signup)</Label>
               <p className="text-xs text-muted-foreground">
                 Form registrasi akun baru untuk pendaftar FIM
               </p>
@@ -240,7 +240,7 @@ export default function RecaptchaSettings() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Login Peserta (/daftar)</Label>
+              <Label>Login Peserta (/portal/login)</Label>
               <p className="text-xs text-muted-foreground">
                 Form login untuk pendaftar FIM
               </p>
@@ -254,7 +254,7 @@ export default function RecaptchaSettings() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Lupa Password Peserta (/daftar/forgot-password)</Label>
+              <Label>Lupa Password Peserta (/portal/forgot-password)</Label>
               <p className="text-xs text-muted-foreground">
                 Form reset password untuk pendaftar
               </p>

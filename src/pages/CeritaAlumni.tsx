@@ -1,49 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
-import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X } from "lucide-react";
+import { Quote, GraduationCap, Briefcase, Heart, Globe, Leaf, Code, User, Play, X, Video, Users } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlumniGridSkeleton, VideoTestimonialSkeleton } from "@/components/skeletons";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-// Fallback data
-const fallbackStories = [
-  { id: "1", name: "Andi Pratama", batch: "FIM 5", sector: "Pendidikan", position: "Founder Sekolah Inspirasi", company: "Yogyakarta", photo_url: null, quote: "FIM mengajarkan saya bahwa perubahan dimulai dari pendidikan. Kini saya mendirikan sekolah gratis untuk anak-anak kurang mampu.", story: "500+ siswa terbantu" },
-  { id: "2", name: "Siti Rahayu", batch: "FIM 8", sector: "Sosial", position: "CEO Yayasan Peduli Desa", company: "Makassar", photo_url: null, quote: "Jaringan FIM membantu saya membangun program pemberdayaan di 50 desa tertinggal.", story: "50 desa terdampak" },
-  { id: "3", name: "Budi Santoso", batch: "FIM 12", sector: "Teknologi", position: "CTO Startup Edutech", company: "Jakarta", photo_url: null, quote: "Dari workshop leadership FIM, saya belajar membangun tim. Sekarang startup kami sudah Series A.", story: "1M+ pengguna aplikasi" },
-  { id: "4", name: "Maria Theresia", batch: "FIM 15", sector: "Kesehatan", position: "Dokter & Aktivis Kesehatan", company: "Flores", photo_url: null, quote: "FIM membuka mata saya tentang kesenjangan akses kesehatan. Saya memilih bertugas di daerah terpencil.", story: "10.000+ pasien dilayani" },
-  { id: "5", name: "Ahmad Fauzi", batch: "FIM 10", sector: "Lingkungan", position: "Founder Green Movement ID", company: "Bandung", photo_url: null, quote: "Semangat kunang-kunang FIM yang menerangi kegelapan menginspirasi gerakan lingkungan kami.", story: "100.000 pohon ditanam" },
-  { id: "6", name: "Dewi Lestari", batch: "FIM 18", sector: "Bisnis", position: "Founder Social Enterprise", company: "Surabaya", photo_url: null, quote: "FIM mengajarkan bahwa bisnis bisa berdampak sosial. Social enterprise kami memberdayakan 200 pengrajin lokal.", story: "200 UMKM diberdayakan" },
-  { id: "7", name: "Rizky Ramadhan", batch: "FIM 20", sector: "Internasional", position: "Diplomat Muda RI", company: "Jenewa", photo_url: null, quote: "Public speaking dan diplomacy skills dari FIM sangat membantu karir saya di kancah internasional.", story: "Perwakilan Indonesia di PBB" },
-  { id: "8", name: "Putri Handayani", batch: "FIM 7", sector: "Pendidikan", position: "Founder Gerakan Literasi", company: "Semarang", photo_url: null, quote: "Saya percaya setiap anak Indonesia berhak membaca. FIM memberi saya keberanian untuk memulai.", story: "1.000+ perpustakaan desa" },
-];
-
-const fallbackOtherAlumni = [
-  { id: "1", name: "Raden Mas Haryanto", batch: "FIM 3", track_record: "Direktur Utama BUMN Strategis", photo_url: null },
-  { id: "2", name: "Kartini Sari Dewi", batch: "FIM 4", track_record: "Anggota DPR RI Komisi X", photo_url: null },
-  { id: "3", name: "Dr. Bambang Sutrisno", batch: "FIM 6", track_record: "Rektor Universitas Negeri", photo_url: null },
-  { id: "4", name: "Ratna Megawati", batch: "FIM 7", track_record: "CEO Perusahaan Teknologi", photo_url: null },
-  { id: "5", name: "Agus Prasetyo", batch: "FIM 9", track_record: "Direktur LSM Internasional", photo_url: null },
-  { id: "6", name: "Indah Permatasari", batch: "FIM 11", track_record: "Kepala Dinas Pendidikan Provinsi", photo_url: null },
-  { id: "7", name: "Hendra Wijaya", batch: "FIM 13", track_record: "Founder Unicorn Startup", photo_url: null },
-  { id: "8", name: "Siska Rahmawati", batch: "FIM 14", track_record: "Peneliti Senior Lembaga Think Tank", photo_url: null },
-];
-
-const fallbackVideoTestimonials = [
-  { id: "1", youtube_id: "dQw4w9WgXcQ", title: "Perjalanan Alumni FIM di Bidang Pendidikan", thumbnail_url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=225&fit=crop", speaker: "Alumni FIM 10" },
-  { id: "2", youtube_id: "dQw4w9WgXcQ", title: "Dampak FIM dalam Karir Profesional", thumbnail_url: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=225&fit=crop", speaker: "Alumni FIM 15" },
-  { id: "3", youtube_id: "dQw4w9WgXcQ", title: "Membangun Jaringan Nasional Melalui FIM", thumbnail_url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=225&fit=crop", speaker: "Alumni FIM 18" },
-  { id: "4", youtube_id: "dQw4w9WgXcQ", title: "Kisah Sukses Alumni FIM di Startup", thumbnail_url: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=225&fit=crop", speaker: "Alumni FIM 20" },
-];
 
 const CeritaAlumni = () => {
   const [selectedSector, setSelectedSector] = useState("Semua");
   const [selectedVideo, setSelectedVideo] = useState<{ youtube_id: string; title: string } | null>(null);
 
   // Fetch alumni stories from database
-  const { data: dbStories, isLoading: storiesLoading } = useQuery({
+  const { data: stories, isLoading: storiesLoading } = useQuery({
     queryKey: ["public-alumni-stories"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -52,12 +22,12 @@ const CeritaAlumni = () => {
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
   // Fetch other alumni from database
-  const { data: dbOtherAlumni, isLoading: otherLoading } = useQuery({
+  const { data: otherAlumni, isLoading: otherLoading } = useQuery({
     queryKey: ["public-alumni-other"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,12 +36,12 @@ const CeritaAlumni = () => {
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
   // Fetch video testimonials from database
-  const { data: dbVideos, isLoading: videosLoading } = useQuery({
+  const { data: videoTestimonials, isLoading: videosLoading } = useQuery({
     queryKey: ["public-video-testimonials"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -80,25 +50,41 @@ const CeritaAlumni = () => {
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  // Use database data or fallback
-  const stories = dbStories && dbStories.length > 0 ? dbStories : fallbackStories;
-  const otherAlumni = dbOtherAlumni && dbOtherAlumni.length > 0 ? dbOtherAlumni : fallbackOtherAlumni;
-  const videoTestimonials = dbVideos && dbVideos.length > 0 ? dbVideos : fallbackVideoTestimonials;
-
   const sectors = ["Semua", "Pendidikan", "Sosial", "Teknologi", "Kesehatan", "Lingkungan", "Bisnis", "Internasional"];
 
-  const filteredStories = selectedSector === "Semua" ? stories : stories.filter((s: any) => s.sector === selectedSector);
+  const filteredStories = selectedSector === "Semua" 
+    ? (stories || []) 
+    : (stories || []).filter((s: any) => s.sector === selectedSector);
 
   const getSectorIcon = (sector: string) => {
-    const icons: Record<string, any> = { Pendidikan: GraduationCap, Sosial: Heart, Teknologi: Code, Kesehatan: Heart, Lingkungan: Leaf, Bisnis: Briefcase, Internasional: Globe };
+    const icons: Record<string, any> = { 
+      Pendidikan: GraduationCap, 
+      Sosial: Heart, 
+      Teknologi: Code, 
+      Kesehatan: Heart, 
+      Lingkungan: Leaf, 
+      Bisnis: Briefcase, 
+      Internasional: Globe 
+    };
     return icons[sector] || Heart;
   };
 
   const isLoading = storiesLoading || otherLoading || videosLoading;
+
+  // Empty state component
+  const EmptyState = ({ title, description, icon: Icon }: { title: string; description: string; icon: any }) => (
+    <div className="text-center py-16">
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+        <Icon className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground max-w-md mx-auto">{description}</p>
+    </div>
+  );
 
   return (
     <Layout>
@@ -127,9 +113,9 @@ const CeritaAlumni = () => {
 
           {videosLoading ? (
             <VideoTestimonialSkeleton />
-          ) : (
+          ) : (videoTestimonials || []).length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {videoTestimonials.map((video: any, index: number) => (
+              {(videoTestimonials || []).map((video: any, index: number) => (
                 <div
                   key={video.id}
                   onClick={() => setSelectedVideo({ youtube_id: video.youtube_id, title: video.title })}
@@ -155,6 +141,12 @@ const CeritaAlumni = () => {
                 </div>
               ))}
             </div>
+          ) : (
+            <EmptyState 
+              icon={Video}
+              title="Belum Ada Video Testimoni"
+              description="Video testimoni alumni akan segera ditambahkan. Nantikan kisah-kisah inspiratif dari para alumni FIM."
+            />
           )}
         </div>
       </section>
@@ -193,7 +185,7 @@ const CeritaAlumni = () => {
 
           {storiesLoading ? (
             <AlumniGridSkeleton />
-          ) : (
+          ) : filteredStories.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
               {filteredStories.map((story: any, index: number) => {
                 const Icon = getSectorIcon(story.sector);
@@ -226,8 +218,17 @@ const CeritaAlumni = () => {
                 );
               })}
             </div>
+          ) : (stories || []).length === 0 ? (
+            <EmptyState 
+              icon={Quote}
+              title="Belum Ada Kisah Alumni"
+              description="Kisah-kisah inspiratif dari alumni FIM akan segera ditambahkan. Tetap pantau halaman ini untuk update terbaru."
+            />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Tidak ada cerita di sektor {selectedSector}.</p>
+            </div>
           )}
-          {filteredStories.length === 0 && <div className="text-center py-12"><p className="text-muted-foreground">Tidak ada cerita di sektor ini.</p></div>}
         </div>
       </section>
 
@@ -239,9 +240,9 @@ const CeritaAlumni = () => {
 
           {otherLoading ? (
             <AlumniGridSkeleton />
-          ) : (
+          ) : (otherAlumni || []).length > 0 ? (
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-              {otherAlumni.map((alumni: any, index: number) => (
+              {(otherAlumni || []).map((alumni: any, index: number) => (
                 <div key={alumni.id} className="bg-card rounded-xl p-4 shadow-lg hover:shadow-xl transition-all animate-fade-in text-center" style={{ animationDelay: `${index * 0.03}s` }}>
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden">
                     {alumni.photo_url ? (
@@ -256,6 +257,12 @@ const CeritaAlumni = () => {
                 </div>
               ))}
             </div>
+          ) : (
+            <EmptyState 
+              icon={Users}
+              title="Belum Ada Data Alumni Lainnya"
+              description="Daftar alumni FIM akan segera ditambahkan. Ribuan alumni telah berkontribusi di berbagai sektor."
+            />
           )}
         </div>
       </section>

@@ -40,7 +40,7 @@ export default function RegistrationDashboard() {
   // Redirect if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate("/daftar", { replace: true });
+      navigate("/portal/login", { replace: true });
     }
   }, [isLoading, user, navigate]);
 
@@ -181,7 +181,7 @@ export default function RegistrationDashboard() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => navigate("/daftar/profile")}
+                onClick={() => navigate("/portal/profile")}
               >
                 <User className="h-4 w-4 mr-2" />
                 Profil
@@ -393,7 +393,7 @@ export default function RegistrationDashboard() {
 
                 <Button 
                   className="w-full" 
-                  onClick={() => navigate("/daftar/pelatihan")}
+                  onClick={() => navigate("/portal/pelatihan")}
                 >
                   {trainingData ? "Lanjutkan Pengisian" : "Mulai Isi Data"}
                   <ArrowRight className="h-4 w-4 ml-2" />

@@ -20,7 +20,7 @@ export default function RegistrationGate({ children }: RegistrationGateProps) {
 
   // If registration is closed, redirect to closed page
   if (!isRegistrationOpen) {
-    return <Navigate to="/daftar/closed" replace />;
+    return <Navigate to="/portal/closed" replace />;
   }
 
   return <>{children}</>;

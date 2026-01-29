@@ -156,13 +156,13 @@ export default function RegistrationLanding() {
             <div className="flex items-center gap-2">
               {isOpen && (
                 <>
-                  <Link to="/daftar/login">
+                  <Link to="/portal/login">
                     <Button variant="ghost" size="sm">
                       <LogIn className="h-4 w-4 mr-2" />
                       Masuk
                     </Button>
                   </Link>
-                  <Link to="/daftar/signup">
+                  <Link to="/portal/signup">
                     <Button size="sm">
                       <UserPlus className="h-4 w-4 mr-2" />
                       Daftar
@@ -223,13 +223,13 @@ export default function RegistrationLanding() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isOpen ? (
                 <>
-                  <Link to="/daftar/signup">
+                  <Link to="/portal/signup">
                     <Button size="lg" className="w-full sm:w-auto">
                       Daftar Sekarang
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link to="/daftar/login">
+                  <Link to="/portal/login">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto">
                       <LogIn className="mr-2 h-5 w-5" />
                       Sudah Punya Akun
@@ -386,7 +386,7 @@ export default function RegistrationLanding() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isOpen ? (
-                <Link to="/daftar/signup">
+                <Link to="/portal/signup">
                   <Button size="lg">
                     Daftar Sekarang
                     <ArrowRight className="ml-2 h-5 w-5" />

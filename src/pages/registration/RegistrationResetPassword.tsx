@@ -23,7 +23,7 @@ export default function RegistrationResetPassword() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Link reset password tidak valid atau sudah kadaluarsa");
-        navigate("/daftar/forgot-password");
+        navigate("/portal/forgot-password");
       }
     };
     checkSession();
@@ -60,7 +60,7 @@ export default function RegistrationResetPassword() {
       // Sign out and redirect to login after 3 seconds
       setTimeout(async () => {
         await supabase.auth.signOut();
-        navigate("/daftar");
+        navigate("/portal/login");
       }, 3000);
     } catch (error: any) {
       toast.error("Gagal mengubah password: " + error.message);

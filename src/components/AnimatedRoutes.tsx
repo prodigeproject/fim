@@ -96,18 +96,22 @@ const AnimatedRoutes = () => {
         <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
         <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
-        {/* Registration routes */}
+        {/* Registration routes - /portal */}
+        <Route path="/portal" element={<RegistrationLanding />} />
+        <Route path="/portal/login" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
+        <Route path="/portal/signup" element={<RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate>} />
+        <Route path="/portal/closed" element={<RegistrationClosed />} />
+        <Route path="/portal/success" element={<RegistrationSuccess />} />
+        <Route path="/portal/verify" element={<VerifyEmail />} />
+        <Route path="/portal/forgot-password" element={<RegistrationForgotPassword />} />
+        <Route path="/portal/reset-password" element={<RegistrationResetPassword />} />
+        <Route path="/portal/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
+        <Route path="/portal/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
+        <Route path="/portal/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
+        
+        {/* Legacy /daftar routes - redirect to /portal */}
         <Route path="/daftar" element={<RegistrationLanding />} />
-        <Route path="/daftar/login" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
-        <Route path="/daftar/signup" element={<RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate>} />
-        <Route path="/daftar/closed" element={<RegistrationClosed />} />
-        <Route path="/daftar/success" element={<RegistrationSuccess />} />
-        <Route path="/daftar/verify" element={<VerifyEmail />} />
-        <Route path="/daftar/forgot-password" element={<RegistrationForgotPassword />} />
-        <Route path="/daftar/reset-password" element={<RegistrationResetPassword />} />
-        <Route path="/daftar/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
-        <Route path="/daftar/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
-        <Route path="/daftar/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
+        <Route path="/daftar/*" element={<RegistrationLanding />} />
         {/* Admin routes - wrapped in AdminAuthProvider */}
         <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
         <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />

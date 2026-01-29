@@ -89,7 +89,7 @@ export default function RegistrationProfile() {
   // Redirect if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate("/daftar", { replace: true });
+      navigate("/portal/login", { replace: true });
     }
   }, [isLoading, user, navigate]);
 
@@ -307,7 +307,7 @@ export default function RegistrationProfile() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/daftar/dashboard")}
+              onClick={() => navigate("/portal/dashboard")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>

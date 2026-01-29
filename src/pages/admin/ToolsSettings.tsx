@@ -395,7 +395,7 @@ export default function ToolsSettings() {
                       <div className="flex items-center justify-between p-3 rounded-lg border">
                         <div>
                           <p className="font-medium">Signup Peserta</p>
-                          <p className="text-sm text-muted-foreground">/daftar/signup</p>
+                          <p className="text-sm text-muted-foreground">/portal/signup</p>
                         </div>
                         <Switch
                           checked={enabledSignup}
@@ -417,7 +417,7 @@ export default function ToolsSettings() {
                       <div className="flex items-center justify-between p-3 rounded-lg border">
                         <div>
                           <p className="font-medium">Lupa Password</p>
-                          <p className="text-sm text-muted-foreground">/daftar/forgot-password</p>
+                          <p className="text-sm text-muted-foreground">/portal/forgot-password</p>
                         </div>
                         <Switch
                           checked={enabledForgotPassword}

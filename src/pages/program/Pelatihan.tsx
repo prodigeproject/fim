@@ -295,7 +295,7 @@ const Pelatihan = () => {
             Indonesia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/daftar">
+            <Link to="/portal">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
                 Daftar Sekarang
                 <ArrowRight className="ml-2 h-5 w-5" />

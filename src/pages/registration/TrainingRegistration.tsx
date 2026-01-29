@@ -153,7 +153,7 @@ export default function TrainingRegistration() {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/daftar", { replace: true });
+      navigate("/portal/login", { replace: true });
     }
   }, [authLoading, user, navigate]);
 
@@ -219,7 +219,7 @@ export default function TrainingRegistration() {
 
       // If already submitted, redirect to dashboard
       if (existingData.is_submitted) {
-        navigate("/daftar/dashboard", { replace: true });
+        navigate("/portal/dashboard", { replace: true });
       }
     }
   }, [existingData, navigate]);
@@ -320,7 +320,7 @@ export default function TrainingRegistration() {
       
       if (result.isSubmit) {
         toast.success("Pendaftaran berhasil dikirim!");
-        navigate("/daftar/dashboard");
+        navigate("/portal/dashboard");
       }
     },
     onError: (error) => {
@@ -500,7 +500,7 @@ export default function TrainingRegistration() {
         <header className="bg-card border-b sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-4">
-              <Link to="/daftar/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+              <Link to="/portal/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
                 <span className="text-sm">Kembali</span>
               </Link>
