@@ -64,9 +64,12 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function ArticleApprovals() {
-  const { isSuperAdmin, user, profile } = useAdminAuth();
+  const { isSuperAdmin, user, profile, role } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Check if user can approve (admin or super_admin)
+  const canApprove = isSuperAdmin || (role as string) === "admin";
 
   const [selectedArticle, setSelectedArticle] = useState<PendingArticle | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -76,7 +79,7 @@ export default function ArticleApprovals() {
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState("");
 
-  // Fetch pending articles
+  // Fetch pending articles - accessible to all admins for viewing
   const { data: pendingArticles, isLoading } = useQuery({
     queryKey: ["pending-articles"],
     queryFn: async () => {
@@ -105,7 +108,6 @@ export default function ArticleApprovals() {
         author: profileMap?.[a.author_id],
       })) as PendingArticle[];
     },
-    enabled: isSuperAdmin,
   });
 
   // Approve article mutation
@@ -355,22 +357,17 @@ export default function ArticleApprovals() {
     });
   };
 
-  if (!isSuperAdmin) {
-    return (
-      <div className="text-center py-12">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">Akses Ditolak</h2>
-        <p className="text-muted-foreground">Hanya Super Admin yang dapat menyetujui artikel</p>
-      </div>
-    );
-  }
+  // Moderators can view but not approve
+  const isViewOnly = role === "moderator";
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Persetujuan Artikel</h1>
         <p className="text-muted-foreground">
-          Review dan setujui artikel dari moderator sebelum dipublikasikan
+          {isViewOnly 
+            ? "Lihat artikel yang menunggu persetujuan dari admin" 
+            : "Review dan setujui artikel dari moderator sebelum dipublikasikan"}
         </p>
       </div>
 

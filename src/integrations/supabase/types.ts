@@ -170,6 +170,47 @@ export type Database = {
         }
         Relationships: []
       }
+      article_collaborators: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          article_id: string
+          can_edit: boolean | null
+          can_review: boolean | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          article_id: string
+          can_edit?: boolean | null
+          can_review?: boolean | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          article_id?: string
+          can_edit?: boolean | null
+          can_review?: boolean | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_collaborators_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       article_comments: {
         Row: {
           article_id: string
@@ -199,6 +240,126 @@ export type Database = {
           {
             foreignKeyName: "article_comments_article_id_fkey"
             columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_inline_comments: {
+        Row: {
+          article_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_resolved: boolean | null
+          parent_comment_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          selected_text: string | null
+          selection_end: number | null
+          selection_start: number | null
+          updated_at: string | null
+          user_id: string
+          version_id: string | null
+        }
+        Insert: {
+          article_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          selected_text?: string | null
+          selection_end?: number | null
+          selection_start?: number | null
+          updated_at?: string | null
+          user_id: string
+          version_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          selected_text?: string | null
+          selection_end?: number | null
+          selection_start?: number | null
+          updated_at?: string | null
+          user_id?: string
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_inline_comments_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_inline_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "article_inline_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_inline_comments_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "article_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_recurrence: {
+        Row: {
+          article_template_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          next_scheduled_at: string | null
+          recurrence_day: number | null
+          recurrence_pattern: string
+          recurrence_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          article_template_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          next_scheduled_at?: string | null
+          recurrence_day?: number | null
+          recurrence_pattern: string
+          recurrence_time?: string
+          updated_at?: string | null
+        }
+        Update: {
+          article_template_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          next_scheduled_at?: string | null
+          recurrence_day?: number | null
+          recurrence_pattern?: string
+          recurrence_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_recurrence_article_template_id_fkey"
+            columns: ["article_template_id"]
             isOneToOne: false
             referencedRelation: "articles"
             referencedColumns: ["id"]
@@ -310,7 +471,9 @@ export type Database = {
           excerpt: string | null
           featured_image_url: string | null
           id: string
+          is_collaborative: boolean | null
           is_pinned: boolean | null
+          lead_author_id: string | null
           media_urls: Json | null
           needs_approval: boolean | null
           pinned_at: string | null
@@ -342,7 +505,9 @@ export type Database = {
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_collaborative?: boolean | null
           is_pinned?: boolean | null
+          lead_author_id?: string | null
           media_urls?: Json | null
           needs_approval?: boolean | null
           pinned_at?: string | null
@@ -374,7 +539,9 @@ export type Database = {
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_collaborative?: boolean | null
           is_pinned?: boolean | null
+          lead_author_id?: string | null
           media_urls?: Json | null
           needs_approval?: boolean | null
           pinned_at?: string | null
@@ -1492,6 +1659,45 @@ export type Database = {
           status?: string
           subject?: string
           total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      seo_settings: {
+        Row: {
+          created_at: string | null
+          default_og_image: string | null
+          default_twitter_card: string | null
+          google_analytics_id: string | null
+          google_site_verification: string | null
+          id: string
+          robots_txt_content: string | null
+          sitemap_enabled: boolean | null
+          structured_data_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_og_image?: string | null
+          default_twitter_card?: string | null
+          google_analytics_id?: string | null
+          google_site_verification?: string | null
+          id?: string
+          robots_txt_content?: string | null
+          sitemap_enabled?: boolean | null
+          structured_data_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_og_image?: string | null
+          default_twitter_card?: string | null
+          google_analytics_id?: string | null
+          google_site_verification?: string | null
+          id?: string
+          robots_txt_content?: string | null
+          sitemap_enabled?: boolean | null
+          structured_data_enabled?: boolean | null
           updated_at?: string | null
         }
         Relationships: []

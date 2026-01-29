@@ -74,6 +74,7 @@ export default function RecruiterAssignmentsManagement() {
   const [selectedRecruiter, setSelectedRecruiter] = useState<string>("");
   const [assignmentType, setAssignmentType] = useState<"administrasi" | "wawancara" | "both">("administrasi");
   const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(new Set());
+  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<Set<string>>(new Set());
 
   // Fetch all assignments
   const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
@@ -239,6 +240,61 @@ export default function RecruiterAssignmentsManagement() {
       toast.error(`Gagal menghapus: ${error.message}`);
     },
   });
+
+  // Bulk delete from active assignments list
+  const bulkDeleteActivesMutation = useMutation({
+    mutationFn: async (assignmentIds: string[]) => {
+      const { error } = await supabase
+        .from("recruiter_assignments")
+        .update({ is_active: false })
+        .in("id", assignmentIds);
+      
+      if (error) throw error;
+      return assignmentIds.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`${count} penugasan berhasil dihapus`);
+      queryClient.invalidateQueries({ queryKey: ["all-recruiter-assignments"] });
+      setSelectedAssignmentIds(new Set());
+    },
+    onError: (error: any) => {
+      toast.error(`Gagal menghapus: ${error.message}`);
+    },
+  });
+
+  // Toggle assignment selection in active list
+  const toggleAssignment = (id: string) => {
+    setSelectedAssignmentIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Select all active assignments
+  const selectAllAssignments = () => {
+    if (assignments) {
+      setSelectedAssignmentIds(new Set(assignments.map(a => a.id)));
+    }
+  };
+
+  // Deselect all active assignments
+  const deselectAllAssignments = () => {
+    setSelectedAssignmentIds(new Set());
+  };
+
+  // Handle bulk delete active assignments
+  const handleBulkDeleteActives = () => {
+    if (selectedAssignmentIds.size === 0) {
+      toast.error("Pilih minimal satu penugasan");
+      return;
+    }
+    bulkDeleteActivesMutation.mutate(Array.from(selectedAssignmentIds));
+  };
 
   // Get admin name by ID
   const getAdminName = (adminId: string) => {
@@ -666,10 +722,40 @@ export default function RecruiterAssignmentsManagement() {
       {/* Current Assignments Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Penugasan Aktif</CardTitle>
-          <CardDescription>
-            {assignments?.length || 0} penugasan aktif
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Daftar Penugasan Aktif</CardTitle>
+              <CardDescription>
+                {assignments?.length || 0} penugasan aktif
+              </CardDescription>
+            </div>
+            {assignments && assignments.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={selectAllAssignments}>
+                  Pilih Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={deselectAllAssignments}>
+                  Batal Pilih
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {selectedAssignmentIds.size} dipilih
+                </span>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleBulkDeleteActives}
+                  disabled={selectedAssignmentIds.size === 0 || bulkDeleteActivesMutation.isPending}
+                >
+                  {bulkDeleteActivesMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Hapus Terpilih
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingAssignments ? (
@@ -681,6 +767,19 @@ export default function RecruiterAssignmentsManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox 
+                        checked={selectedAssignmentIds.size === assignments.length && assignments.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            selectAllAssignments();
+                          } else {
+                            deselectAllAssignments();
+                          }
+                        }}
+                        aria-label="Pilih semua penugasan"
+                      />
+                    </TableHead>
                     <TableHead>Pendaftar</TableHead>
                     <TableHead>Rekruter</TableHead>
                     <TableHead>Tahap</TableHead>
@@ -691,8 +790,16 @@ export default function RecruiterAssignmentsManagement() {
                 <TableBody>
                   {assignments.map((assignment) => {
                     const reg = registrations?.find(r => r.id === assignment.registration_id);
+                    const isSelected = selectedAssignmentIds.has(assignment.id);
                     return (
-                      <TableRow key={assignment.id}>
+                      <TableRow key={assignment.id} className={isSelected ? "bg-primary/5" : ""}>
+                        <TableCell>
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={() => toggleAssignment(assignment.id)}
+                            aria-label={`Pilih penugasan ${reg?.full_name}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{reg?.full_name || "Unknown"}</p>
@@ -712,6 +819,7 @@ export default function RecruiterAssignmentsManagement() {
                             size="icon"
                             onClick={() => deleteMutation.mutate(assignment.id)}
                             disabled={deleteMutation.isPending}
+                            aria-label="Hapus penugasan"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

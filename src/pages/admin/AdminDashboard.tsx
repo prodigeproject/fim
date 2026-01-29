@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
     children: [
       { name: "Manajemen Artikel", href: "/admin/articles", icon: FileText },
       { name: "Persetujuan", href: "/admin/approvals", icon: ClipboardList, badgeKey: "pendingArticles" },
+      { name: "Kalender Jadwal", href: "/admin/article-calendar", icon: ClipboardList, adminOnly: true },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3, adminOnly: true },
     ]
   },
@@ -63,7 +64,7 @@ const navItems: NavItem[] = [
     name: "Newsletter", 
     href: "/admin/newsletter", 
     icon: Mail,
-    adminOnly: true, // Only admin and super_admin can access
+    adminOnly: true,
     children: [
       { name: "Subscribers", href: "/admin/newsletter", icon: Mail },
       { name: "Email Settings", href: "/admin/email-settings", icon: Settings, superAdminOnly: true },
@@ -73,7 +74,7 @@ const navItems: NavItem[] = [
     name: "Data Organisasi", 
     href: "/admin/clubs", 
     icon: UsersRound,
-    adminOnly: true, // Only admin and super_admin
+    adminOnly: true,
     children: [
       { name: "FIM Club", href: "/admin/clubs", icon: UsersRound },
       { name: "Regional", href: "/admin/regionals", icon: MapPin },
@@ -87,7 +88,7 @@ const navItems: NavItem[] = [
     href: "/admin/registrations", 
     icon: ClipboardList, 
     badgeKey: "newRegistrations",
-    adminOnly: true, // Only admin and super_admin for full access
+    adminOnly: true,
     children: [
       { name: "Data Pendaftar", href: "/admin/registrations", icon: ClipboardList, badgeKey: "newRegistrations" },
       { name: "Penugasan Rekruter", href: "/admin/recruiter-assignments", icon: Users, superAdminOnly: true },
@@ -101,7 +102,7 @@ const navItems: NavItem[] = [
     name: "Pengguna", 
     href: "/admin/users", 
     icon: Users,
-    superAdminOnly: true, // Only super_admin
+    superAdminOnly: true,
     children: [
       { name: "Manajemen User", href: "/admin/users", icon: Users },
       { name: "Manajemen Role", href: "/admin/roles", icon: ShieldAlert },
@@ -113,13 +114,13 @@ const navItems: NavItem[] = [
     name: "Sesi Aktif", 
     href: "/admin/sessions", 
     icon: Monitor,
-    hideFromModerator: true, // Hide from moderator
+    hideFromModerator: true,
   },
   { 
     name: "Logs", 
     href: "/admin/audit-logs", 
     icon: ClipboardList,
-    adminOnly: true, // Admin and super_admin only
+    adminOnly: true,
     children: [
       { name: "Audit Log", href: "/admin/audit-logs", icon: ClipboardList },
       { name: "Security", href: "/admin/security-dashboard", icon: ShieldAlert, superAdminOnly: true },
@@ -128,10 +129,13 @@ const navItems: NavItem[] = [
     ]
   },
   {
-    name: "reCAPTCHA",
-    href: "/admin/recaptcha",
-    icon: ShieldAlert,
+    name: "Tools",
+    href: "/admin/tools",
+    icon: Settings,
     superAdminOnly: true,
+    children: [
+      { name: "SEO & reCAPTCHA", href: "/admin/tools", icon: Settings },
+    ]
   },
 ];
 
