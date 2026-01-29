@@ -45,13 +45,14 @@ export default function RegistrationSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [signupCompleted, setSignupCompleted] = useState(false);
 
-  // Redirect if already logged in
+  // Only redirect if already logged in AND not during/after signup process
   useEffect(() => {
-    if (user && registration) {
+    if (user && registration && !signupCompleted && !isSubmitting) {
       navigate("/daftar/dashboard", { replace: true });
     }
-  }, [user, registration, navigate]);
+  }, [user, registration, navigate, signupCompleted, isSubmitting]);
 
   const passwordStrength = useMemo(() => checkPasswordStrength(formData.password), [formData.password]);
 
@@ -161,8 +162,10 @@ export default function RegistrationSignup() {
       toast.error("Pendaftaran gagal: " + error.message);
       setIsSubmitting(false);
     } else {
+      // Mark signup as completed to prevent redirect loops
+      setSignupCompleted(true);
       // Redirect to success page with message, then user logs in manually
-      navigate("/daftar/success");
+      navigate("/daftar/success", { replace: true });
     }
   };
 
