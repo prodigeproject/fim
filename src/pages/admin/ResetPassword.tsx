@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, KeyRound, CheckCircle2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const passwordSchema = z
   .string()
@@ -25,6 +26,7 @@ export default function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   useEffect(() => {
     // Check if we have a valid recovery session
@@ -32,7 +34,8 @@ export default function ResetPassword() {
       async (event, session) => {
         if (event === "PASSWORD_RECOVERY") {
           // User has clicked the recovery link
-          console.log("Password recovery mode");
+          console.log("Password recovery mode detected");
+          setIsRecoveryMode(true);
         }
       }
     );
@@ -41,6 +44,13 @@ export default function ResetPassword() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  const requirements = [
+    { text: "Minimal 8 karakter", valid: password.length >= 8 },
+    { text: "Mengandung huruf besar", valid: /[A-Z]/.test(password) },
+    { text: "Mengandung huruf kecil", valid: /[a-z]/.test(password) },
+    { text: "Mengandung angka", valid: /[0-9]/.test(password) },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,16 +75,21 @@ export default function ResetPassword() {
 
       if (error) {
         setError(error.message);
+        setIsLoading(false);
       } else {
         setSuccess(true);
+        toast.success("Password berhasil direset");
+        
+        // Sign out first, then redirect to login
+        await supabase.auth.signOut();
+        
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         }, 3000);
       }
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -93,11 +108,14 @@ export default function ResetPassword() {
               <CardDescription>
                 Password Anda telah berhasil diperbarui.
                 <br />
-                Mengalihkan ke halaman login...
+                Silakan login kembali dengan password baru Anda.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+              <p className="text-sm text-center text-muted-foreground mt-2">
+                Mengalihkan ke halaman login...
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -116,7 +134,7 @@ export default function ResetPassword() {
             </div>
             <CardTitle className="text-2xl">Reset Password</CardTitle>
             <CardDescription>
-              Masukkan password baru Anda
+              Masukkan password baru Anda. Setelah berhasil, Anda akan diminta login ulang.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -153,9 +171,21 @@ export default function ResetPassword() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Min. 8 karakter, huruf besar, huruf kecil, dan angka
-                </p>
+
+                {/* Password requirements */}
+                <div className="mt-3 space-y-1">
+                  {requirements.map((req) => (
+                    <div
+                      key={req.text}
+                      className={`flex items-center gap-2 text-xs ${
+                        req.valid ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                      }`}
+                    >
+                      <CheckCircle2 className={`h-3 w-3 ${req.valid ? "opacity-100" : "opacity-30"}`} />
+                      {req.text}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -171,7 +201,11 @@ export default function ResetPassword() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || !requirements.every(r => r.valid)}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
