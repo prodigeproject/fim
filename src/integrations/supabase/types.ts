@@ -1220,6 +1220,42 @@ export type Database = {
         }
         Relationships: []
       }
+      recaptcha_settings: {
+        Row: {
+          created_at: string | null
+          enabled_admin_login: boolean | null
+          enabled_forgot_password: boolean | null
+          enabled_login: boolean | null
+          enabled_signup: boolean | null
+          id: string
+          secret_key_encrypted: string | null
+          site_key: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled_admin_login?: boolean | null
+          enabled_forgot_password?: boolean | null
+          enabled_login?: boolean | null
+          enabled_signup?: boolean | null
+          id?: string
+          secret_key_encrypted?: string | null
+          site_key?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled_admin_login?: boolean | null
+          enabled_forgot_password?: boolean | null
+          enabled_login?: boolean | null
+          enabled_signup?: boolean | null
+          id?: string
+          secret_key_encrypted?: string | null
+          site_key?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       recruiter_assignments: {
         Row: {
           assigned_by: string | null
@@ -1636,6 +1672,16 @@ export type Database = {
       get_next_article_version: {
         Args: { p_article_id: string }
         Returns: number
+      }
+      get_recaptcha_public_config: {
+        Args: never
+        Returns: {
+          enabled_admin_login: boolean
+          enabled_forgot_password: boolean
+          enabled_login: boolean
+          enabled_signup: boolean
+          site_key: string
+        }[]
       }
       has_permission: {
         Args: { _action?: string; _permission_key: string; _user_id: string }
