@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, KeyRound, CheckCircle } from "lucide-react";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const passwordSchema = z.object({
   password: z.string()
@@ -21,8 +22,13 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Enum for password change type
+type PasswordChangeType = "first_login" | "self_change" | "reset_by_admin";
+
 export default function ChangePassword() {
-  const { updatePassword, signOut, profile } = useAdminAuth();
+  const { updatePassword, signOut, profile, refreshProfile } = useAdminAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +36,44 @@ export default function ChangePassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Determine the type of password change
+  const getPasswordChangeType = (): PasswordChangeType => {
+    // Check if this is from a reset by admin (passed via location state)
+    if (location.state?.resetByAdmin) {
+      return "reset_by_admin";
+    }
+    // Check if this is first login (must_change_password flag)
+    if (profile?.must_change_password) {
+      return "first_login";
+    }
+    // Otherwise it's a self-initiated change
+    return "self_change";
+  };
+
+  const passwordChangeType = getPasswordChangeType();
+
+  const getTitle = () => {
+    switch (passwordChangeType) {
+      case "first_login":
+        return "Buat Password Baru";
+      case "reset_by_admin":
+        return "Reset Password";
+      case "self_change":
+        return "Ubah Password";
+    }
+  };
+
+  const getDescription = () => {
+    switch (passwordChangeType) {
+      case "first_login":
+        return "Ini adalah login pertama Anda. Silakan buat password baru untuk keamanan akun.";
+      case "reset_by_admin":
+        return "Password Anda telah direset oleh administrator. Silakan buat password baru.";
+      case "self_change":
+        return "Buat password baru yang kuat untuk akun Anda.";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +93,32 @@ export default function ChangePassword() {
       
       if (updateError) {
         setError(updateError.message);
-      } else {
-        // Sign out after password change and redirect to login
-        await signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      // Different behavior based on password change type
+      if (passwordChangeType === "reset_by_admin") {
+        // Reset by admin: logout and redirect to login
         setSuccess(true);
+        toast.success("Password berhasil diubah");
+        
+        setTimeout(async () => {
+          await signOut();
+        }, 2000);
+      } else {
+        // First login or self change: stay logged in, show success
+        await refreshProfile();
+        setSuccess(true);
+        toast.success("Password berhasil diubah");
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate("/admin/dashboard", { replace: true });
+        }, 2000);
       }
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -76,15 +138,24 @@ export default function ChangePassword() {
             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Password Berhasil Diubah</h2>
-            <p className="text-muted-foreground">
-              Silakan login kembali dengan password baru Anda.
-            </p>
-            <Link to="/admin">
-              <Button className="w-full mt-4">
-                Ke Halaman Login
-              </Button>
-            </Link>
+            <h2 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h2>
+            {passwordChangeType === "reset_by_admin" ? (
+              <>
+                <p className="text-muted-foreground">
+                  Anda akan diarahkan ke halaman login untuk masuk dengan password baru.
+                </p>
+                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary mt-4" />
+                <p className="text-sm text-muted-foreground">Mengalihkan ke halaman login...</p>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">
+                  Password Anda telah berhasil diperbarui.
+                </p>
+                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary mt-4" />
+                <p className="text-sm text-muted-foreground">Mengalihkan ke dashboard...</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -98,13 +169,8 @@ export default function ChangePassword() {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             <KeyRound className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Ubah Password</CardTitle>
-          <CardDescription>
-            {profile?.must_change_password 
-              ? "Anda harus mengubah password sebelum melanjutkan"
-              : "Buat password baru yang kuat"
-            }
-          </CardDescription>
+          <CardTitle className="text-2xl">{getTitle()}</CardTitle>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         
         <CardContent>
@@ -185,6 +251,18 @@ export default function ChangePassword() {
                 "Simpan Password"
               )}
             </Button>
+
+            {/* Only show back link for self-change, not for first login or reset */}
+            {passwordChangeType === "self_change" && (
+              <div className="text-center mt-4">
+                <Link 
+                  to="/admin/profile" 
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  Kembali ke Pengaturan Profil
+                </Link>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

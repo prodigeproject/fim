@@ -35,20 +35,48 @@ interface RolePermission {
 }
 
 const PERMISSION_LABELS: Record<string, { label: string; description: string }> = {
+  // Core pages
   dashboard: { label: "Dashboard", description: "Akses halaman dashboard utama" },
+  
+  // Article management
   articles: { label: "Artikel", description: "Manajemen artikel dan konten" },
-  article_approvals: { label: "Persetujuan Artikel", description: "Approve/reject artikel" },
-  newsletter: { label: "Newsletter", description: "Manajemen subscriber dan broadcast" },
-  clubs: { label: "FIM Club", description: "Manajemen FIM Club" },
-  regionals: { label: "Regional", description: "Manajemen regional" },
+  article_approvals: { label: "Persetujuan Artikel", description: "Approve/reject artikel yang pending" },
+  article_analytics: { label: "Analytics Artikel", description: "Lihat statistik dan analytics artikel" },
+  
+  // Newsletter
+  newsletter: { label: "Newsletter", description: "Manajemen subscriber dan broadcast email" },
+  email_settings: { label: "Pengaturan Email", description: "Konfigurasi SMTP dan pengaturan email" },
+  email_templates: { label: "Template Email", description: "Kelola template email sistem" },
+  
+  // Organization data
+  clubs: { label: "FIM Club", description: "Manajemen data FIM Club" },
+  regionals: { label: "Regional", description: "Manajemen data regional" },
   alumni: { label: "Alumni", description: "Manajemen data alumni" },
-  registrations: { label: "Registrasi FIM", description: "Manajemen pendaftaran" },
-  users: { label: "Pengguna", description: "Manajemen user admin" },
-  sessions: { label: "Sesi Aktif", description: "Lihat sesi login aktif" },
-  audit_logs: { label: "Audit Log", description: "Lihat log aktivitas" },
-  security: { label: "Security", description: "Dashboard keamanan" },
+  partners: { label: "Mitra", description: "Manajemen data mitra/partner" },
+  featured_videos: { label: "Video Featured", description: "Kelola video unggulan di homepage" },
+  
+  // Registration management
+  registrations: { label: "Data Pendaftar", description: "Lihat dan kelola data pendaftar" },
+  recruiter_assignments: { label: "Penugasan Rekruter", description: "Assign rekruter ke pendaftar" },
+  interview_calendar: { label: "Kalender Wawancara", description: "Kelola jadwal wawancara" },
+  registration_settings: { label: "Pengaturan Batch", description: "Atur periode dan batch pendaftaran" },
+  registration_stats: { label: "Statistik Registrasi", description: "Lihat statistik pendaftaran" },
+  
+  // User management
+  users: { label: "Manajemen User", description: "Kelola akun admin dan moderator" },
   roles: { label: "Manajemen Role", description: "Kelola role dan permission" },
-  prd_docs: { label: "PRD & Docs", description: "Dokumentasi teknis" },
+  online_admins: { label: "Admin Online", description: "Lihat admin yang sedang online" },
+  login_monitoring: { label: "Login Monitoring", description: "Monitor aktivitas login" },
+  
+  // System
+  sessions: { label: "Sesi Aktif", description: "Lihat dan kelola sesi login aktif" },
+  audit_logs: { label: "Audit Log", description: "Lihat log aktivitas sistem" },
+  security: { label: "Dashboard Security", description: "Dashboard keamanan dan percobaan akses" },
+  recaptcha: { label: "reCAPTCHA", description: "Pengaturan reCAPTCHA" },
+  
+  // Documentation
+  prd_docs: { label: "PRD & Dokumentasi", description: "Dokumentasi produk dan teknis" },
+  technical_docs: { label: "Technical Docs", description: "Dokumentasi teknis sistem" },
 };
 
 export default function RolesManagement() {
