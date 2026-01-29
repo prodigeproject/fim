@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.notify-interview-completed]
 verify_jwt = false
+
+[functions.delete-registrant-auth-user]
+verify_jwt = false
