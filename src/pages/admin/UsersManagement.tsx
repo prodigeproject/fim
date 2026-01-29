@@ -43,6 +43,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Plus, UserPlus, Shield, ShieldCheck, UserX, Key, Copy, ShieldAlert, Trash2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import BulkUserImport from "@/components/admin/BulkUserImport";
 
 interface DynamicRole {
   id: string;
@@ -592,6 +593,8 @@ export default function UsersManagement() {
           </p>
         </div>
         <div className="flex gap-2">
+          <BulkUserImport />
+          
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button>

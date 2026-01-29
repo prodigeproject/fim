@@ -55,6 +55,7 @@ import FeaturedVideosManagement from "@/pages/admin/FeaturedVideosManagement";
 import EmailTemplatesManagement from "@/pages/admin/EmailTemplatesManagement";
 import InterviewCalendar from "@/pages/admin/InterviewCalendar";
 import RecruiterAssignmentsManagement from "@/pages/admin/RecruiterAssignmentsManagement";
+import RecaptchaSettings from "@/pages/admin/RecaptchaSettings";
 import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import RegistrationLogin from "@/pages/registration/RegistrationLogin";
 import RegistrationSignup from "@/pages/registration/RegistrationSignup";
@@ -148,6 +149,7 @@ const AnimatedRoutes = () => {
                 <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
                 <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                 <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
+                <Route path="recaptcha" element={<RequireSuperAdmin><RecaptchaSettings /></RequireSuperAdmin>} />
                 
                 <Route path="*" element={<AdminNotFound />} />
               </Route>

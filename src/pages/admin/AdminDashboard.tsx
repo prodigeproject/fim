@@ -122,6 +122,12 @@ const navItems: NavItem[] = [
       { name: "Technical Docs", href: "/admin/documentation", icon: FileText, superAdminOnly: true },
     ]
   },
+  {
+    name: "reCAPTCHA",
+    href: "/admin/recaptcha",
+    icon: ShieldAlert,
+    superAdminOnly: true,
+  },
 ];
 
 export default function AdminDashboard() {
@@ -214,10 +220,11 @@ export default function AdminDashboard() {
     navigate("/admin", { replace: true });
   };
 
-  const toggleMenu = (name: string) => {
+  const toggleMenu = useCallback((name: string) => {
     // Save scroll position before toggle
-    if (sidebarScrollRef.current) {
-      scrollPositionRef.current = sidebarScrollRef.current.scrollTop;
+    const scrollContainer = sidebarScrollRef.current;
+    if (scrollContainer) {
+      scrollPositionRef.current = scrollContainer.scrollTop;
     }
     
     setOpenMenus(prev => 
@@ -226,15 +233,22 @@ export default function AdminDashboard() {
         : [...prev, name]
     );
     
-    // Restore scroll position after DOM update using double rAF for reliable timing
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (sidebarScrollRef.current) {
-          sidebarScrollRef.current.scrollTop = scrollPositionRef.current;
-        }
-      });
-    });
-  };
+    // Restore scroll position after DOM update - use multiple frames to handle animation
+    const restoreScroll = () => {
+      if (scrollContainer && scrollPositionRef.current !== undefined) {
+        scrollContainer.scrollTop = scrollPositionRef.current;
+      }
+    };
+    
+    // Immediate restore
+    requestAnimationFrame(restoreScroll);
+    // After first paint
+    requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
+    // After potential animation (100ms)
+    setTimeout(restoreScroll, 100);
+    // After animation complete (300ms)
+    setTimeout(restoreScroll, 300);
+  }, []);
 
   // Show loading while auth is being checked
   if (isLoading || !authChecked) {
@@ -386,6 +400,10 @@ export default function AdminDashboard() {
         <div 
           ref={sidebarScrollRef}
           className="flex-1 overflow-y-auto overscroll-contain"
+          style={{ 
+            overflowAnchor: 'none', // Prevent browser scroll anchoring
+            scrollBehavior: 'auto', // Disable smooth scrolling for instant restore
+          }}
           onScroll={(e) => e.stopPropagation()}
         >
           <nav className="p-2 space-y-0.5">
