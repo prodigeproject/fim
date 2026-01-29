@@ -23,7 +23,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  GitBranch
+  GitBranch,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,7 @@ import {
   articleFlowDiagram,
   securityDiagram 
 } from "@/components/admin/MermaidDiagram";
+import { PrivilegeSystemDiagram } from "@/components/admin/PrivilegeSystemDiagram";
 
 // Data structures for documentation
 const publicPages = [
@@ -559,10 +561,14 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
       )}
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 h-auto">
           <TabsTrigger value="overview" className="text-xs">
             <Layers className="h-3 w-3 mr-1" />
             Ringkasan
+          </TabsTrigger>
+          <TabsTrigger value="privileges" className="text-xs">
+            <Users className="h-3 w-3 mr-1" />
+            Hak Akses
           </TabsTrigger>
           <TabsTrigger value="architecture" className="text-xs">
             <GitBranch className="h-3 w-3 mr-1" />
@@ -593,6 +599,10 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
             Migrasi
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="privileges">
+          <PrivilegeSystemDiagram />
+        </TabsContent>
 
         <TabsContent value="overview">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

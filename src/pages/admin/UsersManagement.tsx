@@ -72,6 +72,16 @@ async function extractFunctionErrorMessage(err: any): Promise<string> {
   return err?.message || "Terjadi kesalahan";
 }
 
+function generateSecurePassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  // Ensure at least one uppercase, lowercase, number, and special char
+  return password.slice(0, 8) + 'A1!x';
+}
+
 export default function UsersManagement() {
   const { isSuperAdmin, user } = useAdminAuth();
   const { toast } = useToast();
@@ -240,22 +250,35 @@ export default function UsersManagement() {
 
   // Bulk create users mutation
   const bulkCreateUsersMutation = useMutation({
-    mutationFn: async (users: { email: string; full_name: string; password: string; role: "super_admin" | "moderator" | "admin"; dynamicRoleId?: string }[]) => {
+    mutationFn: async (usersToCreate: { email: string; full_name: string; password: string; role: "super_admin" | "moderator" | "admin"; dynamicRoleId?: string }[]) => {
       const results: { email: string; success: boolean; error?: string; password?: string; userId?: string }[] = [];
       
-      for (const u of users) {
+      for (const u of usersToCreate) {
         try {
+          // Validate email format
+          if (!u.email || !u.email.includes('@')) {
+            results.push({ email: u.email || "invalid", success: false, error: "Email tidak valid" });
+            continue;
+          }
+
+          // Validate password length
+          if (!u.password || u.password.length < 8) {
+            results.push({ email: u.email, success: false, error: "Password harus minimal 8 karakter" });
+            continue;
+          }
+
           const { data, error } = await supabase.functions.invoke("admin-create-user", {
             body: {
-              email: u.email.trim(),
+              email: u.email.trim().toLowerCase(),
               password: u.password,
-              full_name: u.full_name.trim(),
+              full_name: u.full_name.trim() || u.email.split('@')[0],
               role: u.role,
             },
           });
 
           if (error) {
-            results.push({ email: u.email, success: false, error: await extractFunctionErrorMessage(error) });
+            const errorMessage = await extractFunctionErrorMessage(error);
+            results.push({ email: u.email, success: false, error: errorMessage });
             continue;
           }
 
@@ -264,15 +287,16 @@ export default function UsersManagement() {
             continue;
           }
 
-          results.push({ email: u.email, success: true, password: u.password, userId: (data as any)?.user_id });
+          const userId = (data as any)?.user_id;
+          results.push({ email: u.email, success: true, password: u.password, userId });
 
           // Assign dynamic role if specified
-          if (u.dynamicRoleId && (data as any)?.user_id) {
+          if (u.dynamicRoleId && userId) {
             try {
               await supabase
                 .from("user_dynamic_roles")
                 .insert({
-                  user_id: (data as any).user_id,
+                  user_id: userId,
                   role_id: u.dynamicRoleId,
                   assigned_by: user?.id,
                 });
@@ -293,7 +317,10 @@ export default function UsersManagement() {
       queryClient.invalidateQueries({ queryKey: ["user-dynamic-roles"] });
       setBulkAddResults(results);
       const successCount = results.filter(r => r.success).length;
-      toast({ title: `${successCount} dari ${results.length} pengguna berhasil dibuat` });
+      toast({ 
+        title: `${successCount} dari ${results.length} pengguna berhasil dibuat`,
+        description: successCount < results.length ? "Lihat detail untuk error" : undefined,
+      });
     },
     onError: (error) => {
       toast({
@@ -755,21 +782,35 @@ export default function UsersManagement() {
                 className="w-full"
                 onClick={() => {
                   const lines = bulkUserList.trim().split('\n').filter(l => l.trim());
-                  const users = lines.map(line => {
-                    const parts = line.split(',').map(p => p.trim());
+                  
+                  if (lines.length === 0) {
+                    toast({ title: "Tidak ada data untuk diproses", variant: "destructive" });
+                    return;
+                  }
+
+                  const usersToCreate = lines.map(line => {
+                    // Support both comma and semicolon as separators
+                    const separator = line.includes(';') ? ';' : ',';
+                    const parts = line.split(separator).map(p => p.trim());
                     const email = parts[0] || '';
-                    const full_name = parts[1] || parts[0]?.split('@')[0] || '';
-                    // Generate random password
-                    const password = Math.random().toString(36).slice(-8) + 'A1!';
-                    return { email, full_name, password, role: bulkRole, dynamicRoleId: bulkDynamicRoleId || undefined };
+                    const full_name = parts[1] || parts[0]?.split('@')[0] || 'User';
+                    // Generate secure random password
+                    const password = generateSecurePassword();
+                    return { 
+                      email, 
+                      full_name, 
+                      password, 
+                      role: bulkRole, 
+                      dynamicRoleId: bulkDynamicRoleId || undefined 
+                    };
                   }).filter(u => u.email.includes('@'));
                   
-                  if (users.length === 0) {
-                    toast({ title: "Tidak ada data valid", variant: "destructive" });
+                  if (usersToCreate.length === 0) {
+                    toast({ title: "Tidak ada email valid ditemukan. Pastikan format: email, nama_lengkap", variant: "destructive" });
                     return;
                   }
                   
-                  bulkCreateUsersMutation.mutate(users);
+                  bulkCreateUsersMutation.mutate(usersToCreate);
                 }}
                 disabled={bulkCreateUsersMutation.isPending || !bulkUserList.trim()}
               >
@@ -778,8 +819,11 @@ export default function UsersManagement() {
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
                 )}
-                Buat {bulkUserList.trim().split('\n').filter(l => l.trim()).length} Pengguna
+                Buat {bulkUserList.trim().split('\n').filter(l => l.trim() && l.includes('@')).length} Pengguna
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Password acak akan digenerate otomatis dan ditampilkan di hasil
+              </p>
             </div>
           </DialogContent>
         </Dialog>
