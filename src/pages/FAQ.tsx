@@ -10,7 +10,7 @@ import {
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Mail, MessageCircle } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+
 
 const FAQ = () => {
   const faqCategories = [

@@ -222,13 +222,14 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
     try {
       setIsLoading(true);
 
-      console.log("Starting signIn for:", email);
+      const normalizedEmail = email.toLowerCase().trim();
+      console.log("Starting signIn for:", normalizedEmail);
 
-      // First check if registration exists and is verified
+      // First check if registration exists
       const { data: regCheck, error: regCheckError } = await supabase
         .from("fim_registrations")
         .select("id, email_verified, auth_user_id")
-        .eq("email", email.toLowerCase().trim())
+        .eq("email", normalizedEmail)
         .maybeSingle();
 
       console.log("Registration check result:", { regCheck, regCheckError });
@@ -247,11 +248,17 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         throw new Error("UNVERIFIED_EMAIL");
       }
 
+      // Check if auth_user_id exists - if not, there might be an issue with the registration
+      if (!regCheck.auth_user_id) {
+        console.error("Registration exists but no auth_user_id");
+        throw new Error("Akun belum terhubung dengan sistem autentikasi. Silakan hubungi admin.");
+      }
+
       console.log("Email verified, proceeding with signInWithPassword");
 
       // Now do the actual sign in
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
@@ -261,6 +268,10 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         // Provide more specific error messages
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Email atau password salah. Silakan periksa kembali.");
+        }
+        if (error.message.includes("Email not confirmed")) {
+          // This shouldn't happen since we check email_verified, but just in case
+          throw new Error("UNVERIFIED_EMAIL");
         }
         throw error;
       }

@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Heart, Building, AlertTriangle, CheckCircle, Copy, MessageCircle, Instagram, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { useTranslation } from "@/hooks/useTranslation";
+
 
 const Donasi = () => {
   const copyToClipboard = (text: string, label: string) => {
