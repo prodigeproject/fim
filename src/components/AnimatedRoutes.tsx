@@ -151,22 +151,22 @@ const AnimatedRoutes = () => {
                   <Route path="sessions" element={<SessionsManagement />} />
                   <Route path="online" element={<OnlineAdminsDashboard />} />
                   
-                  {/* Routes accessible by admin and super_admin (not moderator) */}
-                  <Route path="newsletter" element={<RequireAdmin><NewsletterManagement /></RequireAdmin>} />
-                  <Route path="email-settings" element={<RequireAdmin><EmailSettings /></RequireAdmin>} />
-                  <Route path="clubs" element={<RequireAdmin><ClubsManagement /></RequireAdmin>} />
-                  <Route path="regionals" element={<RequireAdmin><RegionalsManagement /></RequireAdmin>} />
-                  <Route path="alumni" element={<RequireAdmin><AlumniManagement /></RequireAdmin>} />
-                  <Route path="audit-logs" element={<RequireAdmin><AuditLogs /></RequireAdmin>} />
-                  <Route path="security-dashboard" element={<RequireAdmin><SecurityDashboard /></RequireAdmin>} />
-                  <Route path="registrations" element={<RequireAdmin><RegistrationsManagement /></RequireAdmin>} />
-                  <Route path="registration-settings" element={<RequireAdmin><RegistrationSettingsManagement /></RequireAdmin>} />
-                  <Route path="registration-stats" element={<RequireAdmin><RegistrationStatsDashboard /></RequireAdmin>} />
-                  <Route path="partners" element={<RequireAdmin><PartnersManagement /></RequireAdmin>} />
-                  <Route path="featured-videos" element={<RequireAdmin><FeaturedVideosManagement /></RequireAdmin>} />
-                  <Route path="email-templates" element={<RequireAdmin><EmailTemplatesManagement /></RequireAdmin>} />
-                  <Route path="interview-calendar" element={<RequireAdmin><InterviewCalendar /></RequireAdmin>} />
-                  <Route path="recruiter-assignments" element={<RequireAdmin><RecruiterAssignmentsManagement /></RequireAdmin>} />
+                  {/* Routes accessible based on dynamic permissions */}
+                  <Route path="newsletter" element={<RequireAdmin permissionKey="newsletter"><NewsletterManagement /></RequireAdmin>} />
+                  <Route path="email-settings" element={<RequireAdmin permissionKey="email_settings"><EmailSettings /></RequireAdmin>} />
+                  <Route path="clubs" element={<RequireAdmin permissionKey="clubs"><ClubsManagement /></RequireAdmin>} />
+                  <Route path="regionals" element={<RequireAdmin permissionKey="regionals"><RegionalsManagement /></RequireAdmin>} />
+                  <Route path="alumni" element={<RequireAdmin permissionKey="alumni"><AlumniManagement /></RequireAdmin>} />
+                  <Route path="audit-logs" element={<RequireAdmin permissionKey="audit_logs"><AuditLogs /></RequireAdmin>} />
+                  <Route path="security-dashboard" element={<RequireAdmin permissionKey="security"><SecurityDashboard /></RequireAdmin>} />
+                  <Route path="registrations" element={<RequireAdmin permissionKey="registrations"><RegistrationsManagement /></RequireAdmin>} />
+                  <Route path="registration-settings" element={<RequireAdmin permissionKey="registration_settings"><RegistrationSettingsManagement /></RequireAdmin>} />
+                  <Route path="registration-stats" element={<RequireAdmin permissionKey="registration_stats"><RegistrationStatsDashboard /></RequireAdmin>} />
+                  <Route path="partners" element={<RequireAdmin permissionKey="partners"><PartnersManagement /></RequireAdmin>} />
+                  <Route path="featured-videos" element={<RequireAdmin permissionKey="featured_videos"><FeaturedVideosManagement /></RequireAdmin>} />
+                  <Route path="email-templates" element={<RequireAdmin permissionKey="email_templates"><EmailTemplatesManagement /></RequireAdmin>} />
+                  <Route path="interview-calendar" element={<RequireAdmin permissionKey="interview_calendar"><InterviewCalendar /></RequireAdmin>} />
+                  <Route path="recruiter-assignments" element={<RequireAdmin permissionKey="recruiter_assignments"><RecruiterAssignmentsManagement /></RequireAdmin>} />
                   
                   {/* Super Admin only routes */}
                   <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
@@ -175,7 +175,7 @@ const AnimatedRoutes = () => {
                   <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                   <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
                   <Route path="tools" element={<RequireSuperAdmin><ToolsSettings /></RequireSuperAdmin>} />
-                  <Route path="article-calendar" element={<RequireAdmin><ArticleSchedulingCalendar /></RequireAdmin>} />
+                  <Route path="article-calendar" element={<RequireAdmin permissionKey="article_scheduling"><ArticleSchedulingCalendar /></RequireAdmin>} />
                   
                   <Route path="*" element={<AdminNotFound />} />
                 </Route>

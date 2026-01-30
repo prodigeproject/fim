@@ -10,7 +10,6 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
-import { useTranslation } from "@/hooks/useTranslation";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -43,8 +42,6 @@ import logo28 from "@/assets/partners/logo-28.png";
 import logo29 from "@/assets/partners/logo-29.png";
 
 const Index = () => {
-  const { t, language } = useTranslation();
-  
   // Fetch regional count from database
   const { data: regionalCount } = useQuery({
     queryKey: ["regional-count"],
@@ -110,12 +107,12 @@ const Index = () => {
     },
   });
 
-  // Using translations for static content
+  // Static content
   const stats = [
-    { icon: Calendar, value: "2003", label: t("index.stats.since") },
-    { icon: Users, value: "> 34", label: t("index.stats.batches") },
-    { icon: MapPin, value: regionalCount?.toString() || "61", label: t("index.stats.regions") },
-    { icon: Award, value: "4000+", label: t("index.stats.alumni") },
+    { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
+    { icon: Users, value: "> 34", label: "Angkatan" },
+    { icon: MapPin, value: regionalCount?.toString() || "61", label: "Regional" },
+    { icon: Award, value: "4000+", label: "Alumni" },
   ];
 
   // Alumni testimonials with concrete data
@@ -126,9 +123,7 @@ const Index = () => {
       position: "Policy Analyst",
       company: "Kementerian Keuangan RI",
       icon: Building2,
-      quote: language === "en" 
-        ? "FIM taught me about leadership with integrity. My experience at FIM has been invaluable in my government career."
-        : "FIM mengajarkan saya tentang kepemimpinan yang berintegritas. Pengalaman di FIM menjadi bekal berharga dalam karir saya di pemerintahan."
+      quote: "FIM mengajarkan saya tentang kepemimpinan yang berintegritas. Pengalaman di FIM menjadi bekal berharga dalam karir saya di pemerintahan."
     },
     {
       name: "Siti Nurhaliza",
@@ -136,9 +131,7 @@ const Index = () => {
       position: "Co-Founder",
       company: "EduTech Startup",
       icon: Briefcase,
-      quote: language === "en"
-        ? "The FIM alumni network is very strong. Many business collaborations and social projects were born from friendships at FIM."
-        : "Jaringan alumni FIM sangat kuat. Banyak kolaborasi bisnis dan proyek sosial yang lahir dari pertemanan di FIM."
+      quote: "Jaringan alumni FIM sangat kuat. Banyak kolaborasi bisnis dan proyek sosial yang lahir dari pertemanan di FIM."
     },
     {
       name: "Budi Santoso",
@@ -146,29 +139,27 @@ const Index = () => {
       position: "Program Director",
       company: "NGO Pendidikan Nasional",
       icon: GraduationCap,
-      quote: language === "en"
-        ? "FIM's values of service and humility have shaped the way I lead my organization to this day."
-        : "Nilai-nilai FIM tentang pelayanan dan kebersahajaan membentuk cara saya memimpin organisasi hingga hari ini."
+      quote: "Nilai-nilai FIM tentang pelayanan dan kebersahajaan membentuk cara saya memimpin organisasi hingga hari ini."
     },
   ];
 
   // Program unggulan data
   const programUnggulan = [
     {
-      title: t("index.programSection.training"),
-      description: t("index.programSection.trainingDesc"),
+      title: "Pelatihan Kepemimpinan",
+      description: "Program kaderisasi intensif untuk membentuk karakter dan jiwa kepemimpinan pemuda Indonesia.",
       icon: GraduationCap,
       link: "/program/pelatihan",
     },
     {
-      title: t("index.programSection.mentoring"),
-      description: t("index.programSection.mentoringDesc"),
+      title: "Mentoring Alumni",
+      description: "Bimbingan langsung dari alumni FIM yang sukses di berbagai bidang karir dan profesi.",
       icon: Users,
       link: "/program/program-unggulan",
     },
     {
-      title: t("index.programSection.discussion"),
-      description: t("index.programSection.discussionDesc"),
+      title: "Diskusi Publik",
+      description: "Forum diskusi untuk membahas isu-isu strategis dan solusi bagi permasalahan bangsa.",
       icon: MessageSquare,
       link: "/program/program-unggulan",
     },
@@ -204,8 +195,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO 
-        title={t("home.title")} 
-        description={t("home.description")}
+        title="Forum Indonesia Muda - Membangun Pemimpin Masa Depan Indonesia" 
+        description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
       {/* Hero Section - Optimized for mobile to show content peek below */}
       <section className="relative overflow-hidden">
@@ -221,27 +212,27 @@ const Index = () => {
               className="h-24 lg:h-32 mb-8 animate-fade-in brightness-0 invert" 
             />
             <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              {t("home.hero.heading")}
+              Forum Indonesia Muda
               <br />
-              <span className="text-accent">{t("home.hero.subheading")}</span>
+              <span className="text-accent">Membangun Pemimpin Masa Depan</span>
             </h1>
             {/* Social Proof Subheadline */}
             <p className="text-sm lg:text-base text-accent font-semibold mb-4 animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              {t("home.hero.socialProof")}
+              Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia
             </p>
             <p className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              {t("home.hero.description")}
+              Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.
             </p>
             {/* Urgency Banner */}
             <div className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 animate-fade-in inline-block" style={{ animationDelay: "0.25s" }}>
               <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
-                <span className="animate-pulse">🔥</span> {t("home.hero.urgency")}
+                <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Link to="/tentang">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                  {t("home.hero.cta")} <ArrowRight className="ml-2 h-5 w-5" />
+                  Pelajari Lebih Lanjut <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -328,7 +319,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto text-center">
             <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
             <blockquote className="text-xl lg:text-2xl text-foreground italic mb-4">
-              "{t("index.quote")}"
+              "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia."
             </blockquote>
             <div className="w-16 h-1 bg-accent mx-auto" />
           </div>
@@ -338,9 +329,9 @@ const Index = () => {
       {/* Alumni Testimonials - Social Proof */}
       <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
-          <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.alumniSection.title")}</h2>
+          <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Jejak Alumni FIM</h2>
           <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            {t("index.alumniSection.subtitle")}
+            Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia
           </p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {alumniTestimonials.map((testimonial, index) => (
@@ -370,7 +361,7 @@ const Index = () => {
           <div className="text-center mt-8">
             <Link to="/cerita-alumni">
               <Button variant="outline">
-                {t("index.alumniSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" />
+                Lihat Semua Alumni <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -380,8 +371,8 @@ const Index = () => {
       {/* Program Unggulan Section */}
       <section className="py-16 bg-background" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
-          <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.programSection.title")}</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.programSection.subtitle")}</p>
+          <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Program Unggulan</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berbagai program untuk mengembangkan potensi pemuda Indonesia</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {programUnggulan.map((program, index) => (
               <Link key={program.title} to={program.link} className="group">
@@ -397,7 +388,7 @@ const Index = () => {
           </div>
           <div className="text-center mt-8">
             <Link to="/program/program-unggulan">
-              <Button variant="outline">{t("index.programSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button variant="outline">Lihat Semua Program <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
@@ -406,15 +397,15 @@ const Index = () => {
       {/* Kabar FIM Section - Pinned Articles */}
       <section className="py-16 bg-secondary" aria-labelledby="news-section-heading">
         <div className="container mx-auto px-4">
-          <h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("index.newsSection.title")}</h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("index.newsSection.subtitle")}</p>
+          <h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">Kabar FIM</h2>
+          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">Berita dan kegiatan terbaru dari Forum Indonesia Muda</p>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {featuredArticles?.length ? featuredArticles.map((article, index) => (
               <Link key={article.id} to={`/blog/${article.slug}`} className="group">
                 <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative" style={{ animationDelay: `${index * 0.1}s` }}>
                   {article.is_pinned && (
                     <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">
-                      {t("index.newsSection.featured")}
+                      Unggulan
                     </div>
                   )}
                   <img 
@@ -424,7 +415,7 @@ const Index = () => {
                   />
                   <div className="p-5">
                     <span className="text-xs text-muted-foreground">
-                      {article.published_at ? new Date(article.published_at).toLocaleDateString(language === "en" ? "en-US" : "id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}
+                      {article.published_at ? new Date(article.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}
                     </span>
                     <h3 className="font-bold text-foreground mb-2 mt-1 group-hover:text-primary transition-colors line-clamp-2">{article.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{article.excerpt || ""}</p>
@@ -447,7 +438,7 @@ const Index = () => {
           </div>
           <div className="text-center mt-8">
             <Link to="/blog">
-              <Button variant="outline">{t("index.newsSection.viewAll")} <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button variant="outline">Lihat Semua Berita <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
@@ -456,8 +447,8 @@ const Index = () => {
       {/* Mitra Kami Section - Infinite Scroll Animation */}
       <section className="py-12 bg-background overflow-hidden" aria-labelledby="partners-section-heading">
         <div className="container mx-auto px-4">
-          <h2 id="partners-section-heading" className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">{t("index.partnersSection.title")}</h2>
-          <p className="text-muted-foreground text-center text-sm mb-8">{t("index.partnersSection.subtitle")}</p>
+          <h2 id="partners-section-heading" className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2">Mitra & Kolaborator</h2>
+          <p className="text-muted-foreground text-center text-sm mb-8">Bersama membangun Indonesia yang lebih baik</p>
         </div>
         <div className="relative">
           {/* Gradient masks */}
@@ -514,17 +505,17 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-hero" aria-labelledby="cta-section-heading">
         <div className="container mx-auto px-4 text-center">
-          <h2 id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("index.ctaSection.title")}</h2>
-          <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("index.ctaSection.subtitle")}</p>
+          <h2 id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">Siap Bergabung dengan FIM?</h2>
+          <p className="text-primary-foreground/90 max-w-xl mx-auto mb-8">Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/daftar">
+            <Link to="/portal">
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                {t("index.ctaSection.registerNow")} <ArrowRight className="ml-2 h-5 w-5" />
+                Daftar Sekarang <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/donasi">
               <Button size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold">
-                {t("index.ctaSection.supportFim")}
+                Dukung FIM
               </Button>
             </Link>
           </div>

@@ -1,31 +1,36 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import Forbidden from "@/pages/admin/Forbidden";
 
 interface RequireAdminProps {
   children: React.ReactNode;
-  permissionKey?: string; // Optional permission key for dynamic permission checking
+  permissionKey?: string; // Permission key for dynamic permission checking
 }
 
 /**
- * RequireAdmin - Allows access for super_admin and admin roles only (not moderator)
- * Optionally checks dynamic permissions if permissionKey is provided
+ * RequireAdmin - Checks dynamic permissions from database
+ * If permissionKey is provided, checks if user has 'view' permission for that key
+ * Super admins bypass all permission checks
  */
 export function RequireAdmin({ children, permissionKey }: RequireAdminProps) {
   const { isSuperAdmin, isLoading, user, role, profile } = useAdminAuth();
   const location = useLocation();
   const hasLoggedRef = useRef(false);
+  
+  // Get dynamic permission if permissionKey is provided
+  const { canView, isLoading: isPermissionLoading } = usePermission(permissionKey || "");
 
-  // Check if user has admin or super_admin role
-  const isAdminOrSuperAdmin = role === "super_admin" || (role as string) === "admin";
+  // Super admin always has access
+  const hasAccess = isSuperAdmin || (permissionKey ? canView : role === "admin" || role === "moderator");
 
   // Log unauthorized access attempt
   useEffect(() => {
     const logUnauthorizedAccess = async () => {
-      if (!isLoading && user && role && !isAdminOrSuperAdmin && !hasLoggedRef.current) {
+      if (!isLoading && !isPermissionLoading && user && role && !hasAccess && !hasLoggedRef.current) {
         hasLoggedRef.current = true;
         
         try {
@@ -35,7 +40,8 @@ export function RequireAdmin({ children, permissionKey }: RequireAdminProps) {
             p_details: {
               attempted_path: location.pathname,
               user_role: role,
-              message: "User attempted to access admin only page",
+              permission_key: permissionKey,
+              message: "User attempted to access page without required permission",
             },
           });
 
@@ -57,13 +63,13 @@ export function RequireAdmin({ children, permissionKey }: RequireAdminProps) {
     };
 
     logUnauthorizedAccess();
-  }, [isLoading, user, role, isAdminOrSuperAdmin, location.pathname, profile]);
+  }, [isLoading, isPermissionLoading, user, role, hasAccess, location.pathname, profile, permissionKey]);
 
   useEffect(() => {
     hasLoggedRef.current = false;
   }, [location.pathname]);
 
-  if (isLoading) {
+  if (isLoading || (permissionKey && isPermissionLoading)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -71,7 +77,7 @@ export function RequireAdmin({ children, permissionKey }: RequireAdminProps) {
     );
   }
 
-  if (!isAdminOrSuperAdmin) {
+  if (!hasAccess) {
     return <Forbidden />;
   }
 
@@ -80,7 +86,7 @@ export function RequireAdmin({ children, permissionKey }: RequireAdminProps) {
 
 /**
  * RequirePermission - Check dynamic permissions from database
- * Falls back to role check if permission not found
+ * This is an alias for RequireAdmin with a required permissionKey
  */
 interface RequirePermissionProps {
   children: React.ReactNode;
@@ -92,19 +98,26 @@ export function RequirePermission({ children, permissionKey, action = "view" }: 
   const { isSuperAdmin, isLoading, user, role, profile } = useAdminAuth();
   const location = useLocation();
   const hasLoggedRef = useRef(false);
+  
+  // Get dynamic permission
+  const { canView, canCreate, canEdit, canDelete, isLoading: isPermissionLoading } = usePermission(permissionKey);
 
-  // Super admin always has access
-  if (!isLoading && isSuperAdmin) {
-    return <>{children}</>;
-  }
-
-  // Check if user has admin or super_admin role as fallback
-  const isAdminOrSuperAdmin = role === "super_admin" || (role as string) === "admin";
+  // Check the specific action
+  const hasPermission = (() => {
+    if (isSuperAdmin) return true;
+    switch (action) {
+      case "view": return canView;
+      case "create": return canCreate;
+      case "edit": return canEdit;
+      case "delete": return canDelete;
+      default: return false;
+    }
+  })();
 
   // Log unauthorized access attempt
   useEffect(() => {
     const logUnauthorizedAccess = async () => {
-      if (!isLoading && user && role && !isAdminOrSuperAdmin && !hasLoggedRef.current) {
+      if (!isLoading && !isPermissionLoading && user && role && !hasPermission && !hasLoggedRef.current) {
         hasLoggedRef.current = true;
         
         try {
@@ -138,13 +151,13 @@ export function RequirePermission({ children, permissionKey, action = "view" }: 
     };
 
     logUnauthorizedAccess();
-  }, [isLoading, user, role, isAdminOrSuperAdmin, location.pathname, profile, permissionKey, action]);
+  }, [isLoading, isPermissionLoading, user, role, hasPermission, location.pathname, profile, permissionKey, action]);
 
   useEffect(() => {
     hasLoggedRef.current = false;
   }, [location.pathname]);
 
-  if (isLoading) {
+  if (isLoading || isPermissionLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -152,7 +165,7 @@ export function RequirePermission({ children, permissionKey, action = "view" }: 
     );
   }
 
-  if (!isAdminOrSuperAdmin) {
+  if (!hasPermission) {
     return <Forbidden />;
   }
 

@@ -4,7 +4,6 @@ import { Instagram, Facebook, Linkedin, Youtube, Mail, Phone, Send, Loader2 } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import logoFim from "@/assets/logo-fim.png";
 
@@ -12,7 +11,6 @@ const Footer = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +33,8 @@ const Footer = () => {
       if (error) throw error;
 
       toast({
-        title: t("footer.subscribeSuccess"),
-        description: data?.message || t("footer.subscribeSuccessDesc"),
+        title: "Berhasil berlangganan!",
+        description: data?.message || "Terima kasih telah berlangganan newsletter FIM.",
       });
       setEmail("");
     } catch (err: any) {
@@ -52,13 +50,13 @@ const Footer = () => {
   };
 
   const quickLinks = [
-    { name: t("nav.about"), path: "/tentang" },
-    { name: t("nav.regional"), path: "/tentang/regional" },
-    { name: t("nav.fimClub"), path: "/tentang/fim-club" },
-    { name: t("nav.training"), path: "/program/pelatihan" },
-    { name: t("nav.volunteer"), path: "/gabung-relawan" },
-    { name: t("nav.alumni"), path: "/cerita-alumni" },
-    { name: t("nav.faq"), path: "/faq" },
+    { name: "Tentang FIM", path: "/tentang" },
+    { name: "Regional FIM", path: "/tentang/regional" },
+    { name: "FIM Club", path: "/tentang/fim-club" },
+    { name: "Pelatihan FIM", path: "/program/pelatihan" },
+    { name: "Relawan", path: "/gabung-relawan" },
+    { name: "Alumni", path: "/cerita-alumni" },
+    { name: "FAQ", path: "/faq" },
   ];
 
   const socialLinks = [
@@ -74,14 +72,14 @@ const Footer = () => {
       <div className="border-b border-background/10">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-xl font-bold mb-2">{t("footer.newsletter")}</h3>
+            <h3 className="text-xl font-bold mb-2">Dapatkan Update Terbaru</h3>
             <p className="text-background/70 text-sm mb-4">
-              {t("footer.newsletterDesc")}
+              Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.
             </p>
             <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md mx-auto">
               <Input
                 type="email"
-                placeholder={t("footer.emailPlaceholder")}
+                placeholder="Masukkan email Anda"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-background/10 border-background/20 text-background placeholder:text-background/50"
@@ -98,7 +96,7 @@ const Footer = () => {
                 ) : (
                   <Send className="h-4 w-4 mr-2" />
                 )}
-                {isLoading ? "Memproses..." : t("footer.subscribe")}
+                {isLoading ? "Memproses..." : "Langganan"}
               </Button>
             </form>
           </div>
@@ -115,7 +113,7 @@ const Footer = () => {
               <span className="font-bold text-xl">Forum Indonesia Muda</span>
             </Link>
             <p className="text-background/70 mb-6 max-w-md">
-              {t("footer.description")}
+              Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang yang menerangi masa depan bangsa. Berdiri sejak 2003.
             </p>
             
             {/* Social Links */}
@@ -137,7 +135,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">{t("footer.navigation")}</h3>
+            <h3 className="font-semibold text-lg mb-4">Navigasi</h3>
             <ul className="space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.path}>
@@ -154,7 +152,7 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">{t("footer.contact")}</h3>
+            <h3 className="font-semibold text-lg mb-4">Hubungi Kami</h3>
             <ul className="space-y-3">
               <li>
                 <a
@@ -184,7 +182,7 @@ const Footer = () => {
                 to="/donasi"
                 className="inline-block bg-accent text-accent-foreground px-6 py-2 rounded-lg font-semibold hover:bg-accent/90 transition-colors"
               >
-                {t("footer.supportFim")}
+                Dukung FIM
               </Link>
             </div>
           </div>
@@ -195,9 +193,9 @@ const Footer = () => {
       <div className="border-t border-background/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/60">
-            <p>{t("footer.copyright").replace("{year}", String(new Date().getFullYear()))}</p>
+            <p>© {new Date().getFullYear()} Forum Indonesia Muda. Hak cipta dilindungi.</p>
             <p className="flex items-center gap-1">
-              {t("footer.madeWith")} <span className="text-primary">❤</span> {t("footer.forIndonesia")}
+              Dibuat dengan <span className="text-primary">❤</span> untuk Indonesia
             </p>
           </div>
         </div>
