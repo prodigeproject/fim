@@ -67,7 +67,7 @@ const Navbar = () => {
                   <button
                     className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       link.children.some((c) => isActive(c.path)) || (link.path === "/tentang" && isActiveParent(["/tentang"]))
-                        ? "text-primary bg-primary/10"
+                        ? "text-primary bg-primary/5"
                         : "text-foreground hover:text-primary hover:bg-primary/5"
                     }`}
                   >
@@ -79,7 +79,7 @@ const Navbar = () => {
                     to={link.path}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       isActive(link.path)
-                        ? "text-primary bg-primary/10"
+                        ? "text-primary bg-primary/5"
                         : "text-foreground hover:text-primary hover:bg-primary/5"
                     }`}
                   >
@@ -97,7 +97,7 @@ const Navbar = () => {
                           to={child.path}
                           className={`block px-4 py-2 text-sm transition-colors ${
                             isActive(child.path)
-                              ? "text-primary bg-primary/10"
+                              ? "text-primary bg-primary/5"
                               : "text-foreground hover:text-primary hover:bg-primary/5"
                           }`}
                         >
