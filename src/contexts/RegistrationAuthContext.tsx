@@ -265,13 +265,47 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       console.log("SignInWithPassword result:", { data: data ? "success" : null, error });
 
       if (error) {
+        // Handle "Email not confirmed" error - try to sync Auth with database
+        if (error.message.includes("Email not confirmed")) {
+          console.log("Auth email not confirmed but database says verified. Attempting sync...");
+          
+          // Try to confirm Auth email via edge function
+          try {
+            await supabase.functions.invoke("confirm-auth-email", {
+              body: { registration_id: regCheck.id }
+            });
+            console.log("Auth email synced, retrying login...");
+            
+            // Retry login after syncing
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+              email: normalizedEmail,
+              password,
+            });
+            
+            if (retryError) {
+              if (retryError.message.includes("Invalid login credentials")) {
+                throw new Error("Email atau password salah. Silakan periksa kembali.");
+              }
+              throw retryError;
+            }
+            
+            // Login succeeded after sync
+            if (retryData.user) {
+              const reg = await fetchRegistration(retryData.user.id);
+              if (reg) {
+                setRegistration(reg);
+              }
+            }
+            return { error: null };
+          } catch (syncError) {
+            console.error("Failed to sync auth email:", syncError);
+            throw new Error("UNVERIFIED_EMAIL");
+          }
+        }
+        
         // Provide more specific error messages
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Email atau password salah. Silakan periksa kembali.");
-        }
-        if (error.message.includes("Email not confirmed")) {
-          // This shouldn't happen since we check email_verified, but just in case
-          throw new Error("UNVERIFIED_EMAIL");
         }
         throw error;
       }

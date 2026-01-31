@@ -85,6 +85,17 @@ export default function VerifyEmail() {
           return;
         }
 
+        // Also confirm email in Auth system
+        try {
+          await supabase.functions.invoke("confirm-auth-email", {
+            body: { registration_id: registration.id }
+          });
+          console.log("Auth email confirmed successfully");
+        } catch (authError) {
+          console.error("Failed to confirm auth email (non-critical):", authError);
+          // Continue even if this fails - database verification is primary
+        }
+
         setStatus("success");
         setMessage("Email Anda berhasil diverifikasi!");
       } catch (error) {
@@ -166,7 +177,7 @@ export default function VerifyEmail() {
 
             {status !== "loading" && (
               <CardFooter className="flex flex-col gap-3">
-                <Link to="/daftar" className="w-full">
+                <Link to="/portal/login" className="w-full">
                   <Button className="w-full" size="lg">
                     <ArrowRight className="h-4 w-4 mr-2" />
                     {status === "success" ? "Login Sekarang" : "Kembali ke Login"}

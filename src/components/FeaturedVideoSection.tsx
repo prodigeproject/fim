@@ -317,7 +317,7 @@ export default function FeaturedVideoSection() {
                   Tertarik menjadi bagian dari perjalanan ini?
                 </p>
                 <Button asChild className="w-full">
-                  <a href="/daftar">Daftar Sekarang</a>
+                  <a href="/portal">Daftar Sekarang</a>
                 </Button>
               </div>
             </div>

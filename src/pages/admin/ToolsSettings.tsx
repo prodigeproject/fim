@@ -406,7 +406,7 @@ export default function ToolsSettings() {
                       <div className="flex items-center justify-between p-3 rounded-lg border">
                         <div>
                           <p className="font-medium">Login Peserta</p>
-                          <p className="text-sm text-muted-foreground">/daftar</p>
+                          <p className="text-sm text-muted-foreground">/portal/login</p>
                         </div>
                         <Switch
                           checked={enabledLogin}

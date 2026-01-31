@@ -1,1 +1,6 @@
+# Redirect legacy /daftar routes to /portal
+/daftar              /portal              301
+/daftar/*            /portal              301
+
+# SPA fallback
 /*    /index.html   200

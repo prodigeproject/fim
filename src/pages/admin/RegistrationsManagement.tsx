@@ -975,6 +975,7 @@ export default function RegistrationsManagement() {
   // Manual email verification mutation
   const manualVerifyMutation = useMutation({
     mutationFn: async ({ id, email, name }: { id: string; email: string; name: string }) => {
+      // Update database first
       const { error } = await supabase
         .from("fim_registrations")
         .update({ 
@@ -984,6 +985,17 @@ export default function RegistrationsManagement() {
         .eq("id", id);
       
       if (error) throw error;
+
+      // Also confirm email in Auth system
+      try {
+        await supabase.functions.invoke("confirm-auth-email", {
+          body: { registration_id: id }
+        });
+        console.log("Auth email confirmed for manual verification");
+      } catch (authError) {
+        console.error("Failed to confirm auth email (non-critical):", authError);
+        // Continue even if this fails - database verification is primary
+      }
 
       // Log this action
       await supabase.from("registration_activity_logs").insert({
