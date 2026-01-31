@@ -69,7 +69,7 @@ export default function RegistrationDashboard() {
   const handleSignOut = async () => {
     await signOut();
     toast.success("Berhasil keluar");
-    navigate("/daftar");
+    navigate("/portal");
   };
 
   if (isLoading) {

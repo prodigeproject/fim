@@ -127,9 +127,7 @@ const AnimatedRoutes = () => {
           <Route path="/portal/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
           <Route path="/portal/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
           
-          {/* Legacy /daftar routes - redirect to /portal */}
-          <Route path="/daftar" element={<RegistrationLanding />} />
-          <Route path="/daftar/*" element={<RegistrationLanding />} />
+          {/* Legacy /daftar routes removed - all redirects handled by _redirects */}
           {/* Admin routes - wrapped in AdminAuthProvider */}
           <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
           <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />

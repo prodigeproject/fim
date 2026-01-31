@@ -114,8 +114,10 @@ serve(async (req: Request) => {
 
     const tempPassword = (body.temporary_password?.trim() || randomPassword()) as string;
 
+    // Update password and confirm email at the same time
     const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(registration.auth_user_id, {
       password: tempPassword,
+      email_confirm: true, // Ensure email is confirmed when admin resets password
     });
 
     if (updateErr) {
@@ -125,6 +127,16 @@ serve(async (req: Request) => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+
+    // Also update fim_registrations email_verified if not already verified
+    await supabaseAdmin
+      .from("fim_registrations")
+      .update({ 
+        email_verified: true, 
+        email_verified_at: new Date().toISOString() 
+      })
+      .eq("id", registrationId)
+      .is("email_verified", false);
 
     // Audit (best effort) - never log the password
     void supabaseAdmin

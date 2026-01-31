@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,6 +92,7 @@ interface VideoTestimonial {
 
 export default function AlumniManagement() {
   const { user, isSuperAdmin } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("alumni");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -422,12 +424,14 @@ export default function AlumniManagement() {
 
         {/* Cerita Alumni Tab */}
         <TabsContent value="stories" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => { resetStoryForm(); setEditingStory(null); setStoryDialog(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Cerita
-            </Button>
-          </div>
+          {canCreate && (
+            <div className="flex justify-end">
+              <Button onClick={() => { resetStoryForm(); setEditingStory(null); setStoryDialog(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Cerita
+              </Button>
+            </div>
+          )}
           
           <Card>
             <CardContent className="pt-6">
@@ -467,10 +471,12 @@ export default function AlumniManagement() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => openEditStory(story)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {isSuperAdmin && (
+                            {canEdit ? (
+                              <Button variant="ghost" size="sm" onClick={() => openEditStory(story)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            ) : null}
+                            {canDelete && (
                               <Button variant="ghost" size="sm" onClick={() => deleteStoryMutation.mutate(story.id)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -490,12 +496,14 @@ export default function AlumniManagement() {
 
         {/* Alumni Lainnya Tab */}
         <TabsContent value="other" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => { resetOtherForm(); setEditingOther(null); setOtherDialog(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Alumni
-            </Button>
-          </div>
+          {canCreate && (
+            <div className="flex justify-end">
+              <Button onClick={() => { resetOtherForm(); setEditingOther(null); setOtherDialog(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Alumni
+              </Button>
+            </div>
+          )}
           
           <Card>
             <CardContent className="pt-6">
@@ -535,10 +543,12 @@ export default function AlumniManagement() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => openEditOther(alumni)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {isSuperAdmin && (
+                            {canEdit ? (
+                              <Button variant="ghost" size="sm" onClick={() => openEditOther(alumni)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            ) : null}
+                            {canDelete && (
                               <Button variant="ghost" size="sm" onClick={() => deleteOtherMutation.mutate(alumni.id)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -558,12 +568,14 @@ export default function AlumniManagement() {
 
         {/* Video Testimoni Tab */}
         <TabsContent value="videos" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => { resetVideoForm(); setEditingVideo(null); setVideoDialog(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Video
-            </Button>
-          </div>
+          {canCreate && (
+            <div className="flex justify-end">
+              <Button onClick={() => { resetVideoForm(); setEditingVideo(null); setVideoDialog(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Video
+              </Button>
+            </div>
+          )}
           
           <Card>
             <CardContent className="pt-6">
@@ -593,10 +605,12 @@ export default function AlumniManagement() {
                         <h4 className="font-medium text-sm line-clamp-2">{video.title}</h4>
                         <p className="text-xs text-muted-foreground">{video.speaker}</p>
                         <div className="flex gap-2 mt-3">
-                          <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditVideo(video)}>
-                            <Edit className="h-4 w-4 mr-1" /> Edit
-                          </Button>
-                          {isSuperAdmin && (
+                          {canEdit ? (
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditVideo(video)}>
+                              <Edit className="h-4 w-4 mr-1" /> Edit
+                            </Button>
+                          ) : null}
+                          {canDelete && (
                             <Button variant="destructive" size="sm" onClick={() => deleteVideoMutation.mutate(video.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>

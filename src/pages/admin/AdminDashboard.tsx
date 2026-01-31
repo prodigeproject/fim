@@ -188,6 +188,23 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount, not on every pathname change
 
+  // Preserve sidebar scroll position during navigation
+  useEffect(() => {
+    const scrollContainer = sidebarScrollRef.current;
+    if (scrollContainer && scrollPositionRef.current > 0) {
+      // Restore scroll position after navigation
+      const restoreScroll = () => {
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollPositionRef.current;
+        }
+      };
+      requestAnimationFrame(restoreScroll);
+      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
+      setTimeout(restoreScroll, 50);
+      setTimeout(restoreScroll, 150);
+    }
+  }, [location.pathname]);
+
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
     // Wait for auth to finish loading

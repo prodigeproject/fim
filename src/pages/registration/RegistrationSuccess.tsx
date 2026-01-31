@@ -97,7 +97,7 @@ export default function RegistrationSuccess() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
-              <Link to="/daftar" className="w-full">
+              <Link to="/portal/login" className="w-full">
                 <Button className="w-full" size="lg">
                   <ArrowRight className="h-4 w-4 mr-2" />
                   Ke Halaman Login
