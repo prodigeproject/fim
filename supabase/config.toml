@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.verify-recaptcha]
 verify_jwt = false
+
+[functions.confirm-auth-email]
+verify_jwt = false
+
+[functions.reset-registrant-password]
+verify_jwt = false
