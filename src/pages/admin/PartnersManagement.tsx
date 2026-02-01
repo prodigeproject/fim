@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermission } from "@/hooks/usePermission";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -123,6 +124,7 @@ const staticPartners = [
 
 export default function PartnersManagement() {
   const queryClient = useQueryClient();
+  const { canCreate, canEdit, canDelete } = usePermission("partners");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [deletePartner, setDeletePartner] = useState<Partner | null>(null);
@@ -333,7 +335,7 @@ export default function PartnersManagement() {
           <p className="text-muted-foreground">Kelola logo mitra kerjasama di homepage</p>
         </div>
         <div className="flex gap-2">
-          {partners?.length === 0 && (
+          {canCreate && partners?.length === 0 && (
             <Button 
               variant="outline" 
               onClick={() => seedMutation.mutate()}
@@ -347,10 +349,12 @@ export default function PartnersManagement() {
               Import Logo Statis
             </Button>
           )}
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Mitra
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Mitra
+            </Button>
+          )}
         </div>
       </div>
 
@@ -440,12 +444,20 @@ export default function PartnersManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(partner)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeletePartner(partner)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {canEdit ? (
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(partner)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" title="Lihat">
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button variant="ghost" size="icon" onClick={() => setDeletePartner(partner)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

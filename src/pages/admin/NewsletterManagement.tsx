@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,6 +98,7 @@ interface CSVImportResult {
 
 export default function NewsletterManagement() {
   const { isSuperAdmin, user, profile } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("newsletter");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -599,19 +601,20 @@ export default function NewsletterManagement() {
         </div>
       <div className="flex items-center gap-2 flex-wrap">
           {/* Import CSV Dialog */}
-          <Dialog 
-            open={isImportDialogOpen} 
-            onOpenChange={(open) => { 
-              setIsImportDialogOpen(open); 
-              if (!open) resetImportState(); 
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Upload className="h-4 w-4 mr-2" />
-                Import CSV
-              </Button>
-            </DialogTrigger>
+          {canCreate && (
+            <Dialog 
+              open={isImportDialogOpen} 
+              onOpenChange={(open) => { 
+                setIsImportDialogOpen(open); 
+                if (!open) resetImportState(); 
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Import Subscriber dari CSV</DialogTitle>
@@ -725,22 +728,24 @@ export default function NewsletterManagement() {
                 )}
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          )}
 
           {/* Add Subscriber Dialog */}
-          <Dialog 
-            open={isSubscriberDialogOpen} 
-            onOpenChange={(open) => { 
-              setIsSubscriberDialogOpen(open); 
-              if (!open) resetSubscriberForm(); 
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Subscriber
-              </Button>
-            </DialogTrigger>
+          {canCreate && (
+            <Dialog 
+              open={isSubscriberDialogOpen} 
+              onOpenChange={(open) => { 
+                setIsSubscriberDialogOpen(open); 
+                if (!open) resetSubscriberForm(); 
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tambah Subscriber
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingSubscriber ? "Edit Subscriber" : "Tambah Subscriber Manual"}</DialogTitle>
@@ -783,6 +788,7 @@ export default function NewsletterManagement() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
 
           {isSuperAdmin && (
             <Dialog open={isBroadcastOpen} onOpenChange={(open) => { setIsBroadcastOpen(open); if (!open) resetBroadcastForm(); }}>
@@ -991,13 +997,17 @@ export default function NewsletterManagement() {
                       <TableCell className="text-muted-foreground text-sm">{subscriber.subscribed_at ? format(new Date(subscriber.subscribed_at), "dd MMM yyyy", { locale: id }) : "—"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditSubscriber(subscriber)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: subscriber.id, isActive: subscriber.is_active })} disabled={toggleMutation.isPending}>
-                            {subscriber.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                          </Button>
-                          {isSuperAdmin && (
+                          {canEdit && (
+                            <Button variant="ghost" size="sm" onClick={() => handleEditSubscriber(subscriber)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canEdit && (
+                            <Button variant="ghost" size="sm" onClick={() => toggleMutation.mutate({ id: subscriber.id, isActive: subscriber.is_active })} disabled={toggleMutation.isPending}>
+                              {subscriber.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                            </Button>
+                          )}
+                          {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild><Button variant="ghost" size="sm"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                               <AlertDialogContentUI>

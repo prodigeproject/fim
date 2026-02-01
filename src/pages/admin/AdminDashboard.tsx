@@ -146,9 +146,11 @@ export default function AdminDashboard() {
   const [authChecked, setAuthChecked] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   
+  // Persistent scroll key for sessionStorage
+  const SCROLL_KEY = "admin-sidebar-scroll";
+  
   // Refs to preserve scroll position when toggling menus
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
-  const scrollPositionRef = useRef(0);
 
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
@@ -188,22 +190,28 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount, not on every pathname change
 
-  // Preserve sidebar scroll position during navigation
+  // Restore sidebar scroll position from sessionStorage on mount
   useEffect(() => {
     const scrollContainer = sidebarScrollRef.current;
-    if (scrollContainer && scrollPositionRef.current > 0) {
-      // Restore scroll position after navigation
-      const restoreScroll = () => {
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollPositionRef.current;
-        }
-      };
-      requestAnimationFrame(restoreScroll);
-      requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
-      setTimeout(restoreScroll, 50);
-      setTimeout(restoreScroll, 150);
+    if (!scrollContainer) return;
+    
+    const savedScrollPosition = sessionStorage.getItem(SCROLL_KEY);
+    if (savedScrollPosition) {
+      const position = parseInt(savedScrollPosition, 10);
+      // Use RAF to ensure DOM is ready
+      requestAnimationFrame(() => {
+        scrollContainer.scrollTop = position;
+      });
     }
-  }, [location.pathname]);
+  }, []); // Only on mount
+
+  // Save scroll position when user scrolls the sidebar
+  const handleSidebarScroll = useCallback(() => {
+    const scrollContainer = sidebarScrollRef.current;
+    if (scrollContainer) {
+      sessionStorage.setItem(SCROLL_KEY, String(scrollContainer.scrollTop));
+    }
+  }, []);
 
   // Single effect to handle all auth redirects with proper timing
   useEffect(() => {
@@ -249,33 +257,11 @@ export default function AdminDashboard() {
   };
 
   const toggleMenu = useCallback((name: string) => {
-    // Save scroll position before toggle
-    const scrollContainer = sidebarScrollRef.current;
-    if (scrollContainer) {
-      scrollPositionRef.current = scrollContainer.scrollTop;
-    }
-    
     setOpenMenus(prev => 
       prev.includes(name) 
         ? prev.filter(n => n !== name)
         : [...prev, name]
     );
-    
-    // Restore scroll position after DOM update - use multiple frames to handle animation
-    const restoreScroll = () => {
-      if (scrollContainer && scrollPositionRef.current !== undefined) {
-        scrollContainer.scrollTop = scrollPositionRef.current;
-      }
-    };
-    
-    // Immediate restore
-    requestAnimationFrame(restoreScroll);
-    // After first paint
-    requestAnimationFrame(() => requestAnimationFrame(restoreScroll));
-    // After potential animation (100ms)
-    setTimeout(restoreScroll, 100);
-    // After animation complete (300ms)
-    setTimeout(restoreScroll, 300);
   }, []);
 
   // Show loading while auth is being checked
@@ -426,15 +412,15 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - scroll container with position preservation */}
+        {/* Navigation - scroll container with persistent position */}
         <div 
           ref={sidebarScrollRef}
           className="flex-1 overflow-y-auto overscroll-contain"
           style={{ 
-            overflowAnchor: 'none', // Prevent browser scroll anchoring
-            scrollBehavior: 'auto', // Disable smooth scrolling for instant restore
+            overflowAnchor: 'none',
+            scrollBehavior: 'auto',
           }}
-          onScroll={(e) => e.stopPropagation()}
+          onScroll={handleSidebarScroll}
         >
           <nav className="p-2 space-y-0.5">
             {filteredNavItems.map((item) => (

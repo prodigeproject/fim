@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,6 +81,7 @@ const categoryLabels: Record<string, string> = {
 
 export default function ArticlesManagement() {
   const { user, isSuperAdmin } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("articles");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -402,9 +404,9 @@ export default function ArticlesManagement() {
   const hasActiveFilters = searchTerm || statusFilter !== "all" || categoryFilter !== "all" || 
     authorFilter !== "all" || tagFilter || dateFrom || dateTo;
 
-  // Check if user can edit article
-  const canEdit = (article: any) => {
-    return isSuperAdmin || article.author_id === user?.id;
+  // Check if user can edit a specific article (author or has edit permission)
+  const canEditArticle = (article: any) => {
+    return isSuperAdmin || canEdit || article.author_id === user?.id;
   };
 
   // Handle select all
@@ -444,12 +446,14 @@ export default function ArticlesManagement() {
             Kelola artikel blog FIM
           </p>
         </div>
-        <Link to="/admin/articles/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Tulis Artikel
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link to="/admin/articles/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Tulis Artikel
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Card>
@@ -757,7 +761,7 @@ export default function ArticlesManagement() {
                              </Button>
                            )}
                           
-                          {canEdit(article) && (
+                          {canEditArticle(article) && (
                             <Link to={`/admin/articles/edit/${article.id}`}>
                               <Button variant="ghost" size="icon">
                                 <Edit className="h-4 w-4" />
@@ -783,7 +787,7 @@ export default function ArticlesManagement() {
                             </Button>
                           )}
 
-                          {isSuperAdmin && (
+                          {canDelete && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive">
