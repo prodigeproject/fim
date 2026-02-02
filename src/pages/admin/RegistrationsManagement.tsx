@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { exportSingleSheet, getExcelFilename } from "@/lib/excelExport";
 import { jsPDF } from "jspdf";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { RecruiterAssignment, RecruiterAssignmentBadge } from "@/components/admin/RecruiterAssignment";
 import { InterviewerSelector } from "@/components/admin/InterviewerSelector";
 import { BulkImportRegistrants } from "@/components/admin/BulkImportRegistrants";
@@ -175,7 +176,8 @@ interface Batch {
 
 export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
-  const { profile } = useAdminAuth();
+  const { profile, isSuperAdmin } = useAdminAuth();
+  const { canCreate, canEdit, canDelete } = usePermission("registrations");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stageFilter, setStageFilter] = useState<string>("all");

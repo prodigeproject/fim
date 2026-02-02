@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   ChevronRight,
-  ChevronDown,
   Loader2,
   KeyRound,
   BarChart3,
@@ -33,7 +32,6 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -144,13 +142,22 @@ export default function AdminDashboard() {
   const { user, profile, role, isLoading, signOut, isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>([]);
   
-  // Persistent scroll key for sessionStorage
-  const SCROLL_KEY = "admin-sidebar-scroll";
+  // Use localStorage for persistent menu state across sessions
+  const [openMenus, setOpenMenus] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("admin-open-menus");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   
-  // Refs to preserve scroll position when toggling menus
+  // Ref for sidebar scroll container
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
+  
+  // Track if we've done initial scroll restoration
+  const hasRestoredScroll = useRef(false);
 
   // Get pending articles count for badge
   const pendingArticlesCount = usePendingArticlesCount();
@@ -168,49 +175,67 @@ export default function AdminDashboard() {
   // Check if user is admin (has admin role)
   const isAdmin = role === "super_admin" || (role as string) === "admin";
 
+  // Persist open menus to localStorage
+  useEffect(() => {
+    localStorage.setItem("admin-open-menus", JSON.stringify(openMenus));
+  }, [openMenus]);
+
   // Auto-expand parent menu if child is active - only on mount
   useEffect(() => {
-    const initialOpenMenus: string[] = [];
+    const currentPath = location.pathname;
     navItems.forEach(item => {
       if (item.children) {
         const hasActiveChild = item.children.some(child => 
-          location.pathname === child.href || location.pathname.startsWith(child.href + "/")
+          currentPath === child.href || currentPath.startsWith(child.href + "/")
         );
-        if (hasActiveChild) {
-          initialOpenMenus.push(item.name);
+        if (hasActiveChild && !openMenus.includes(item.name)) {
+          setOpenMenus(prev => [...prev, item.name]);
         }
       }
     });
-    if (initialOpenMenus.length > 0) {
-      setOpenMenus(prev => {
-        const newMenus = initialOpenMenus.filter(m => !prev.includes(m));
-        return newMenus.length > 0 ? [...prev, ...newMenus] : prev;
-      });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount, not on every pathname change
+  }, []); // Only run on mount
 
-  // Restore sidebar scroll position from sessionStorage on mount
+  // Restore scroll position from sessionStorage after component mounts
   useEffect(() => {
+    if (hasRestoredScroll.current) return;
+    
     const scrollContainer = sidebarScrollRef.current;
     if (!scrollContainer) return;
     
-    const savedScrollPosition = sessionStorage.getItem(SCROLL_KEY);
-    if (savedScrollPosition) {
-      const position = parseInt(savedScrollPosition, 10);
-      // Use RAF to ensure DOM is ready
+    const savedPosition = sessionStorage.getItem("admin-sidebar-scroll");
+    if (savedPosition) {
+      const position = parseInt(savedPosition, 10);
+      // Use requestAnimationFrame for smoother restoration
       requestAnimationFrame(() => {
-        scrollContainer.scrollTop = position;
+        requestAnimationFrame(() => {
+          if (scrollContainer) {
+            scrollContainer.scrollTop = position;
+          }
+        });
       });
     }
-  }, []); // Only on mount
+    hasRestoredScroll.current = true;
+  }, []);
 
-  // Save scroll position when user scrolls the sidebar
-  const handleSidebarScroll = useCallback(() => {
+  // Save scroll position periodically using passive scroll listener
+  useEffect(() => {
     const scrollContainer = sidebarScrollRef.current;
-    if (scrollContainer) {
-      sessionStorage.setItem(SCROLL_KEY, String(scrollContainer.scrollTop));
-    }
+    if (!scrollContainer) return;
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          sessionStorage.setItem("admin-sidebar-scroll", String(scrollContainer.scrollTop));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Single effect to handle all auth redirects with proper timing
@@ -256,12 +281,26 @@ export default function AdminDashboard() {
     navigate("/admin", { replace: true });
   };
 
-  const toggleMenu = useCallback((name: string) => {
-    setOpenMenus(prev => 
-      prev.includes(name) 
-        ? prev.filter(n => n !== name)
-        : [...prev, name]
-    );
+  const toggleMenu = useCallback((name: string, e?: React.MouseEvent) => {
+    // Prevent default to stop any scroll interference
+    e?.preventDefault();
+    e?.stopPropagation();
+    
+    // Save current scroll position before state change
+    const scrollContainer = sidebarScrollRef.current;
+    const currentScroll = scrollContainer?.scrollTop || 0;
+    
+    setOpenMenus(prev => {
+      const isOpen = prev.includes(name);
+      return isOpen ? prev.filter(n => n !== name) : [...prev, name];
+    });
+    
+    // Restore scroll position after state change using microtask
+    queueMicrotask(() => {
+      if (scrollContainer) {
+        scrollContainer.scrollTop = currentScroll;
+      }
+    });
   }, []);
 
   // Show loading while auth is being checked
@@ -341,32 +380,34 @@ export default function AdminDashboard() {
 
     if (hasChildren) {
       return (
-        <Collapsible open={isOpen} onOpenChange={() => toggleMenu(item.name)}>
-          <CollapsibleTrigger asChild>
-            <button
-              className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                hasActiveChild || isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.name}
-              </div>
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pl-4 mt-0.5 space-y-0.5">
+        <div className="space-y-0.5">
+          <button
+            onClick={(e) => toggleMenu(item.name, e)}
+            className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              hasActiveChild || isActive
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <item.icon className="h-4 w-4 shrink-0" />
+              {item.name}
+            </div>
+            <ChevronRight 
+              className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} 
+            />
+          </button>
+          {/* Simple CSS-based show/hide instead of Collapsible */}
+          <div 
+            className={`pl-4 space-y-0.5 overflow-hidden transition-all duration-200 ${
+              isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
             {item.children!.map((child) => (
               <NavItemComponent key={child.href} item={child} depth={depth + 1} />
             ))}
-          </CollapsibleContent>
-        </Collapsible>
+          </div>
+        </div>
       );
     }
 
@@ -412,15 +453,15 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Navigation - scroll container with persistent position */}
+        {/* Navigation - scroll container with stable positioning */}
         <div 
           ref={sidebarScrollRef}
-          className="flex-1 overflow-y-auto overscroll-contain"
+          className="flex-1 overflow-y-auto"
           style={{ 
             overflowAnchor: 'none',
             scrollBehavior: 'auto',
+            contain: 'strict',
           }}
-          onScroll={handleSidebarScroll}
         >
           <nav className="p-2 space-y-0.5">
             {filteredNavItems.map((item) => (

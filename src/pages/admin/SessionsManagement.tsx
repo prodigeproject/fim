@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { usePermission } from "@/hooks/usePermission";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; devic
 
 export default function SessionsManagement() {
   const { isSuperAdmin, user, session, role } = useAdminAuth();
+  const { canDelete } = usePermission("sessions");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);

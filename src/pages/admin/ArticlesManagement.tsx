@@ -404,9 +404,28 @@ export default function ArticlesManagement() {
   const hasActiveFilters = searchTerm || statusFilter !== "all" || categoryFilter !== "all" || 
     authorFilter !== "all" || tagFilter || dateFrom || dateTo;
 
-  // Check if user can edit a specific article (author or has edit permission)
+  // Check if user can edit a specific article
+  // Super admin and admin with edit permission can edit all
+  // Others can only edit their own articles
   const canEditArticle = (article: any) => {
-    return isSuperAdmin || canEdit || article.author_id === user?.id;
+    if (isSuperAdmin) return true;
+    // Check if user is the author of the article
+    if (article.author_id === user?.id) return true;
+    // Admin with edit permission can edit all articles
+    if (canEdit) return true;
+    return false;
+  };
+
+  // Check if user can delete a specific article
+  // Super admin and admin with delete permission can delete all
+  // Others can only delete their own articles
+  const canDeleteArticle = (article: any) => {
+    if (isSuperAdmin) return true;
+    // Non-admin/super_admin can only delete their own articles
+    if (article.author_id === user?.id) return canDelete;
+    // Admin with delete permission can delete all articles
+    if (canDelete) return true;
+    return false;
   };
 
   // Handle select all
@@ -787,7 +806,7 @@ export default function ArticlesManagement() {
                             </Button>
                           )}
 
-                          {canDelete && (
+                          {canDeleteArticle(article) && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive">
