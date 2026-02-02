@@ -242,16 +242,28 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         throw new Error("Email tidak terdaftar sebagai pendaftar FIM. Silakan daftar terlebih dahulu.");
       }
 
-      // Check email verification status BEFORE signing in
-      if (!regCheck.email_verified) {
-        console.log("Email not verified, throwing UNVERIFIED_EMAIL");
-        throw new Error("UNVERIFIED_EMAIL");
-      }
-
       // Check if auth_user_id exists - if not, there might be an issue with the registration
       if (!regCheck.auth_user_id) {
         console.error("Registration exists but no auth_user_id");
         throw new Error("Akun belum terhubung dengan sistem autentikasi. Silakan hubungi admin.");
+      }
+
+      // Check email verification status BEFORE signing in
+      if (!regCheck.email_verified) {
+        console.log("Email not verified in database, throwing UNVERIFIED_EMAIL");
+        throw new Error("UNVERIFIED_EMAIL");
+      }
+
+      // If database says verified, try to sync Auth first before login attempt
+      // This proactively ensures Auth email is confirmed
+      try {
+        console.log("Pre-syncing auth email confirmation...");
+        await supabase.functions.invoke("confirm-auth-email", {
+          body: { registration_id: regCheck.id }
+        });
+      } catch (syncErr) {
+        console.warn("Pre-sync warning (non-fatal):", syncErr);
+        // Continue anyway - the login attempt will handle it
       }
 
       console.log("Email verified, proceeding with signInWithPassword");
@@ -265,16 +277,24 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       console.log("SignInWithPassword result:", { data: data ? "success" : null, error });
 
       if (error) {
-        // Handle "Email not confirmed" error - try to sync Auth with database
+        // Handle "Email not confirmed" error - retry sync and login
         if (error.message.includes("Email not confirmed")) {
-          console.log("Auth email not confirmed but database says verified. Attempting sync...");
+          console.log("Auth email still not confirmed. Retrying sync...");
           
-          // Try to confirm Auth email via edge function
           try {
-            await supabase.functions.invoke("confirm-auth-email", {
+            const syncResponse = await supabase.functions.invoke("confirm-auth-email", {
               body: { registration_id: regCheck.id }
             });
-            console.log("Auth email synced, retrying login...");
+            
+            if (syncResponse.error) {
+              console.error("Sync failed:", syncResponse.error);
+              throw new Error("UNVERIFIED_EMAIL");
+            }
+            
+            console.log("Sync successful, retrying login...");
+            
+            // Short delay to allow Auth system to process
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Retry login after syncing
             const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
@@ -285,6 +305,10 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
             if (retryError) {
               if (retryError.message.includes("Invalid login credentials")) {
                 throw new Error("Email atau password salah. Silakan periksa kembali.");
+              }
+              if (retryError.message.includes("Email not confirmed")) {
+                // Still not confirmed after sync - something is wrong
+                throw new Error("UNVERIFIED_EMAIL");
               }
               throw retryError;
             }
@@ -297,8 +321,11 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
               }
             }
             return { error: null };
-          } catch (syncError) {
+          } catch (syncError: any) {
             console.error("Failed to sync auth email:", syncError);
+            if (syncError.message === "UNVERIFIED_EMAIL") {
+              throw syncError;
+            }
             throw new Error("UNVERIFIED_EMAIL");
           }
         }
