@@ -91,10 +91,18 @@ const PageLoader = () => (
 const AnimatedRoutes = () => {
   const location = useLocation();
 
+  // Keep admin/portal layout mounted across internal navigation to prevent sidebar scroll reset.
+  const routeKey =
+    location.pathname.startsWith("/admin")
+      ? "/admin"
+      : location.pathname.startsWith("/portal")
+        ? "/portal"
+        : location.pathname;
+
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<PageLoader />}>
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location} key={routeKey}>
           {/* Public routes */}
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/tentang" element={<PageTransition><Tentang /></PageTransition>} />
