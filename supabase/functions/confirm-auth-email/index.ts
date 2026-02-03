@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 interface ConfirmRequest {
-  registration_id: string;
+  registration_id?: string;
+  email?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -16,25 +17,30 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { registration_id }: ConfirmRequest = await req.json();
-    
-    if (!registration_id) {
+    const { registration_id, email }: ConfirmRequest = await req.json();
+
+    if (!registration_id && !email) {
       return new Response(
-        JSON.stringify({ error: "Registration ID required" }),
+        JSON.stringify({ error: "registration_id or email required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    const normalizedEmail = email ? email.toLowerCase().trim() : null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get registration data
-    const { data: registration, error: regError } = await supabase
+    // Get registration data (by id or email)
+    const regQuery = supabase
       .from("fim_registrations")
       .select("auth_user_id, email")
-      .eq("id", registration_id)
-      .single();
+      .limit(1);
+
+    const { data: registration, error: regError } = await (registration_id
+      ? regQuery.eq("id", registration_id).maybeSingle()
+      : regQuery.eq("email", normalizedEmail!).maybeSingle());
 
     if (regError || !registration) {
       console.error("Registration not found:", regError);

@@ -2,6 +2,21 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+type PortalLoginPrecheckResult =
+  | {
+      exists: true;
+      registration_id: string;
+      auth_user_id: string | null;
+      email_verified: boolean;
+      is_blocked: boolean;
+      blocked_reason?: string | null;
+    }
+  | {
+      exists: false;
+      is_blocked: boolean;
+      blocked_reason?: string | null;
+    };
+
 interface Registration {
   id: string;
   email: string;
@@ -225,45 +240,53 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       const normalizedEmail = email.toLowerCase().trim();
       console.log("Starting signIn for:", normalizedEmail);
 
-      // First check if registration exists
-      const { data: regCheck, error: regCheckError } = await supabase
-        .from("fim_registrations")
-        .select("id, email_verified, auth_user_id")
-        .eq("email", normalizedEmail)
-        .maybeSingle();
+      // IMPORTANT: fim_registrations is protected by RLS, so we must precheck via backend function.
+      const { data: precheckData, error: precheckError } = await supabase.functions.invoke(
+        "portal-login-precheck",
+        {
+          body: { email: normalizedEmail },
+        }
+      );
 
-      console.log("Registration check result:", { regCheck, regCheckError });
-
-      if (regCheckError && regCheckError.code !== "PGRST116") {
+      if (precheckError) {
+        console.error("portal-login-precheck error:", precheckError);
         throw new Error("Gagal memeriksa data pendaftaran");
       }
 
-      if (!regCheck) {
+      const precheck = precheckData as PortalLoginPrecheckResult | null;
+
+      if (!precheck) {
+        throw new Error("Gagal memeriksa data pendaftaran");
+      }
+
+      if (precheck.is_blocked) {
+        throw new Error(
+          precheck.blocked_reason
+            ? `Akun Anda telah diblokir: ${precheck.blocked_reason}`
+            : "Akun Anda telah diblokir oleh administrator"
+        );
+      }
+
+      if (!precheck.exists) {
         throw new Error("Email tidak terdaftar sebagai pendaftar FIM. Silakan daftar terlebih dahulu.");
       }
 
-      // Check if auth_user_id exists - if not, there might be an issue with the registration
-      if (!regCheck.auth_user_id) {
-        console.error("Registration exists but no auth_user_id");
+      if (!precheck.auth_user_id) {
         throw new Error("Akun belum terhubung dengan sistem autentikasi. Silakan hubungi admin.");
       }
 
       // Check email verification status BEFORE signing in
-      if (!regCheck.email_verified) {
-        console.log("Email not verified in database, throwing UNVERIFIED_EMAIL");
+      if (!precheck.email_verified) {
         throw new Error("UNVERIFIED_EMAIL");
       }
 
-      // If database says verified, try to sync Auth first before login attempt
-      // This proactively ensures Auth email is confirmed
+      // Proactive sync (manual verification often flips DB flag first)
       try {
-        console.log("Pre-syncing auth email confirmation...");
         await supabase.functions.invoke("confirm-auth-email", {
-          body: { registration_id: regCheck.id }
+          body: { registration_id: precheck.registration_id },
         });
       } catch (syncErr) {
         console.warn("Pre-sync warning (non-fatal):", syncErr);
-        // Continue anyway - the login attempt will handle it
       }
 
       console.log("Email verified, proceeding with signInWithPassword");
@@ -283,7 +306,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           
           try {
             const syncResponse = await supabase.functions.invoke("confirm-auth-email", {
-              body: { registration_id: regCheck.id }
+              body: { registration_id: precheck.registration_id, email: normalizedEmail },
             });
             
             if (syncResponse.error) {
