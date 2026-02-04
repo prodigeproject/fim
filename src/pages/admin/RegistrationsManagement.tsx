@@ -176,8 +176,9 @@ interface Batch {
 
 export default function RegistrationsManagement() {
   const queryClient = useQueryClient();
-  const { profile, isSuperAdmin } = useAdminAuth();
+  const { user, profile, isSuperAdmin, role } = useAdminAuth();
   const { canCreate, canEdit, canDelete } = usePermission("registrations");
+  const isAdminOrSuperAdmin = isSuperAdmin || role === "admin";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stageFilter, setStageFilter] = useState<string>("all");
@@ -287,9 +288,26 @@ export default function RegistrationsManagement() {
     };
   }, [queryClient]);
 
+  // Fetch recruiter assignments for current user (to filter registrations for non-admin users)
+  const { data: myAssignments } = useQuery({
+    queryKey: ["my-recruiter-assignments", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("recruiter_assignments")
+        .select("registration_id")
+        .eq("assigned_to", user.id)
+        .eq("is_active", true);
+      
+      if (error) throw error;
+      return data.map(a => a.registration_id);
+    },
+    enabled: !!user?.id && !isAdminOrSuperAdmin,
+  });
+
   // Fetch all registrations with batch filter
   const { data: registrations, isLoading } = useQuery({
-    queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, batchFilter, sortField, sortOrder],
+    queryKey: ["fim-registrations", searchQuery, statusFilter, stageFilter, batchFilter, sortField, sortOrder, isAdminOrSuperAdmin, myAssignments],
     queryFn: async () => {
       let query = supabase
         .from("fim_registrations")
@@ -314,8 +332,15 @@ export default function RegistrationsManagement() {
       const { data, error } = await query;
       if (error) throw error;
       
+      let filteredData = data as Registration[];
+      
+      // Filter by recruiter assignment for non-admin users
+      if (!isAdminOrSuperAdmin && myAssignments) {
+        filteredData = filteredData.filter(reg => myAssignments.includes(reg.id));
+      }
+      
       // Sort client-side for flexibility
-      const sorted = (data as Registration[]).sort((a, b) => {
+      const sorted = filteredData.sort((a, b) => {
         if (sortField === "name") {
           const comparison = a.full_name.localeCompare(b.full_name, 'id');
           return sortOrder === "asc" ? comparison : -comparison;
@@ -2265,36 +2290,40 @@ Tim Forum Indonesia Muda
                                 <Eye className="h-4 w-4 mr-2" />
                                 Lihat Detail
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  resetPasswordMutation.mutate({ registrationId: reg.id });
-                                }}
-                                disabled={resetPasswordMutation.isPending}
-                              >
-                                <Key className="h-4 w-4 mr-2" />
-                                Reset Password
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  setRegistrationToDelete(reg);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Hapus Data
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  setRegistrationToBlock(reg);
-                                  setIsBlockDialogOpen(true);
-                                }}
-                              >
-                                <Ban className="h-4 w-4 mr-2" />
-                                Blokir & Hapus
-                              </DropdownMenuItem>
+                              {isAdminOrSuperAdmin && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      resetPasswordMutation.mutate({ registrationId: reg.id });
+                                    }}
+                                    disabled={resetPasswordMutation.isPending}
+                                  >
+                                    <Key className="h-4 w-4 mr-2" />
+                                    Reset Password
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => {
+                                      setRegistrationToDelete(reg);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Hapus Data
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => {
+                                      setRegistrationToBlock(reg);
+                                      setIsBlockDialogOpen(true);
+                                    }}
+                                  >
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    Blokir & Hapus
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

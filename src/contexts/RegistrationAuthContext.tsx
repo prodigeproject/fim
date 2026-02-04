@@ -2,21 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type PortalLoginPrecheckResult =
-  | {
-      exists: true;
-      registration_id: string;
-      auth_user_id: string | null;
-      email_verified: boolean;
-      is_blocked: boolean;
-      blocked_reason?: string | null;
-    }
-  | {
-      exists: false;
-      is_blocked: boolean;
-      blocked_reason?: string | null;
-    };
-
 interface Registration {
   id: string;
   email: string;
@@ -56,8 +41,6 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   const [session, setSession] = useState<Session | null>(null);
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Flag to prevent auto-redirect during signup process
-  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const fetchRegistration = useCallback(async (userId: string) => {
     try {
@@ -71,7 +54,6 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         console.error("Error fetching registration:", error);
         return null;
       }
-
       return data as Registration | null;
     } catch (error) {
       console.error("Error fetching registration:", error);
@@ -87,61 +69,38 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
   }, [user, fetchRegistration]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST (avoid deadlocks)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      // Skip processing if we're in the middle of signup
-      if (isSigningUp) {
-        console.log("Skipping auth state change during signup");
-        return;
-      }
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
-        // Defer Supabase calls
         setTimeout(() => {
           fetchRegistration(nextSession.user.id).then(setRegistration);
         }, 0);
       } else {
         setRegistration(null);
       }
-
       setIsLoading(false);
     });
 
-    // THEN check for existing session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: existingSession } }) => {
-        // Skip if we're signing up
-        if (isSigningUp) {
-          setIsLoading(false);
-          return;
-        }
-
-        setSession(existingSession);
-        setUser(existingSession?.user ?? null);
-
-        if (existingSession?.user) {
-          fetchRegistration(existingSession.user.id).then(setRegistration);
-        }
-
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      if (existingSession?.user) {
+        fetchRegistration(existingSession.user.id).then(setRegistration);
+      }
+      setIsLoading(false);
+    }).catch(() => setIsLoading(false));
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchRegistration, isSigningUp]);
+  }, [fetchRegistration]);
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     try {
       setIsLoading(true);
-      setIsSigningUp(true); // Prevent auth state listener from triggering
+      const normalizedEmail = email.toLowerCase().trim();
 
       // Fetch current open batch
       const { data: batchData } = await supabase
@@ -153,27 +112,23 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
       // Sign up with Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
+        options: { data: { full_name: fullName } },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
 
-      // Generate verification token with 24-hour expiration
+      // Generate verification token
       const verificationToken = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      // Create registration record with token expiration and batch_id
+      // Create registration record
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
         .insert({
-          email: email.toLowerCase().trim(),
+          email: normalizedEmail,
           full_name: fullName,
           phone: phone || null,
           auth_user_id: authData.user.id,
@@ -192,33 +147,19 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       // Send verification email
       try {
         await supabase.functions.invoke("send-verification-email", {
-          body: {
-            email: email.toLowerCase().trim(),
-            name: fullName,
-            token: verificationToken,
-          },
+          body: { email: normalizedEmail, name: fullName, token: verificationToken },
         });
       } catch (emailError) {
         console.error("Failed to send verification email:", emailError);
       }
 
-      // Notify super admin (fire-and-forget)
-      supabase.functions
-        .invoke("notify-new-registration", {
-          body: {
-            registrationId: regData.id,
-            fullName,
-            email,
-          },
-        })
-        .catch(() => {
-          // ignore notification failures
-        });
+      // Notify admin (fire-and-forget)
+      supabase.functions.invoke("notify-new-registration", {
+        body: { registrationId: regData.id, fullName, email: normalizedEmail },
+      }).catch(() => {});
 
-      // Sign out immediately after signup - user should login manually
+      // Sign out after signup - user must verify email first
       await supabase.auth.signOut();
-      
-      // Clear state manually
       setUser(null);
       setSession(null);
       setRegistration(null);
@@ -229,138 +170,100 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
       return { error: error as Error };
     } finally {
       setIsLoading(false);
-      setIsSigningUp(false); // Re-enable auth state listener
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-
       const normalizedEmail = email.toLowerCase().trim();
-      console.log("Starting signIn for:", normalizedEmail);
 
-      // IMPORTANT: fim_registrations is protected by RLS, so we must precheck via backend function.
+      // Step 1: Precheck via backend (bypasses RLS)
       const { data: precheckData, error: precheckError } = await supabase.functions.invoke(
         "portal-login-precheck",
-        {
-          body: { email: normalizedEmail },
-        }
+        { body: { email: normalizedEmail } }
       );
 
       if (precheckError) {
-        console.error("portal-login-precheck error:", precheckError);
+        console.error("Precheck error:", precheckError);
         throw new Error("Gagal memeriksa data pendaftaran");
       }
 
-      const precheck = precheckData as PortalLoginPrecheckResult | null;
-
-      if (!precheck) {
+      // Step 2: Handle precheck results
+      if (!precheckData) {
         throw new Error("Gagal memeriksa data pendaftaran");
       }
 
-      if (precheck.is_blocked) {
+      if (precheckData.is_blocked) {
         throw new Error(
-          precheck.blocked_reason
-            ? `Akun Anda telah diblokir: ${precheck.blocked_reason}`
+          precheckData.blocked_reason
+            ? `Akun Anda telah diblokir: ${precheckData.blocked_reason}`
             : "Akun Anda telah diblokir oleh administrator"
         );
       }
 
-      if (!precheck.exists) {
+      if (!precheckData.exists) {
         throw new Error("Email tidak terdaftar sebagai pendaftar FIM. Silakan daftar terlebih dahulu.");
       }
 
-      if (!precheck.auth_user_id) {
+      if (!precheckData.auth_user_id) {
         throw new Error("Akun belum terhubung dengan sistem autentikasi. Silakan hubungi admin.");
       }
 
-      // Check email verification status BEFORE signing in
-      if (!precheck.email_verified) {
+      // Step 3: Check verification status
+      if (!precheckData.email_verified) {
         throw new Error("UNVERIFIED_EMAIL");
       }
 
-      // Proactive sync (manual verification often flips DB flag first)
+      // Step 4: Sync auth email confirmation if needed
       try {
         await supabase.functions.invoke("confirm-auth-email", {
-          body: { registration_id: precheck.registration_id },
+          body: { registration_id: precheckData.registration_id },
         });
       } catch (syncErr) {
-        console.warn("Pre-sync warning (non-fatal):", syncErr);
+        console.warn("Auth sync warning:", syncErr);
       }
 
-      console.log("Email verified, proceeding with signInWithPassword");
-
-      // Now do the actual sign in
+      // Step 5: Attempt login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       });
 
-      console.log("SignInWithPassword result:", { data: data ? "success" : null, error });
-
       if (error) {
-        // Handle "Email not confirmed" error - retry sync and login
         if (error.message.includes("Email not confirmed")) {
-          console.log("Auth email still not confirmed. Retrying sync...");
+          // Retry sync and login
+          await supabase.functions.invoke("confirm-auth-email", {
+            body: { registration_id: precheckData.registration_id, email: normalizedEmail },
+          });
+          await new Promise((r) => setTimeout(r, 500));
           
-          try {
-            const syncResponse = await supabase.functions.invoke("confirm-auth-email", {
-              body: { registration_id: precheck.registration_id, email: normalizedEmail },
-            });
-            
-            if (syncResponse.error) {
-              console.error("Sync failed:", syncResponse.error);
-              throw new Error("UNVERIFIED_EMAIL");
-            }
-            
-            console.log("Sync successful, retrying login...");
-            
-            // Short delay to allow Auth system to process
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Retry login after syncing
-            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-              email: normalizedEmail,
-              password,
-            });
-            
-            if (retryError) {
-              if (retryError.message.includes("Invalid login credentials")) {
-                throw new Error("Email atau password salah. Silakan periksa kembali.");
-              }
-              if (retryError.message.includes("Email not confirmed")) {
-                // Still not confirmed after sync - something is wrong
-                throw new Error("UNVERIFIED_EMAIL");
-              }
-              throw retryError;
-            }
-            
-            // Login succeeded after sync
-            if (retryData.user) {
-              const reg = await fetchRegistration(retryData.user.id);
-              if (reg) {
-                setRegistration(reg);
-              }
-            }
-            return { error: null };
-          } catch (syncError: any) {
-            console.error("Failed to sync auth email:", syncError);
-            if (syncError.message === "UNVERIFIED_EMAIL") {
-              throw syncError;
+          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
+          
+          if (retryError) {
+            if (retryError.message.includes("Invalid login credentials")) {
+              throw new Error("Email atau password salah.");
             }
             throw new Error("UNVERIFIED_EMAIL");
           }
+          
+          if (retryData.user) {
+            const reg = await fetchRegistration(retryData.user.id);
+            if (reg) setRegistration(reg);
+          }
+          return { error: null };
         }
-        
-        // Provide more specific error messages
+
         if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Email atau password salah. Silakan periksa kembali.");
+          throw new Error("Email atau password salah.");
         }
         throw error;
       }
 
-      // Check if this user has an admin role - admins should use /admin
+      // Step 6: Ensure this is not an admin account
       if (data.user) {
         const { data: adminRole } = await supabase
           .from("user_roles")
@@ -369,19 +272,15 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
           .maybeSingle();
 
         if (adminRole) {
-          // This is an admin user trying to login to registration portal
           await supabase.auth.signOut();
-          throw new Error("Akun admin tidak dapat digunakan untuk login pendaftaran. Silakan gunakan /admin untuk login admin.");
+          throw new Error("Akun admin tidak dapat digunakan untuk login pendaftaran. Silakan gunakan /admin.");
         }
 
         const reg = await fetchRegistration(data.user.id);
-        
         if (!reg) {
-          // No registration found for this user
           await supabase.auth.signOut();
           throw new Error("Akun tidak terdaftar sebagai pendaftar FIM");
         }
-
         setRegistration(reg);
       }
 
@@ -403,16 +302,7 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
 
   return (
     <RegistrationAuthContext.Provider
-      value={{
-        user,
-        session,
-        registration,
-        isLoading,
-        signUp,
-        signIn,
-        signOut,
-        refreshRegistration,
-      }}
+      value={{ user, session, registration, isLoading, signUp, signIn, signOut, refreshRegistration }}
     >
       {children}
     </RegistrationAuthContext.Provider>
