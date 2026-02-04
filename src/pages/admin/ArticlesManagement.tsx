@@ -80,8 +80,9 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function ArticlesManagement() {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, role } = useAdminAuth();
   const { canCreate, canEdit, canDelete } = usePermission("articles");
+  const isAdminOrSuperAdmin = isSuperAdmin || role === "admin";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -405,27 +406,21 @@ export default function ArticlesManagement() {
     authorFilter !== "all" || tagFilter || dateFrom || dateTo;
 
   // Check if user can edit a specific article
-  // Super admin and admin with edit permission can edit all
-  // Others can only edit their own articles
+  // Admin and Super admin can edit all articles
+  // Others can ONLY edit their own articles
   const canEditArticle = (article: any) => {
-    if (isSuperAdmin) return true;
-    // Check if user is the author of the article
-    if (article.author_id === user?.id) return true;
-    // Admin with edit permission can edit all articles
-    if (canEdit) return true;
-    return false;
+    if (isAdminOrSuperAdmin) return true;
+    // Non-admin/superadmin users can only edit their own articles
+    return article.author_id === user?.id && canEdit;
   };
 
   // Check if user can delete a specific article
-  // Super admin and admin with delete permission can delete all
-  // Others can only delete their own articles
+  // Admin and Super admin can delete all articles
+  // Others can ONLY delete their own articles
   const canDeleteArticle = (article: any) => {
-    if (isSuperAdmin) return true;
-    // Non-admin/super_admin can only delete their own articles
-    if (article.author_id === user?.id) return canDelete;
-    // Admin with delete permission can delete all articles
-    if (canDelete) return true;
-    return false;
+    if (isAdminOrSuperAdmin) return true;
+    // Non-admin/superadmin users can only delete their own articles
+    return article.author_id === user?.id && canDelete;
   };
 
   // Handle select all
