@@ -559,17 +559,39 @@ export default function RegistrationsManagement() {
         throw new Error("No registrations found");
       }
 
-      // Group registrations by their current stage for smart bulk update
-      const adminStageRegs = regs.filter(r => r.selection_stage === "administrasi" && !r.selection_passed);
-      const adminPassedRegs = regs.filter(r => r.selection_stage === "administrasi" && r.selection_passed === true);
-      const interviewStageRegs = regs.filter(r => r.selection_stage === "wawancara");
+      // Get training data to check submission status
+      const { data: trainingDataCheck } = await supabase
+        .from("fim_training_registrations")
+        .select("registration_id, is_submitted")
+        .in("registration_id", ids);
+      
+      const submittedIds = new Set(
+        trainingDataCheck?.filter(t => t.is_submitted).map(t => t.registration_id) || []
+      );
+
+      // Filter out registrations that haven't submitted for administrasi stage
+      const eligibleRegs = regs.filter(r => {
+        // For administrasi stage without selection_passed, must have submitted
+        if (r.selection_stage === "administrasi" && !r.selection_passed) {
+          return submittedIds.has(r.id);
+        }
+        // For wawancara stage, allow update
+        return true;
+      });
+
+      if (eligibleRegs.length === 0) {
+        throw new Error("Tidak ada pendaftar yang memenuhi syarat. Pastikan pendaftar sudah menyelesaikan dan submit formulir.");
+      }
+
+      // Track skipped count for user feedback
+      const skippedCount = regs.length - eligibleRegs.length;
 
       let totalUpdated = 0;
 
       // Process based on stage parameter
       if (stage === "lolos_seleksi") {
         // For "lolos_seleksi", mark current stage as passed based on where they are
-        for (const reg of regs) {
+        for (const reg of eligibleRegs) {
           const updates: any = {
             updated_at: new Date().toISOString(),
             selection_passed: true,
@@ -602,7 +624,7 @@ export default function RegistrationsManagement() {
         }
       } else if (stage === "tidak_lolos") {
         // For "tidak_lolos", mark as failed
-        for (const reg of regs) {
+        for (const reg of eligibleRegs) {
           const updates: any = {
             updated_at: new Date().toISOString(),
             selection_passed: false,
@@ -639,12 +661,10 @@ export default function RegistrationsManagement() {
 
       return totalUpdated;
     },
-    onSuccess: (count, variables) => {
-      const stageText = variables.stage === "lolos_seleksi" 
+    onSuccess: (count) => {
+      const stageText = count > 0 
         ? "ditandai Lolos Seleksi" 
-        : variables.stage === "tidak_lolos" 
-        ? "ditandai Tidak Lolos" 
-        : `dipindahkan ke tahap ${variables.stage}`;
+        : "diproses";
       toast.success(`${count} pendaftaran berhasil ${stageText}`);
       queryClient.invalidateQueries({ queryKey: ["fim-registrations"] });
       setSelectedIds(new Set());
@@ -1754,9 +1774,19 @@ Tim Forum Indonesia Muda
   const toggleSelectAll = () => {
     if (!registrations) return;
     
-    const eligibleRegs = registrations.filter(r => 
-      r.registration_status !== "approved" && r.registration_status !== "rejected"
-    );
+    // Only include registrations that are eligible for bulk actions
+    // For administrasi stage: must have submitted
+    const eligibleRegs = registrations.filter(r => {
+      if (r.registration_status === "approved" || r.registration_status === "rejected") {
+        return false;
+      }
+      // For administrasi stage without selection_passed, check if submitted
+      if (r.selection_stage === "administrasi" && r.selection_passed !== true) {
+        const training = getTrainingDataForRegistration(r.id);
+        return training?.is_submitted === true;
+      }
+      return true;
+    });
     
     if (selectedIds.size === eligibleRegs.length) {
       setSelectedIds(new Set());
@@ -1989,9 +2019,18 @@ Tim Forum Indonesia Muda
     toast.success("PDF berhasil diunduh");
   };
 
-  const eligibleForSelection = registrations?.filter(r => 
-    r.registration_status !== "approved" && r.registration_status !== "rejected"
-  ) || [];
+  // Filter eligible registrations for bulk selection - must have submitted for administrasi stage
+  const eligibleForSelection = registrations?.filter(r => {
+    if (r.registration_status === "approved" || r.registration_status === "rejected") {
+      return false;
+    }
+    // For administrasi stage without selection_passed, check if submitted
+    if (r.selection_stage === "administrasi" && r.selection_passed !== true) {
+      const training = getTrainingDataForRegistration(r.id);
+      return training?.is_submitted === true;
+    }
+    return true;
+  }) || [];
 
   return (
     <div className="space-y-6">
@@ -2229,7 +2268,10 @@ Tim Forum Indonesia Muda
                   </TableRow>
                 ) : registrations && registrations.length > 0 ? (
                   registrations.map((reg) => {
-                    const canSelect = reg.registration_status !== "approved" && reg.registration_status !== "rejected";
+                    // Check if registration can be selected for bulk actions
+                    const isApprovedOrRejected = reg.registration_status === "approved" || reg.registration_status === "rejected";
+                    const isAdminStageNotSubmitted = reg.selection_stage === "administrasi" && reg.selection_passed !== true && !getTrainingDataForRegistration(reg.id)?.is_submitted;
+                    const canSelect = !isApprovedOrRejected && !isAdminStageNotSubmitted;
                     const schedule = getInterviewScheduleForRegistration(reg.id);
                     return (
                       <TableRow key={reg.id}>
@@ -2957,67 +2999,79 @@ Tim Forum Indonesia Muda
                     )}
                     
                     {interviewSchedule && interviewSchedule.status === "scheduled" && (
-                      <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 space-y-2">
-                        <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                          <CalendarCheck className="h-4 w-4" />
-                          <strong>Terjadwal</strong> - Wawancara belum dilaksanakan.
-                        </p>
-                        <div className="text-xs text-blue-600 dark:text-blue-400">
-                          <p>Tanggal: {format(new Date(interviewSchedule.scheduled_date), "dd MMMM yyyy", { locale: id })}</p>
-                          <p>Waktu: {interviewSchedule.scheduled_time}</p>
-                          {interviewSchedule.location && <p>Lokasi: {interviewSchedule.location}</p>}
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-                            onClick={() => {
-                              setScheduleToComplete({ id: interviewSchedule.id, registrationId: selectedRegistration.id });
-                              setIsInterviewCompletedDialogOpen(true);
-                            }}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Selesai
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                            onClick={() => {
-                              if (confirm("Tandai peserta ini sebagai Tidak Hadir? Status akan otomatis menjadi Tidak Lolos.")) {
-                                updateInterviewStatusMutation.mutate({
-                                  scheduleId: interviewSchedule.id,
-                                  registrationId: selectedRegistration.id,
-                                  status: "no_show"
-                                });
-                              }
-                            }}
-                            disabled={updateInterviewStatusMutation.isPending}
-                          >
-                            <UserX className="h-4 w-4 mr-2" />
-                            Tidak Hadir
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-300 hover:bg-red-50"
-                            onClick={() => {
-                              if (confirm("Batalkan wawancara ini? Status akan otomatis menjadi Tidak Lolos.")) {
-                                updateInterviewStatusMutation.mutate({
-                                  scheduleId: interviewSchedule.id,
-                                  registrationId: selectedRegistration.id,
-                                  status: "cancelled"
-                                });
-                              }
-                            }}
-                            disabled={updateInterviewStatusMutation.isPending}
-                          >
-                            <Ban className="h-4 w-4 mr-2" />
-                            Batalkan
-                          </Button>
-                        </div>
-                      </div>
+                      (() => {
+                        // Check if interview time has passed
+                        const scheduledDateTime = new Date(`${interviewSchedule.scheduled_date}T${interviewSchedule.scheduled_time}`);
+                        const now = new Date();
+                        const hasInterviewTimePassed = now > scheduledDateTime;
+                        
+                        return (
+                          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 space-y-2">
+                            <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                              <CalendarCheck className="h-4 w-4" />
+                              <strong>Terjadwal</strong> - {hasInterviewTimePassed ? "Waktu wawancara sudah lewat." : "Wawancara belum dilaksanakan."}
+                            </p>
+                            <div className="text-xs text-blue-600 dark:text-blue-400">
+                              <p>Tanggal: {format(new Date(interviewSchedule.scheduled_date), "dd MMMM yyyy", { locale: id })}</p>
+                              <p>Waktu: {interviewSchedule.scheduled_time}</p>
+                              {interviewSchedule.location && <p>Lokasi: {interviewSchedule.location}</p>}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {/* Selesai button only shows after scheduled time has passed */}
+                              {hasInterviewTimePassed && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                                  onClick={() => {
+                                    setScheduleToComplete({ id: interviewSchedule.id, registrationId: selectedRegistration.id });
+                                    setIsInterviewCompletedDialogOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Selesai
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                                onClick={() => {
+                                  if (confirm("Tandai peserta ini sebagai Tidak Hadir? Status akan otomatis menjadi Tidak Lolos.")) {
+                                    updateInterviewStatusMutation.mutate({
+                                      scheduleId: interviewSchedule.id,
+                                      registrationId: selectedRegistration.id,
+                                      status: "no_show"
+                                    });
+                                  }
+                                }}
+                                disabled={updateInterviewStatusMutation.isPending}
+                              >
+                                <UserX className="h-4 w-4 mr-2" />
+                                Tidak Hadir
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-300 hover:bg-red-50"
+                                onClick={() => {
+                                  if (confirm("Batalkan wawancara ini? Status akan otomatis menjadi Tidak Lolos.")) {
+                                    updateInterviewStatusMutation.mutate({
+                                      scheduleId: interviewSchedule.id,
+                                      registrationId: selectedRegistration.id,
+                                      status: "cancelled"
+                                    });
+                                  }
+                                }}
+                                disabled={updateInterviewStatusMutation.isPending}
+                              >
+                                <Ban className="h-4 w-4 mr-2" />
+                                Batalkan
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()
                     )}
                     
                     {interviewSchedule && interviewSchedule.status === "completed" && (
