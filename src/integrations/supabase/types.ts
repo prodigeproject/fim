@@ -670,6 +670,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_jobs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          function_name: string
+          id: string
+          is_active: boolean | null
+          last_error: string | null
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          next_run_at: string | null
+          run_count: number | null
+          schedule: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          function_name: string
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          next_run_at?: string | null
+          run_count?: number | null
+          schedule: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          function_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          next_run_at?: string | null
+          run_count?: number | null
+          schedule?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dynamic_roles: {
         Row: {
           created_at: string | null
@@ -739,6 +787,60 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           variables?: Json | null
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          category: string
+          context: Json | null
+          created_at: string | null
+          error_code: string
+          id: string
+          ip_address: string | null
+          message: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          context?: Json | null
+          created_at?: string | null
+          error_code: string
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          context?: Json | null
+          created_at?: string | null
+          error_code?: string
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1228,6 +1330,54 @@ export type Database = {
           email?: string
           id?: string
           ip_address?: string
+        }
+        Relationships: []
+      }
+      notification_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          max_retries: number | null
+          notification_type: string
+          payload: Json
+          processed_at: string | null
+          recipient_email: string | null
+          recipient_id: string | null
+          retry_count: number | null
+          scheduled_at: string | null
+          status: string | null
+          template_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number | null
+          notification_type: string
+          payload?: Json
+          processed_at?: string | null
+          recipient_email?: string | null
+          recipient_id?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          template_name: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number | null
+          notification_type?: string
+          payload?: Json
+          processed_at?: string | null
+          recipient_email?: string | null
+          recipient_id?: string | null
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string | null
+          template_name?: string
         }
         Relationships: []
       }
@@ -1862,7 +2012,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_stats: {
+        Row: {
+          accepted_count: number | null
+          active_admins: number | null
+          active_subscribers: number | null
+          completed_registrations: number | null
+          interview_stage_count: number | null
+          last_refreshed: string | null
+          pending_approvals: number | null
+          pending_registrations: number | null
+          published_articles: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_login_rate_limit: {
@@ -1927,6 +2090,18 @@ export type Database = {
             Returns: string
           }
       publish_scheduled_articles: { Args: never; Returns: number }
+      queue_notification: {
+        Args: {
+          p_payload?: Json
+          p_recipient_email?: string
+          p_recipient_id?: string
+          p_scheduled_at?: string
+          p_template: string
+          p_type: string
+        }
+        Returns: string
+      }
+      refresh_dashboard_stats: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "super_admin" | "moderator" | "admin"
