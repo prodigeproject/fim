@@ -1,256 +1,510 @@
 
-# Rencana Implementasi: Menu Admin Dinamis Sesuai Role Permission
+# Rencana Implementasi Komprehensif
 
 ## Ringkasan
-Implementasi menu admin panel yang sepenuhnya dinamis berdasarkan permission dari database, dengan real-time update dan mode view-only untuk user yang hanya memiliki privilege lihat.
+
+Implementasi semua fitur dari rencana pengembangan, mencakup:
+1. Fitur Portal Pendaftaran (Progress Tracker, Countdown, Push Notifications)
+2. Audit & Perbaikan RLS Policies
+3. Sistem Notifikasi Terpusat
+4. Optimasi Performance Frontend
+5. Sistem Cron Jobs Terpusat
+6. File Storage Optimization
+7. Centralized Error Handling & Logging
+8. Data Backup & Recovery
+9. Caching System
 
 ---
 
-## Permasalahan Saat Ini
+## Fase 1: Audit & Perbaikan RLS Policies
 
-### 1. Menu Navigation Hybrid
-- `AdminDashboard.tsx` masih menggunakan kombinasi hardcoded flags (`superAdminOnly`, `adminOnly`, `hideFromModerator`) bersama dengan `permissionKey`
-- Ini membuat perubahan permission di database tidak selalu tercermin di menu
+### 1.1 Perbaikan yang Diimplementasikan
 
-### 2. Permission Check Tidak Konsisten
-- Beberapa halaman tidak memiliki permission check sama sekali
-- Tombol CRUD (tambah/edit/hapus) muncul untuk semua user yang bisa akses halaman
+| Tabel | Perbaikan |
+|-------|-----------|
+| `newsletter_subscription_attempts` | Tambah policy untuk rate limiting |
+| `newsletter_subscribers` | Batasi INSERT dengan validasi |
+| Indeks baru | Tambah index untuk query optimization |
 
-### 3. Real-time Belum Optimal
-- `staleTime` 30 detik dan `refetchInterval` 1 menit masih lambat
-- Tidak ada Supabase Realtime subscription untuk perubahan permission
+### 1.2 Migrasi Database
 
-### 4. Mapping Permission Key Tidak Lengkap
-Permission keys di database sudah lengkap (30 keys), tapi mapping di navItems belum complete:
-- `article_scheduling` - sudah ada
-- `article_collaboration` - belum dimapping ke menu
-- `seo_settings` - belum dimapping (sekarang pakai `tools_settings`)
-- `partners` - sudah ada
+```sql
+-- Tambah index untuk optimasi query
+CREATE INDEX IF NOT EXISTS idx_fim_registrations_batch_stage 
+ON fim_registrations(batch_id, selection_stage) 
+WHERE registration_status != 'draft';
 
----
+CREATE INDEX IF NOT EXISTS idx_fim_registrations_email 
+ON fim_registrations(email);
 
-## Solusi Teknis
+CREATE INDEX IF NOT EXISTS idx_articles_status_published 
+ON articles(status, published_at DESC) 
+WHERE status = 'published';
 
-### Fase 1: Refactor Navigation Filter (AdminDashboard.tsx)
-
-**Perubahan utama:**
-1. Hapus flag legacy (`superAdminOnly`, `adminOnly`, `hideFromModerator`) 
-2. Gunakan HANYA `permissionKey` untuk filtering
-3. Tambahkan fallback: menu tanpa `permissionKey` = akses semua (default dashboard)
-4. Super admin tetap bypass semua check
-
-**Mapping permissionKey yang diupdate:**
-```text
-Menu                     | permissionKey
--------------------------|------------------
-Dashboard                | (tidak ada - default akses)
-Manajemen Artikel        | articles
-Persetujuan              | article_approvals
-Kalender Jadwal          | article_scheduling  
-Analytics                | article_analytics
-Newsletter Subscribers   | newsletter
-Email Settings           | email_settings
-FIM Club                 | clubs
-Regional                 | regionals  
-Alumni                   | alumni
-Mitra                    | partners
-Video Featured           | featured_videos
-Data Pendaftar           | registrations
-Penugasan Rekruter       | recruiter_assignments
-Kalender Wawancara       | interview_calendar
-Pengaturan Batch         | registration_settings
-Statistik                | registration_stats
-Template Email           | email_templates
-Manajemen User           | users
-Manajemen Role           | roles
-Admin Online             | online_admins
-Login Monitoring         | login_monitoring
-Sesi Aktif               | sessions
-Audit Log                | audit_logs
-Security                 | security
-PRD & Docs               | prd_docs
-Technical Docs           | technical_docs
-SEO & reCAPTCHA          | tools_settings + seo_settings
+CREATE INDEX IF NOT EXISTS idx_interview_schedules_date 
+ON interview_schedules(scheduled_date, scheduled_time);
 ```
 
-### Fase 2: Real-time Permission Updates (usePermission.ts)
+---
 
-**Perubahan:**
-1. Tambahkan Supabase Realtime subscription ke tabel `role_permissions`
-2. Kurangi `staleTime` menjadi 10 detik
-3. Refetch otomatis saat ada perubahan di database
-4. Cleanup subscription saat komponen unmount
+## Fase 2: Fitur Portal Pendaftaran
+
+### 2.1 Progress Tracker yang Engaging
+
+**File baru**: `src/components/registration/ProgressTracker.tsx`
+
+Fitur:
+- Animasi step-by-step dengan Framer Motion
+- Pulse animation untuk tahap aktif
+- Gradient progress bar
+- Responsive untuk mobile
+
+### 2.2 Countdown Timer
+
+**File baru**: `src/components/registration/CountdownTimer.tsx`
+
+Fitur:
+- Flip clock style dengan animasi
+- Real-time countdown (detik, menit, jam, hari)
+- Visual warning saat < 24 jam
+- Integrasi dengan registration_settings
+
+### 2.3 Push Notifications untuk Status Updates
+
+**File baru**: `src/hooks/usePortalNotifications.ts`
+
+Fitur:
+- Subscribe ke perubahan status registrasi via Supabase Realtime
+- Browser push notifications
+- In-app toast notifications
+- Notifikasi untuk: jadwal wawancara, perubahan tahap seleksi, hasil final
+
+---
+
+## Fase 3: Sistem Notifikasi Terpusat
+
+### 3.1 Database Schema
+
+**Tabel baru**: `notification_queue`
+
+```sql
+CREATE TABLE notification_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_type TEXT NOT NULL, -- 'email', 'push', 'in_app'
+  template_name TEXT NOT NULL,
+  recipient_id UUID,
+  recipient_email TEXT,
+  payload JSONB NOT NULL DEFAULT '{}',
+  status TEXT DEFAULT 'pending', -- pending, processing, sent, failed
+  retry_count INTEGER DEFAULT 0,
+  max_retries INTEGER DEFAULT 3,
+  error_message TEXT,
+  scheduled_at TIMESTAMPTZ DEFAULT NOW(),
+  processed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index untuk query efficiency
+CREATE INDEX idx_notification_queue_status ON notification_queue(status, scheduled_at);
+```
+
+### 3.2 Edge Function Terpusat
+
+**File baru**: `supabase/functions/process-notifications/index.ts`
+
+Menggabungkan logika dari 9 edge functions:
+- notify-article-status
+- notify-first-login
+- notify-interview-completed
+- notify-login
+- notify-new-registration
+- notify-registration-status
+- notify-revision
+- notify-selection-stage
+- notify-unauthorized-access
+
+### 3.3 Helper Function
+
+**File baru**: `supabase/functions/_shared/notification-service.ts`
 
 ```typescript
-// Pseudo-code untuk realtime subscription
-useEffect(() => {
-  if (!user?.id || isSuperAdmin) return;
+// Centralized email sending with Gmail SMTP
+export async function sendNotification(params: NotificationParams) {
+  // Template rendering
+  // Email sending via Gmail
+  // Retry logic
+  // Error handling
+}
+```
+
+---
+
+## Fase 4: Optimasi Performance Frontend
+
+### 4.1 Vite Bundle Splitting
+
+**Update**: `vite.config.ts`
+
+```typescript
+build: {
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+        'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', 
+                      '@radix-ui/react-select', '@radix-ui/react-tabs'],
+        'vendor-charts': ['recharts'],
+        'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit'],
+        'vendor-motion': ['framer-motion'],
+      }
+    }
+  }
+}
+```
+
+### 4.2 Image Optimization Component
+
+**File baru**: `src/components/OptimizedImage.tsx`
+
+Fitur:
+- Lazy loading dengan Intersection Observer
+- Blur placeholder
+- WebP conversion via Supabase Image Transformation
+- Responsive srcset
+
+### 4.3 Image Compression Before Upload
+
+**Update**: `src/components/admin/ImageUploader.tsx`
+
+Tambah dependency: `browser-image-compression`
+
+```typescript
+import imageCompression from 'browser-image-compression';
+
+const compressImage = async (file: File) => {
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  };
+  return await imageCompression(file, options);
+};
+```
+
+---
+
+## Fase 5: Sistem Cron Jobs Terpusat
+
+### 5.1 Database Schema
+
+**Tabel baru**: `cron_jobs`
+
+```sql
+CREATE TABLE cron_jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  schedule TEXT NOT NULL,
+  function_name TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  last_run_at TIMESTAMPTZ,
+  next_run_at TIMESTAMPTZ,
+  last_status TEXT,
+  last_error TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default jobs
+INSERT INTO cron_jobs (name, schedule, function_name) VALUES
+  ('cleanup-expired-sessions', '0 */6 * * *', 'cleanup-sessions'),
+  ('reminder-incomplete-registration', '0 9 * * *', 'send-reminder-incomplete'),
+  ('publish-scheduled-articles', '*/5 * * * *', 'publish-scheduled'),
+  ('process-notification-queue', '* * * * *', 'process-notifications'),
+  ('cleanup-orphaned-files', '0 3 * * 0', 'cleanup-files');
+```
+
+### 5.2 Master Cron Edge Function
+
+**File baru**: `supabase/functions/cron-master/index.ts`
+
+Menjalankan job berdasarkan schedule dari tabel cron_jobs.
+
+---
+
+## Fase 6: File Storage Optimization
+
+### 6.1 Auto-Cleanup Orphaned Files
+
+**File baru**: `supabase/functions/cleanup-orphaned-files/index.ts`
+
+Logic:
+1. List semua file di storage buckets
+2. Query database untuk file yang masih direferensikan
+3. Hapus file yang tidak ada referensinya
+4. Log hasil ke audit_logs
+
+### 6.2 Thumbnail Generation
+
+Memanfaatkan Supabase Image Transformation yang sudah tersedia:
+
+```typescript
+const thumbnailUrl = supabase.storage
+  .from(bucket)
+  .getPublicUrl(path, {
+    transform: { width: 300, height: 200, resize: 'cover' }
+  });
+```
+
+---
+
+## Fase 7: Centralized Error Handling & Logging
+
+### 7.1 Error Codes & Types
+
+**File baru**: `src/lib/errors.ts`
+
+```typescript
+export const ErrorCodes = {
+  // Authentication (1xxx)
+  AUTH_INVALID_CREDENTIALS: 'E1001',
+  AUTH_UNVERIFIED_EMAIL: 'E1002',
+  AUTH_BLOCKED_ACCOUNT: 'E1003',
+  AUTH_SESSION_EXPIRED: 'E1004',
   
-  const channel = supabase
-    .channel('role-permissions-changes')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'role_permissions' },
-      () => refetch()
-    )
-    .subscribe();
-    
-  return () => supabase.removeChannel(channel);
-}, [user?.id]);
+  // Database (2xxx)
+  DB_CONNECTION_ERROR: 'E2001',
+  DB_QUERY_ERROR: 'E2002',
+  DB_RLS_VIOLATION: 'E2003',
+  
+  // Validation (3xxx)
+  VALIDATION_REQUIRED_FIELD: 'E3001',
+  VALIDATION_INVALID_FORMAT: 'E3002',
+  VALIDATION_FILE_TOO_LARGE: 'E3003',
+  
+  // External (4xxx)
+  EXTERNAL_API_ERROR: 'E4001',
+  EXTERNAL_TIMEOUT: 'E4002',
+  EXTERNAL_RATE_LIMITED: 'E4003',
+} as const;
+
+export interface AppError {
+  code: keyof typeof ErrorCodes;
+  category: 'user' | 'system' | 'external';
+  message: string;
+  technicalDetails?: string;
+  recoverable: boolean;
+  suggestedAction?: string;
+}
 ```
 
-### Fase 3: View-Only Mode di Halaman Admin
+### 7.2 Error Logging Table
 
-Buat reusable component `PermissionGuard` dan update setiap halaman admin untuk menyembunyikan tombol CRUD berdasarkan permission.
+```sql
+CREATE TABLE error_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  error_code TEXT NOT NULL,
+  category TEXT NOT NULL,
+  message TEXT,
+  stack_trace TEXT,
+  user_id UUID,
+  context JSONB,
+  severity TEXT DEFAULT 'error',
+  url TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-**Pola implementasi:**
-```tsx
-// Di setiap halaman admin
-const { canView, canCreate, canEdit, canDelete } = usePermission("clubs");
-
-// Tombol Tambah
-{canCreate && (
-  <Button><Plus /> Tambah Club</Button>
-)}
-
-// Tombol Edit 
-{canEdit && (
-  <Button><Pencil /> Edit</Button>
-)}
-
-// Tombol Hapus
-{canDelete && (
-  <AlertDialog>...</AlertDialog>
-)}
+-- Index for querying
+CREATE INDEX idx_error_logs_created ON error_logs(created_at DESC);
+CREATE INDEX idx_error_logs_code ON error_logs(error_code);
 ```
 
-**Halaman yang perlu diupdate (prioritas tinggi):**
-1. `ClubsManagement.tsx` - permissionKey: `clubs`
-2. `RegionalsManagement.tsx` - permissionKey: `regionals`
-3. `AlumniManagement.tsx` - permissionKey: `alumni`
-4. `PartnersManagement.tsx` - permissionKey: `partners`
-5. `FeaturedVideosManagement.tsx` - permissionKey: `featured_videos`
-6. `NewsletterManagement.tsx` - permissionKey: `newsletter`
-7. `RegistrationsManagement.tsx` - permissionKey: `registrations`
-8. `ArticlesManagement.tsx` - permissionKey: `articles`
-9. `EmailTemplatesManagement.tsx` - permissionKey: `email_templates`
-10. `SessionsManagement.tsx` - permissionKey: `sessions`
-11. `AuditLogs.tsx` - permissionKey: `audit_logs`
-12. `InterviewCalendar.tsx` - permissionKey: `interview_calendar`
-13. `ArticleSchedulingCalendar.tsx` - permissionKey: `article_scheduling`
-14. `ToolsSettings.tsx` - permissionKey: `tools_settings`
+### 7.3 Error Boundary Component
+
+**File baru**: `src/components/ErrorBoundary.tsx`
+
+```typescript
+class ErrorBoundary extends React.Component<Props, State> {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    logErrorToServer({
+      error,
+      errorInfo,
+      userId: getCurrentUserId(),
+      route: window.location.pathname
+    });
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback onRetry={this.handleRetry} />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+### 7.4 Error Logging Edge Function
+
+**File baru**: `supabase/functions/log-error/index.ts`
 
 ---
 
-## File yang Akan Dimodifikasi
+## Fase 8: Data Backup & Recovery
 
-### 1. `src/hooks/usePermission.ts`
-- Tambah Supabase Realtime subscription
-- Kurangi staleTime untuk lebih responsif
-- Tambah helper function `usePermissionGate`
+### 8.1 Data Export Functionality
 
-### 2. `src/pages/admin/AdminDashboard.tsx`
-- Refactor `navItems` - hapus legacy flags, tambah permissionKey di semua menu
-- Simplify `filterNavItems` - hanya gunakan permissionKey
-- Loading state saat permission loading
+**File baru**: `src/components/admin/DataExporter.tsx`
 
-### 3. Halaman Admin (14 file)
-Update untuk menggunakan `usePermission` dan menyembunyikan tombol CRUD:
-- ClubsManagement.tsx
-- RegionalsManagement.tsx
-- AlumniManagement.tsx
-- PartnersManagement.tsx
-- FeaturedVideosManagement.tsx
-- NewsletterManagement.tsx
-- RegistrationsManagement.tsx
-- ArticlesManagement.tsx
-- EmailTemplatesManagement.tsx
-- SessionsManagement.tsx
-- AuditLogs.tsx
-- InterviewCalendar.tsx
-- ArticleSchedulingCalendar.tsx
-- ToolsSettings.tsx
+Fitur:
+- Export ke JSON, CSV, Excel
+- Filter berdasarkan tanggal
+- Download individual tables atau semua data
+- Menggunakan exceljs yang sudah terinstall
+
+### 8.2 Backup Edge Function
+
+**File baru**: `supabase/functions/backup-data/index.ts`
+
+Fitur:
+- Export tabel-tabel penting ke JSON
+- Compress dengan gzip
+- Upload ke Google Drive (memerlukan GOOGLE_SERVICE_ACCOUNT_KEY)
+- Rotasi backup (hapus > 30 hari)
+
+**Catatan**: Google Drive backup memerlukan secret `GOOGLE_SERVICE_ACCOUNT_KEY` yang perlu ditambahkan.
 
 ---
 
-## Alur Permission yang Baru
+## Fase 9: Caching System
 
-```text
-User Login
-    │
-    ▼
-useAllPermissions() dipanggil
-    │
-    ├─── Super Admin? ──► Bypass semua, akses penuh
-    │
-    ▼
-Query role_permissions dari database
-    │
-    ├─── Subscribe realtime changes
-    │
-    ▼
-filterNavItems() di AdminDashboard
-    │
-    ├─── Cek permissionKey setiap menu
-    ├─── can_view = true → Tampilkan menu
-    ├─── can_view = false → Sembunyikan menu
-    │
-    ▼
-User buka halaman
-    │
-    ▼
-usePermission(permissionKey) di halaman
-    │
-    ├─── can_create = true → Tampilkan tombol Tambah
-    ├─── can_edit = true → Tampilkan tombol Edit
-    ├─── can_delete = true → Tampilkan tombol Hapus
-    ├─── Semua false → View-only mode
+### 9.1 Edge Function Cache Layer
+
+**File baru**: `supabase/functions/_shared/cache.ts`
+
+```typescript
+const CACHE = new Map<string, { data: any; expiresAt: number }>();
+
+export async function getCached<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttlSeconds: number = 300
+): Promise<T> {
+  const cached = CACHE.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+  
+  const data = await fetcher();
+  CACHE.set(key, { data, expiresAt: Date.now() + ttlSeconds * 1000 });
+  return data;
+}
+
+export function invalidateCache(keyPattern?: string) {
+  if (!keyPattern) {
+    CACHE.clear();
+    return;
+  }
+  for (const key of CACHE.keys()) {
+    if (key.includes(keyPattern)) {
+      CACHE.delete(key);
+    }
+  }
+}
+```
+
+### 9.2 Materialized View untuk Dashboard Stats
+
+```sql
+CREATE MATERIALIZED VIEW IF NOT EXISTS dashboard_stats AS
+SELECT 
+  (SELECT COUNT(*) FROM fim_registrations WHERE registration_status = 'pending') as pending_registrations,
+  (SELECT COUNT(*) FROM fim_registrations WHERE selection_stage = 'wawancara') as interview_stage,
+  (SELECT COUNT(*) FROM articles WHERE status = 'published') as published_articles,
+  (SELECT COUNT(*) FROM articles WHERE needs_approval = true AND status = 'draft') as pending_approvals,
+  (SELECT COUNT(*) FROM newsletter_subscribers WHERE is_active = true) as active_subscribers,
+  NOW() as last_refreshed;
+
+-- Refresh function
+CREATE OR REPLACE FUNCTION refresh_dashboard_stats()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW dashboard_stats;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
 ---
 
-## Detail Teknis
+## Daftar File yang Akan Dibuat/Dimodifikasi
 
-### Struktur Permission di Database
-```text
-role_permissions:
-  - permission_key: "clubs"
-  - can_view: boolean    → Bisa lihat menu & halaman
-  - can_create: boolean  → Bisa tambah data baru
-  - can_edit: boolean    → Bisa edit data
-  - can_delete: boolean  → Bisa hapus data
+### File Baru (20 files)
+
+| Path | Deskripsi |
+|------|-----------|
+| `src/components/registration/ProgressTracker.tsx` | Progress tracker dengan animasi |
+| `src/components/registration/CountdownTimer.tsx` | Countdown timer flip clock |
+| `src/hooks/usePortalNotifications.ts` | Push notifications untuk portal |
+| `src/components/OptimizedImage.tsx` | Image optimization component |
+| `src/lib/errors.ts` | Error codes & types |
+| `src/components/ErrorBoundary.tsx` | React Error Boundary |
+| `src/components/admin/DataExporter.tsx` | Data export functionality |
+| `supabase/functions/process-notifications/index.ts` | Centralized notification processor |
+| `supabase/functions/_shared/notification-service.ts` | Notification helper |
+| `supabase/functions/_shared/cache.ts` | Caching layer |
+| `supabase/functions/cron-master/index.ts` | Master cron handler |
+| `supabase/functions/cleanup-orphaned-files/index.ts` | Storage cleanup |
+| `supabase/functions/log-error/index.ts` | Error logging |
+| `supabase/functions/backup-data/index.ts` | Data backup |
+
+### File yang Dimodifikasi (7 files)
+
+| Path | Perubahan |
+|------|-----------|
+| `vite.config.ts` | Bundle splitting configuration |
+| `src/components/admin/ImageUploader.tsx` | Image compression |
+| `src/pages/registration/RegistrationDashboard.tsx` | Integrate ProgressTracker |
+| `src/pages/registration/RegistrationLanding.tsx` | Integrate CountdownTimer |
+| `src/App.tsx` | Add ErrorBoundary |
+| `supabase/config.toml` | Add new edge function configs |
+
+### Migrasi Database
+
+1 migration file dengan:
+- Tabel: `notification_queue`, `cron_jobs`, `error_logs`
+- Indexes untuk optimization
+- Materialized view: `dashboard_stats`
+- RLS policies untuk tabel baru
+
+---
+
+## Dependencies Baru
+
+```json
+{
+  "browser-image-compression": "^2.0.2"
+}
 ```
 
-### Contoh Konfigurasi Role "Rekruter"
-- `registrations`: can_view=true, can_create=false, can_edit=true, can_delete=false
-  - Bisa lihat data pendaftar
-  - Bisa edit (update status wawancara)
-  - Tidak bisa tambah/hapus
+---
 
-### View-Only Mode
-Jika user hanya punya `can_view=true`:
-- Halaman tetap bisa diakses
-- Semua tombol aksi (Tambah/Edit/Hapus/Import/Export) disembunyikan
-- Data bisa dilihat dalam mode read-only
-- Form tidak muncul
+## Secrets yang Diperlukan
+
+| Secret | Status | Untuk |
+|--------|--------|-------|
+| `GMAIL_USER` | ✅ Ada | Email sending |
+| `GMAIL_APP_PASSWORD` | ✅ Ada | Email sending |
+| `GOOGLE_SERVICE_ACCOUNT_KEY` | ❌ Perlu ditambah | GDrive backup (opsional) |
 
 ---
 
-## Keuntungan Implementasi
+## Catatan Implementasi
 
-1. **Fleksibilitas** - Permission bisa diatur per-fitur tanpa deploy ulang
-2. **Real-time** - Perubahan permission langsung berlaku tanpa refresh
-3. **Konsistensi** - Satu sumber kebenaran (database) untuk semua access control
-4. **Keamanan** - Double validation: menu tersembunyi + tombol tersembunyi + RLS di database
-5. **Maintainability** - Tidak perlu update code saat menambah role baru
+1. **RLS Policies**: Tidak mengubah pembatasan field UPDATE pada fim_registrations sesuai permintaan
 
----
+2. **Backward Compatibility**: Edge functions lama tetap berfungsi, sistem notifikasi baru berjalan paralel
 
-## Estimasi Perubahan
+3. **Gradual Migration**: Notifikasi baru akan menggunakan queue, edge functions lama bisa di-deprecate secara bertahap
 
-| File | Jenis Perubahan | Kompleksitas |
-|------|-----------------|--------------|
-| usePermission.ts | Tambah realtime subscription | Sedang |
-| AdminDashboard.tsx | Refactor filterNavItems | Sedang |
-| 14 halaman admin | Tambah permission checks | Rendah (repetitif) |
+4. **Performance**: Bundle splitting akan mengurangi initial load time secara signifikan
 
-Total: ~16 file dimodifikasi
+5. **Google Drive Backup**: Bersifat opsional, memerlukan setup Google Cloud Service Account
