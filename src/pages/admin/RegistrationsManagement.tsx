@@ -2251,12 +2251,12 @@ Tim Forum Indonesia Muda
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tahap Seleksi</TableHead>
-                  <TableHead>Tanggal Daftar</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="min-w-[150px]">Nama</TableHead>
+                  <TableHead className="min-w-[180px]">Email</TableHead>
+                  <TableHead className="min-w-[120px] max-w-[150px]">Status</TableHead>
+                  <TableHead className="min-w-[130px] max-w-[160px]">Tahap Seleksi</TableHead>
+                  <TableHead className="min-w-[100px]">Tanggal Daftar</TableHead>
+                  <TableHead className="text-right w-16">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -3032,24 +3032,27 @@ Tim Forum Indonesia Muda
                                   Selesai
                                 </Button>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                                onClick={() => {
-                                  if (confirm("Tandai peserta ini sebagai Tidak Hadir? Status akan otomatis menjadi Tidak Lolos.")) {
-                                    updateInterviewStatusMutation.mutate({
-                                      scheduleId: interviewSchedule.id,
-                                      registrationId: selectedRegistration.id,
-                                      status: "no_show"
-                                    });
-                                  }
-                                }}
-                                disabled={updateInterviewStatusMutation.isPending}
-                              >
-                                <UserX className="h-4 w-4 mr-2" />
-                                Tidak Hadir
-                              </Button>
+                              {/* Tidak Hadir button only shows after scheduled time has passed */}
+                              {hasInterviewTimePassed && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                                  onClick={() => {
+                                    if (confirm("Tandai peserta ini sebagai Tidak Hadir? Status akan otomatis menjadi Tidak Lolos.")) {
+                                      updateInterviewStatusMutation.mutate({
+                                        scheduleId: interviewSchedule.id,
+                                        registrationId: selectedRegistration.id,
+                                        status: "no_show"
+                                      });
+                                    }
+                                  }}
+                                  disabled={updateInterviewStatusMutation.isPending}
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Tidak Hadir
+                                </Button>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"

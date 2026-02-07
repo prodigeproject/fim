@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { BackupManager } from "@/components/admin/BackupManager";
+import { DataExporter } from "@/components/admin/DataExporter";
 import { 
   Settings, 
   Shield, 
@@ -18,7 +20,9 @@ import {
   Save, 
   Globe,
   FileText,
-  BarChart
+  BarChart,
+  Database,
+  Download
 } from "lucide-react";
 
 interface RecaptchaSettings {
@@ -218,6 +222,10 @@ export default function ToolsSettings() {
           <TabsTrigger value="recaptcha" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             reCAPTCHA
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Backup Data
           </TabsTrigger>
         </TabsList>
 
@@ -453,6 +461,12 @@ export default function ToolsSettings() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Backup Data Tab */}
+        <TabsContent value="backup" className="space-y-6">
+          <BackupManager showGDriveOption={true} />
+          <DataExporter />
         </TabsContent>
       </Tabs>
     </div>
