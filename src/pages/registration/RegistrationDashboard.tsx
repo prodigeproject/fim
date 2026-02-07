@@ -1,13 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { 
   Loader2, 
   LogOut, 
@@ -22,7 +25,8 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  RefreshCw
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
@@ -35,6 +39,8 @@ const SELECTION_STAGES = [
 
 export default function RegistrationDashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const { user, registration, isLoading, signOut, refreshRegistration } = useRegistrationAuth();
 
   // Redirect if not logged in
@@ -45,7 +51,7 @@ export default function RegistrationDashboard() {
   }, [isLoading, user, navigate]);
 
   // Fetch training registration data
-  const { data: trainingData, isLoading: isLoadingTraining } = useQuery({
+  const { data: trainingData, isLoading: isLoadingTraining, refetch: refetchTraining } = useQuery({
     queryKey: ["training-registration", registration?.id],
     queryFn: async () => {
       if (!registration?.id) return null;
@@ -65,6 +71,15 @@ export default function RegistrationDashboard() {
     },
     enabled: !!registration?.id,
   });
+
+  // Pull to refresh handler
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      refreshRegistration(),
+      refetchTraining(),
+    ]);
+    toast.success("Data berhasil diperbarui");
+  }, [refreshRegistration, refetchTraining]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -167,34 +182,56 @@ export default function RegistrationDashboard() {
         description="Dashboard pendaftaran Forum Indonesia Muda"
       />
       
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        {/* Header */}
+      <div className={`min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 ${isMobile ? 'pb-20' : ''}`}>
+        {/* Header - Hidden on mobile, use bottom nav instead */}
         <header className="bg-card border-b sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link to="/">
               <img src={logoFim} alt="FIM Logo" className="h-10" />
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <span className="text-sm text-muted-foreground hidden sm:block">
                 {registration.email}
               </span>
+              {/* Desktop buttons */}
+              <div className="hidden md:flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate("/portal/profile")}
+                  className="min-h-[44px] min-w-[44px]"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Profil
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="min-h-[44px] min-w-[44px]"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Keluar
+                </Button>
+              </div>
+              {/* Mobile refresh button */}
               <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate("/portal/profile")}
+                variant="ghost" 
+                size="icon" 
+                onClick={handleRefresh}
+                className="md:hidden min-h-[44px] min-w-[44px]"
               >
-                <User className="h-4 w-4 mr-2" />
-                Profil
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Keluar
+                <RefreshCw className="h-5 w-5" />
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <PullToRefresh onRefresh={handleRefresh} className={`${isMobile ? '' : 'hidden'}`}>
+          <div className="p-4" />
+        </PullToRefresh>
+
+        <main className="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
           {/* Welcome Card */}
           <Card>
             <CardHeader>
@@ -438,6 +475,9 @@ export default function RegistrationDashboard() {
             </CardContent>
           </Card>
         </main>
+        
+        {/* Mobile Bottom Navigation */}
+        {isMobile && <MobileBottomNav />}
       </div>
     </>
   );
