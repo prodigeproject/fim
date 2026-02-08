@@ -45,9 +45,23 @@ interface RegistrationSettings {
 }
 
 export default function RegistrationLanding() {
+  // First try to get pinned batch, then fall back to active batch
   const { data: batchData, isLoading } = useQuery({
     queryKey: ["registration-landing-batch"],
     queryFn: async () => {
+      // First, try to get pinned batch
+      const { data: pinnedBatch, error: pinnedError } = await supabase
+        .from("registration_settings")
+        .select("*")
+        .eq("is_pinned", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (pinnedBatch) {
+        return pinnedBatch as RegistrationSettings;
+      }
+
+      // Fall back to latest active batch
       const { data, error } = await supabase
         .from("registration_settings")
         .select("*")

@@ -598,6 +598,39 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_settings: {
+        Row: {
+          auto_backup_enabled: boolean | null
+          auto_backup_schedule: string | null
+          created_at: string | null
+          gdrive_folder_id: string | null
+          gdrive_service_account_key: string | null
+          id: string
+          last_backup_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_backup_enabled?: boolean | null
+          auto_backup_schedule?: string | null
+          created_at?: string | null
+          gdrive_folder_id?: string | null
+          gdrive_service_account_key?: string | null
+          id?: string
+          last_backup_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_backup_enabled?: boolean | null
+          auto_backup_schedule?: string | null
+          created_at?: string | null
+          gdrive_folder_id?: string | null
+          gdrive_service_account_key?: string | null
+          id?: string
+          last_backup_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       blocked_registrations: {
         Row: {
           blocked_at: string | null
@@ -1537,6 +1570,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_logs: {
+        Row: {
+          blocked_until: string | null
+          created_at: string | null
+          endpoint: string
+          id: string
+          identifier: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          blocked_until?: string | null
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          identifier: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          blocked_until?: string | null
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          identifier?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       recaptcha_settings: {
         Row: {
           created_at: string | null
@@ -1674,6 +1737,7 @@ export type Database = {
           interview_end_date: string | null
           interview_start_date: string | null
           is_active: boolean
+          is_pinned: boolean | null
           is_registration_open: boolean
           max_participants: number | null
           registration_end_date: string | null
@@ -1695,6 +1759,7 @@ export type Database = {
           interview_end_date?: string | null
           interview_start_date?: string | null
           is_active?: boolean
+          is_pinned?: boolean | null
           is_registration_open?: boolean
           max_participants?: number | null
           registration_end_date?: string | null
@@ -1716,6 +1781,7 @@ export type Database = {
           interview_end_date?: string | null
           interview_start_date?: string | null
           is_active?: boolean
+          is_pinned?: boolean | null
           is_registration_open?: boolean
           max_participants?: number | null
           registration_end_date?: string | null
@@ -2036,6 +2102,20 @@ export type Database = {
           should_show_captcha: boolean
         }[]
       }
+      check_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_identifier: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          reset_at: string
+        }[]
+      }
+      cleanup_old_rate_limit_logs: { Args: never; Returns: undefined }
       cleanup_old_subscription_attempts: { Args: never; Returns: undefined }
       cleanup_old_view_tracking: { Args: never; Returns: undefined }
       get_next_article_version: {

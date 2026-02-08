@@ -1,0 +1,191 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "required": "Required",
+    "optional": "Optional",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "description": "Description",
+    "notes": "Notes",
+    "download": "Download",
+    "upload": "Upload",
+    "refresh": "Refresh",
+    "language": "Language",
+    "settings": "Settings"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "program": "Programs",
+    "training": "Training",
+    "flagship": "Flagship Programs",
+    "alumni": "Alumni",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "register": "Register",
+    "login": "Login",
+    "logout": "Logout",
+    "donate": "Donate",
+    "volunteer": "Volunteer"
+  },
+  "home": {
+    "hero": {
+      "title": "Indonesia Youth Forum",
+      "subtitle": "Growing, collaborating, and becoming fireflies for Indonesia",
+      "cta": "Join Now",
+      "learnMore": "Learn More"
+    },
+    "stats": {
+      "alumni": "Alumni",
+      "regional": "Regionals",
+      "years": "Years",
+      "programs": "Programs"
+    },
+    "about": {
+      "title": "About FIM",
+      "description": "Forum Indonesia Muda is a youth leadership organization established since 2003"
+    },
+    "programs": {
+      "title": "Our Programs",
+      "training": "Leadership Training",
+      "community": "Alumni Community"
+    },
+    "partners": {
+      "title": "Our Partners"
+    },
+    "newsletter": {
+      "title": "Get Latest Updates",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe",
+      "success": "Thank you for subscribing!"
+    }
+  },
+  "portal": {
+    "registration": {
+      "title": "Registration",
+      "open": "Registration Open",
+      "closed": "Registration Closed",
+      "countdown": "closes in",
+      "countdownOpen": "opens in",
+      "registerNow": "Register Now",
+      "alreadyRegistered": "Already Have Account",
+      "getNotification": "Get Notification"
+    },
+    "benefits": {
+      "title": "Benefits of Joining FIM",
+      "character": "Character Development",
+      "characterDesc": "Building integrity, empathy, and leadership values",
+      "competency": "Competency Development",
+      "competencyDesc": "Enhancing leadership, public policy, and soft skills",
+      "network": "National Network",
+      "networkDesc": "Connect with thousands of alumni from 61 regionals across Indonesia",
+      "impact": "Real Impact",
+      "impactDesc": "Opportunity to contribute through social projects"
+    },
+    "requirements": {
+      "title": "Applicant Requirements",
+      "age": "Indonesian citizen aged 18-35",
+      "education": "Minimum high school education",
+      "commitment": "Committed to complete the entire program",
+      "concern": "Passionate about social issues",
+      "contribute": "Willing to contribute to FIM ecosystem"
+    },
+    "dashboard": {
+      "welcome": "Welcome",
+      "status": "Registration Status",
+      "progress": "Form Progress",
+      "stage": "Selection Stage",
+      "completeForm": "Complete Form"
+    },
+    "form": {
+      "personalData": "Personal Data",
+      "education": "Education",
+      "experience": "Experience",
+      "motivation": "Motivation",
+      "recommendation": "Recommendation"
+    },
+    "timeline": {
+      "registration": "Registration",
+      "review": "Admin Review",
+      "interview": "Interview",
+      "announcement": "Announcement"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Enter your email and password",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account"
+    },
+    "signup": {
+      "title": "Create New Account",
+      "subtitle": "Register to start the application process",
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign In"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to reset password",
+      "sendLink": "Send Reset Link"
+    }
+  },
+  "footer": {
+    "about": "About",
+    "contact": "Contact",
+    "social": "Social Media",
+    "links": "Links",
+    "copyright": "Copyright",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions"
+  },
+  "accessibility": {
+    "skipToContent": "Skip to main content",
+    "menuToggle": "Open menu",
+    "closeMenu": "Close menu",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "languageSelector": "Select language",
+    "searchToggle": "Open search",
+    "loadingContent": "Loading content",
+    "errorOccurred": "An error occurred",
+    "tryAgain": "Try again"
+  }
+}

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { BackupManager } from "@/components/admin/BackupManager";
+import { BackupSettingsForm } from "@/components/admin/BackupSettingsForm";
 import { DataExporter } from "@/components/admin/DataExporter";
 import { 
   Settings, 
@@ -20,9 +21,8 @@ import {
   Save, 
   Globe,
   FileText,
-  BarChart,
   Database,
-  Download
+  Key
 } from "lucide-react";
 
 interface RecaptchaSettings {
@@ -465,6 +465,7 @@ export default function ToolsSettings() {
 
         {/* Backup Data Tab */}
         <TabsContent value="backup" className="space-y-6">
+          <BackupSettingsForm />
           <BackupManager showGDriveOption={true} />
           <DataExporter />
         </TabsContent>

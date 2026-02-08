@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AnimatedRoutes from "./components/AnimatedRoutes";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { SkipToContent } from "@/components/SkipToContent";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ErrorBoundary>
+            <SkipToContent />
             <Toaster />
             <Sonner />
             <BrowserRouter>
