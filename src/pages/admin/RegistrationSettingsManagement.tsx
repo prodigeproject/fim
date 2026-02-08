@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle, Clock, FileCheck, MessageSquare, Trophy, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Settings, Calendar, Users, AlertCircle, CheckCircle, Clock, FileCheck, MessageSquare, Trophy, ChevronDown, ChevronUp, BarChart3, Pin, PinOff } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { BatchTimelineVisualization } from "@/components/admin/BatchTimelineVisualization";
@@ -30,6 +30,7 @@ interface RegistrationSettings {
   max_participants: number | null;
   description: string | null;
   is_active: boolean;
+  is_pinned: boolean;
   created_at: string;
   // Timeline fields
   admin_review_start_date: string | null;
@@ -117,6 +118,32 @@ export default function RegistrationSettingsManagement() {
     },
     onError: (error) => {
       toast.error("Gagal mengubah status: " + error.message);
+    },
+  });
+
+  const togglePinnedMutation = useMutation({
+    mutationFn: async ({ id, isPinned }: { id: string; isPinned: boolean }) => {
+      // If pinning, unpin all other batches first
+      if (isPinned) {
+        await supabase
+          .from("registration_settings")
+          .update({ is_pinned: false })
+          .neq("id", id);
+      }
+
+      const { error } = await supabase
+        .from("registration_settings")
+        .update({ is_pinned: isPinned })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, { isPinned }) => {
+      queryClient.invalidateQueries({ queryKey: ["registration-settings-admin"] });
+      toast.success(isPinned ? "Batch di-pin untuk ditampilkan di portal" : "Batch tidak lagi di-pin");
+    },
+    onError: (error) => {
+      toast.error("Gagal mengubah status pin: " + error.message);
     },
   });
 
@@ -540,10 +567,20 @@ export default function RegistrationSettingsManagement() {
               {settings?.map((setting) => (
                 <TableRow key={setting.id}>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{setting.batch_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Angkatan {setting.batch_number}
+                    <div className="flex items-start gap-2">
+                      <div>
+                        <div className="font-medium flex items-center gap-2">
+                          {setting.batch_name}
+                          {setting.is_pinned && (
+                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                              <Pin className="h-3 w-3 mr-1" />
+                              Pinned
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Angkatan {setting.batch_number}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -593,11 +630,26 @@ export default function RegistrationSettingsManagement() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => togglePinnedMutation.mutate({ id: setting.id, isPinned: !setting.is_pinned })}
+                        disabled={togglePinnedMutation.isPending}
+                        title={setting.is_pinned ? "Unpin batch ini" : "Pin batch ini untuk ditampilkan di portal"}
+                        className="min-h-[44px] min-w-[44px]"
+                      >
+                        {setting.is_pinned ? (
+                          <PinOff className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Pin className="h-4 w-4" />
+                        )}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(setting)}
+                        className="min-h-[44px] min-w-[44px]"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -610,6 +662,7 @@ export default function RegistrationSettingsManagement() {
                           }
                         }}
                         disabled={deleteMutation.isPending || (registrationCounts?.[setting.id] || 0) > 0}
+                        className="min-h-[44px] min-w-[44px]"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

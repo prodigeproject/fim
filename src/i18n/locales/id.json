@@ -1,0 +1,191 @@
+{
+  "common": {
+    "loading": "Memuat...",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Edit",
+    "view": "Lihat",
+    "search": "Cari",
+    "filter": "Filter",
+    "export": "Ekspor",
+    "import": "Impor",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "previous": "Sebelumnya",
+    "submit": "Kirim",
+    "close": "Tutup",
+    "confirm": "Konfirmasi",
+    "success": "Berhasil",
+    "error": "Gagal",
+    "warning": "Peringatan",
+    "info": "Informasi",
+    "yes": "Ya",
+    "no": "Tidak",
+    "all": "Semua",
+    "none": "Tidak ada",
+    "required": "Wajib diisi",
+    "optional": "Opsional",
+    "actions": "Aksi",
+    "status": "Status",
+    "date": "Tanggal",
+    "time": "Waktu",
+    "name": "Nama",
+    "email": "Email",
+    "phone": "Telepon",
+    "address": "Alamat",
+    "description": "Deskripsi",
+    "notes": "Catatan",
+    "download": "Unduh",
+    "upload": "Unggah",
+    "refresh": "Segarkan",
+    "language": "Bahasa",
+    "settings": "Pengaturan"
+  },
+  "nav": {
+    "home": "Beranda",
+    "about": "Tentang",
+    "program": "Program",
+    "training": "Pelatihan",
+    "flagship": "Program Unggulan",
+    "alumni": "Alumni",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "register": "Daftar",
+    "login": "Masuk",
+    "logout": "Keluar",
+    "donate": "Donasi",
+    "volunteer": "Relawan"
+  },
+  "home": {
+    "hero": {
+      "title": "Wadah Pemuda Indonesia",
+      "subtitle": "Bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang untuk Indonesia",
+      "cta": "Bergabung Sekarang",
+      "learnMore": "Pelajari Lebih Lanjut"
+    },
+    "stats": {
+      "alumni": "Alumni",
+      "regional": "Regional",
+      "years": "Tahun Berdiri",
+      "programs": "Program"
+    },
+    "about": {
+      "title": "Tentang FIM",
+      "description": "Forum Indonesia Muda adalah organisasi kaderisasi pemuda yang berdiri sejak 2003"
+    },
+    "programs": {
+      "title": "Program Kami",
+      "training": "Pelatihan Kepemimpinan",
+      "community": "Komunitas Alumni"
+    },
+    "partners": {
+      "title": "Mitra Kami"
+    },
+    "newsletter": {
+      "title": "Dapatkan Update Terbaru",
+      "placeholder": "Masukkan email Anda",
+      "subscribe": "Berlangganan",
+      "success": "Terima kasih telah berlangganan!"
+    }
+  },
+  "portal": {
+    "registration": {
+      "title": "Pendaftaran",
+      "open": "Pendaftaran Dibuka",
+      "closed": "Pendaftaran Ditutup",
+      "countdown": "ditutup dalam",
+      "countdownOpen": "dibuka dalam",
+      "registerNow": "Daftar Sekarang",
+      "alreadyRegistered": "Sudah Punya Akun",
+      "getNotification": "Dapatkan Notifikasi"
+    },
+    "benefits": {
+      "title": "Manfaat Mengikuti FIM",
+      "character": "Pengembangan Karakter",
+      "characterDesc": "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan",
+      "competency": "Pengembangan Kompetensi",
+      "competencyDesc": "Meningkatkan skill kepemimpinan, kebijakan publik, dan soft skills",
+      "network": "Jaringan Nasional",
+      "networkDesc": "Terhubung dengan ribuan alumni dari 61 regional di Indonesia",
+      "impact": "Dampak Nyata",
+      "impactDesc": "Kesempatan untuk berkontribusi melalui proyek sosial"
+    },
+    "requirements": {
+      "title": "Persyaratan Pendaftar",
+      "age": "WNI usia 18-35 tahun",
+      "education": "Pendidikan minimal SMA/sederajat",
+      "commitment": "Berkomitmen mengikuti seluruh rangkaian program",
+      "concern": "Memiliki kepedulian terhadap isu sosial",
+      "contribute": "Bersedia berkontribusi di ekosistem FIM"
+    },
+    "dashboard": {
+      "welcome": "Selamat datang",
+      "status": "Status Pendaftaran",
+      "progress": "Progres Formulir",
+      "stage": "Tahap Seleksi",
+      "completeForm": "Lengkapi Formulir"
+    },
+    "form": {
+      "personalData": "Data Pribadi",
+      "education": "Pendidikan",
+      "experience": "Pengalaman",
+      "motivation": "Motivasi",
+      "recommendation": "Rekomendasi"
+    },
+    "timeline": {
+      "registration": "Pendaftaran",
+      "review": "Review Admin",
+      "interview": "Wawancara",
+      "announcement": "Pengumuman"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Masuk ke Akun",
+      "subtitle": "Masukkan email dan password Anda",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Lupa Password?",
+      "noAccount": "Belum punya akun?",
+      "createAccount": "Buat Akun"
+    },
+    "signup": {
+      "title": "Buat Akun Baru",
+      "subtitle": "Daftar untuk memulai proses pendaftaran",
+      "fullName": "Nama Lengkap",
+      "email": "Email",
+      "phone": "Nomor Telepon",
+      "password": "Password",
+      "confirmPassword": "Konfirmasi Password",
+      "hasAccount": "Sudah punya akun?",
+      "signIn": "Masuk"
+    },
+    "forgotPassword": {
+      "title": "Lupa Password",
+      "subtitle": "Masukkan email untuk reset password",
+      "sendLink": "Kirim Link Reset"
+    }
+  },
+  "footer": {
+    "about": "Tentang",
+    "contact": "Kontak",
+    "social": "Media Sosial",
+    "links": "Tautan",
+    "copyright": "Hak Cipta",
+    "privacy": "Kebijakan Privasi",
+    "terms": "Syarat & Ketentuan"
+  },
+  "accessibility": {
+    "skipToContent": "Lewati ke konten utama",
+    "menuToggle": "Buka menu",
+    "closeMenu": "Tutup menu",
+    "darkMode": "Mode gelap",
+    "lightMode": "Mode terang",
+    "languageSelector": "Pilih bahasa",
+    "searchToggle": "Buka pencarian",
+    "loadingContent": "Memuat konten",
+    "errorOccurred": "Terjadi kesalahan",
+    "tryAgain": "Coba lagi"
+  }
+}
