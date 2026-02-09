@@ -90,6 +90,22 @@
     }
   },
   "portal": {
+    "login": "Login",
+    "register": "Register",
+    "statusOpen": "Registration Open",
+    "statusClosed": "Registration Not Open",
+    "defaultDescription": "A leadership program to shape Indonesian youth with character and impact",
+    "closesIn": "Registration closes in",
+    "opensIn": "Registration opens in",
+    "registerNow": "Register Now",
+    "hasAccount": "Already Have Account",
+    "getNotification": "Get Notification",
+    "learnProgram": "Learn Program",
+    "readyToJoin": "Ready to Join FIM?",
+    "joinThousands": "Join thousands of FIM alumni who have contributed to Indonesia.",
+    "registrationWillOpen": "Registration Will Open",
+    "registrationWillOpenDesc": "Registration for {batchName} will open on {date}. Follow our WA channel to get notified when registration opens.",
+    "followWaChannel": "Follow WA Channel FIMers Update for latest info!",
     "registration": {
       "title": "Registration",
       "open": "Registration Open",

@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import logoFim from "@/assets/logo-fim.png";
+import heroLeadership from "@/assets/hero-leadership.jpg";
 import {
   ArrowRight,
   CheckCircle,
@@ -23,7 +26,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BatchTimeline } from "@/components/registration/BatchTimeline";
 import { RegistrationStats } from "@/components/registration/RegistrationStats";
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
-import { id } from "date-fns/locale";
+import { id as idLocale } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { useEffect, useState } from "react";
 
 interface RegistrationSettings {
@@ -45,6 +49,8 @@ interface RegistrationSettings {
 }
 
 export default function RegistrationLanding() {
+  const { t, i18n } = useTranslation();
+  const currentLocale = i18n.language === 'en' ? enUS : idLocale;
   // First try to get pinned batch, then fall back to active batch
   const { data: batchData, isLoading } = useQuery({
     queryKey: ["registration-landing-batch"],
@@ -157,9 +163,9 @@ export default function RegistrationLanding() {
         description="Daftar dan bergabung dengan Forum Indonesia Muda. Program kepemimpinan untuk pemuda Indonesia."
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="container mx-auto px-4 py-6">
+        <header className="container mx-auto px-4 py-6 relative z-20">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <img src={logoFim} alt="FIM Logo" className="h-10" />
@@ -168,18 +174,19 @@ export default function RegistrationLanding() {
               </span>
             </Link>
             <div className="flex items-center gap-2">
+              <LanguageSwitcher />
               {isOpen && (
                 <>
                   <Link to="/portal/login">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="min-h-[44px]">
                       <LogIn className="h-4 w-4 mr-2" />
-                      Masuk
+                      {t('portal.login', 'Masuk')}
                     </Button>
                   </Link>
                   <Link to="/portal/signup">
-                    <Button size="sm">
+                    <Button size="sm" className="min-h-[44px]">
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Daftar
+                      {t('portal.register', 'Daftar')}
                     </Button>
                   </Link>
                 </>
@@ -188,11 +195,27 @@ export default function RegistrationLanding() {
           </div>
         </header>
 
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-12 lg:py-20">
-          <div className="max-w-4xl mx-auto text-center">
+        {/* Hero Section with Leadership Image */}
+        <section className="relative overflow-hidden">
+          {/* Background Image with Red Overlay */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={heroLeadership} 
+              alt="" 
+              className="w-full h-full object-cover"
+              aria-hidden="true"
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/95" />
+            {/* Additional shadow effect */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
+            <div className="max-w-4xl mx-auto text-center">
             {/* Status Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card shadow-md mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-card/90 shadow-md mb-6 backdrop-blur-sm">
               {isOpen ? (
                 <>
                   <span className="relative flex h-3 w-3">
@@ -200,34 +223,36 @@ export default function RegistrationLanding() {
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-supporting" />
                   </span>
                   <span className="text-sm font-medium text-supporting">
-                    Pendaftaran Dibuka
+                    {t('portal.statusOpen', 'Pendaftaran Dibuka')}
                   </span>
                 </>
               ) : (
                 <>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">
-                    Pendaftaran Belum Dibuka
+                    {t('portal.statusClosed', 'Pendaftaran Belum Dibuka')}
                   </span>
                 </>
               )}
             </div>
 
             {/* Main Title */}
-            <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-4">
+            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {batchData?.batch_name || "Forum Indonesia Muda"}
             </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+            <p className="text-lg lg:text-xl text-white/90 mb-6 max-w-2xl mx-auto drop-shadow">
               {batchData?.description ||
-                "Program kepemimpinan untuk membentuk pemuda Indonesia yang berkarakter dan berdampak"}
+                t('portal.defaultDescription', 'Program kepemimpinan untuk membentuk pemuda Indonesia yang berkarakter dan berdampak')}
             </p>
 
             {/* Countdown / Status */}
             {countdown && (
-              <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary/10 text-primary mb-8">
+              <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white mb-8 border border-white/30">
                 <Calendar className="h-5 w-5" />
                 <span className="font-semibold">
-                  {isOpen ? "Pendaftaran ditutup dalam" : "Pendaftaran dibuka dalam"}:{" "}
+                  {isOpen 
+                    ? t('portal.closesIn', 'Pendaftaran ditutup dalam') 
+                    : t('portal.opensIn', 'Pendaftaran dibuka dalam')}:{" "}
                   {countdown}
                 </span>
               </div>
@@ -238,15 +263,15 @@ export default function RegistrationLanding() {
               {isOpen ? (
                 <>
                   <Link to="/portal/signup">
-                    <Button size="lg" className="w-full sm:w-auto">
-                      Daftar Sekarang
+                    <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
+                      {t('portal.registerNow', 'Daftar Sekarang')}
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                   <Link to="/portal/login">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
                       <LogIn className="mr-2 h-5 w-5" />
-                      Sudah Punya Akun
+                      {t('portal.hasAccount', 'Sudah Punya Akun')}
                     </Button>
                   </Link>
                 </>
@@ -257,20 +282,21 @@ export default function RegistrationLanding() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button size="lg" className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
                       <MessageSquare className="mr-2 h-5 w-5" />
-                      Dapatkan Notifikasi
+                      {t('portal.getNotification', 'Dapatkan Notifikasi')}
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </Button>
                   </a>
                   <Link to="/program/pelatihan">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
                       <BookOpen className="mr-2 h-5 w-5" />
-                      Pelajari Program
+                      {t('portal.learnProgram', 'Pelajari Program')}
                     </Button>
                   </Link>
                 </>
               )}
+            </div>
             </div>
           </div>
         </section>
@@ -357,7 +383,7 @@ export default function RegistrationLanding() {
                     Pendaftaran untuk {batchData?.batch_name} akan dibuka pada{" "}
                     <span className="font-semibold text-foreground">
                       {format(parseISO(registrationStartDate), "d MMMM yyyy", {
-                        locale: id,
+                        locale: currentLocale,
                       })}
                     </span>
                     . Ikuti channel WA untuk mendapatkan notifikasi saat
