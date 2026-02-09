@@ -90,6 +90,22 @@
     }
   },
   "portal": {
+    "login": "Masuk",
+    "register": "Daftar",
+    "statusOpen": "Pendaftaran Dibuka",
+    "statusClosed": "Pendaftaran Belum Dibuka",
+    "defaultDescription": "Program kepemimpinan untuk membentuk pemuda Indonesia yang berkarakter dan berdampak",
+    "closesIn": "Pendaftaran ditutup dalam",
+    "opensIn": "Pendaftaran dibuka dalam",
+    "registerNow": "Daftar Sekarang",
+    "hasAccount": "Sudah Punya Akun",
+    "getNotification": "Dapatkan Notifikasi",
+    "learnProgram": "Pelajari Program",
+    "readyToJoin": "Siap Menjadi Bagian dari FIM?",
+    "joinThousands": "Bergabunglah dengan ribuan alumni FIM yang telah berkontribusi untuk Indonesia.",
+    "registrationWillOpen": "Pendaftaran Akan Dibuka",
+    "registrationWillOpenDesc": "Pendaftaran untuk {batchName} akan dibuka pada {date}. Ikuti channel WA untuk mendapatkan notifikasi saat pendaftaran dibuka.",
+    "followWaChannel": "Ikuti Channel WA FIMers Update untuk info terbaru!",
     "registration": {
       "title": "Pendaftaran",
       "open": "Pendaftaran Dibuka",

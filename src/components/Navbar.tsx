@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchDialog } from "@/components/SearchDialog";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import logoFim from "@/assets/logo-fim.png";
 
 const Navbar = () => {
@@ -111,6 +113,7 @@ const Navbar = () => {
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-2">
             <SearchDialog />
+            <LanguageSwitcher />
             <ThemeToggle />
             <Link to="/portal">
               <Button variant="outline" className="font-semibold">
@@ -127,10 +130,12 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
             <SearchDialog />
+            <LanguageSwitcher />
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Toggle menu"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
