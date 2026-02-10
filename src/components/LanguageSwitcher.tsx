@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,16 +7,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Globe } from 'lucide-react';
-import { changeLanguage } from '@/i18n';
 
 const languages = [
-  { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-] as const;
+  { code: 'id' as const, name: 'Bahasa Indonesia', flag: '🇮🇩' },
+  { code: 'en' as const, name: 'English', flag: '🇺🇸' },
+];
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
-  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
+  const { language, setLanguage, t } = useLanguage();
+  const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
     <DropdownMenu>
@@ -35,8 +34,8 @@ export function LanguageSwitcher() {
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
-            onClick={() => changeLanguage(lang.code)}
-            className={`min-h-[44px] cursor-pointer ${i18n.language === lang.code ? 'bg-primary/10' : ''}`}
+            onClick={() => setLanguage(lang.code)}
+            className={`min-h-[44px] cursor-pointer ${language === lang.code ? 'bg-primary/10' : ''}`}
           >
             <span className="mr-2">{lang.flag}</span>
             {lang.name}

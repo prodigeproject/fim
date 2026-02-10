@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -49,8 +49,8 @@ interface RegistrationSettings {
 }
 
 export default function RegistrationLanding() {
-  const { t, i18n } = useTranslation();
-  const currentLocale = i18n.language === 'en' ? enUS : idLocale;
+  const { t, language } = useLanguage();
+  const currentLocale = language === 'en' ? enUS : idLocale;
   // First try to get pinned batch, then fall back to active batch
   const { data: batchData, isLoading } = useQuery({
     queryKey: ["registration-landing-batch"],
