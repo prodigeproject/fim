@@ -45,6 +45,8 @@ import {
 import { SEO } from "@/components/SEO";
 import { WordCountTextarea } from "@/components/WordCountTextarea";
 import { RecommendationStep } from "@/components/registration/RecommendationStep";
+import { AutosaveIndicator } from "@/components/AutosaveIndicator";
+import { RadialProgress } from "@/components/RadialProgress";
 import logoFim from "@/assets/logo-fim.png";
 
 interface OrganizationalExperience {
@@ -505,13 +507,11 @@ export default function TrainingRegistration() {
                 <span className="text-sm">Kembali</span>
               </Link>
               <img src={logoFim} alt="FIM Logo" className="h-8" />
-              <div className="flex items-center gap-2">
-                {lastSaved && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {lastSaved.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
+              <div className="flex items-center gap-3">
+                <AutosaveIndicator
+                  status={saveMutation.isPending ? "saving" : saveMutation.isError ? "error" : lastSaved ? "saved" : "idle"}
+                  lastSaved={lastSaved}
+                />
                 <Button variant="outline" size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
                   {saveMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -522,13 +522,15 @@ export default function TrainingRegistration() {
               </div>
             </div>
             
-            {/* Progress Bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">Progress: {completionPercentage}%</span>
-                <span className="text-muted-foreground">Step {currentStep} dari {STEPS.length}</span>
+            {/* Radial Progress + Step Info */}
+            <div className="flex items-center gap-4">
+              <RadialProgress value={completionPercentage} size={64} strokeWidth={5} showLabel={true} className="flex-shrink-0" />
+              <div className="flex-1 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">Step {currentStep} dari {STEPS.length}</span>
+                </div>
+                <Progress value={completionPercentage} className="h-2" />
               </div>
-              <Progress value={completionPercentage} className="h-2" />
             </div>
 
             {/* Step Indicators */}
