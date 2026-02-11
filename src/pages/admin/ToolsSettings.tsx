@@ -214,7 +214,7 @@ export default function ToolsSettings() {
       </div>
 
       <Tabs defaultValue="seo" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="seo" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             SEO Google
@@ -222,6 +222,10 @@ export default function ToolsSettings() {
           <TabsTrigger value="recaptcha" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             reCAPTCHA
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            Email & Queue
           </TabsTrigger>
           <TabsTrigger value="backup" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
@@ -463,6 +467,11 @@ export default function ToolsSettings() {
           </Card>
         </TabsContent>
 
+        {/* Email & Queue Settings Tab */}
+        <TabsContent value="email" className="space-y-6">
+          <EmailQueueSettings />
+        </TabsContent>
+
         {/* Backup Data Tab */}
         <TabsContent value="backup" className="space-y-6">
           <BackupSettingsForm />
@@ -471,5 +480,237 @@ export default function ToolsSettings() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function EmailQueueSettings() {
+  const queryClient = useQueryClient();
+  const [mailHost, setMailHost] = useState("smtp.gmail.com");
+  const [mailPort, setMailPort] = useState(587);
+  const [mailUsername, setMailUsername] = useState("");
+  const [mailPassword, setMailPassword] = useState("");
+  const [mailEncryption, setMailEncryption] = useState("TLS");
+  const [mailFromAddress, setMailFromAddress] = useState("");
+  const [mailFromName, setMailFromName] = useState("Forum Indonesia Muda");
+  const [dailyRateLimit, setDailyRateLimit] = useState(2000);
+  const [retryMaxAttempts, setRetryMaxAttempts] = useState(3);
+  const [retryDelaySeconds, setRetryDelaySeconds] = useState(60);
+  const [queueEnabled, setQueueEnabled] = useState(true);
+
+  const { data: emailSettings, isLoading } = useQuery({
+    queryKey: ["email-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_settings")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) {
+        setMailHost(data.mail_host || "smtp.gmail.com");
+        setMailPort(data.mail_port || 587);
+        setMailUsername(data.mail_username || "");
+        setMailEncryption(data.mail_encryption || "TLS");
+        setMailFromAddress(data.mail_from_address || "");
+        setMailFromName(data.mail_from_name || "Forum Indonesia Muda");
+        setDailyRateLimit(data.daily_rate_limit || 2000);
+        setRetryMaxAttempts(data.retry_max_attempts || 3);
+        setRetryDelaySeconds(data.retry_delay_seconds || 60);
+        setQueueEnabled(data.queue_enabled ?? true);
+      }
+      return data;
+    },
+  });
+
+  // Queue stats
+  const { data: queueStats } = useQuery({
+    queryKey: ["queue-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notification_queue")
+        .select("status")
+      if (error) throw error;
+      const stats = { pending: 0, processing: 0, sent: 0, failed: 0 };
+      data?.forEach((n: any) => {
+        if (stats[n.status as keyof typeof stats] !== undefined) {
+          stats[n.status as keyof typeof stats]++;
+        }
+      });
+      return stats;
+    },
+    refetchInterval: 10000,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const updateData: any = {
+        mail_host: mailHost,
+        mail_port: mailPort,
+        mail_username: mailUsername || null,
+        mail_encryption: mailEncryption,
+        mail_from_address: mailFromAddress || null,
+        mail_from_name: mailFromName,
+        daily_rate_limit: dailyRateLimit,
+        retry_max_attempts: retryMaxAttempts,
+        retry_delay_seconds: retryDelaySeconds,
+        queue_enabled: queueEnabled,
+        updated_at: new Date().toISOString(),
+      };
+      if (mailPassword && mailPassword !== "••••••••") {
+        updateData.mail_password_encrypted = mailPassword;
+      }
+      if (emailSettings?.id) {
+        const { error } = await supabase.from("email_settings").update(updateData).eq("id", emailSettings.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("email_settings").insert(updateData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-settings"] });
+      toast.success("Pengaturan email berhasil disimpan");
+    },
+    onError: (error: any) => toast.error(`Gagal menyimpan: ${error.message}`),
+  });
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  return (
+    <>
+      {/* Queue Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Status Queue Email
+          </CardTitle>
+          <CardDescription>Monitor antrian pengiriman email real-time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Pending", value: queueStats?.pending || 0, color: "text-yellow-600" },
+              { label: "Processing", value: queueStats?.processing || 0, color: "text-blue-600" },
+              { label: "Sent", value: queueStats?.sent || 0, color: "text-green-600" },
+              { label: "Failed", value: queueStats?.failed || 0, color: "text-red-600" },
+            ].map(s => (
+              <div key={s.label} className="text-center p-3 rounded-lg bg-muted/50">
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SMTP Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Konfigurasi SMTP</CardTitle>
+          <CardDescription>Pengaturan Gmail SMTP untuk pengiriman email</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>SMTP Host</Label>
+              <Input value={mailHost} onChange={e => setMailHost(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Port</Label>
+              <Input type="number" value={mailPort} onChange={e => setMailPort(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Username (Email)</Label>
+              <Input value={mailUsername} onChange={e => setMailUsername(e.target.value)} placeholder="noreply@domain.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>App Password</Label>
+              <Input type="password" value={mailPassword} onChange={e => setMailPassword(e.target.value)} placeholder={emailSettings?.mail_password_encrypted ? "••••••••" : "App Password"} />
+            </div>
+            <div className="space-y-2">
+              <Label>Encryption</Label>
+              <Input value={mailEncryption} onChange={e => setMailEncryption(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>From Address</Label>
+              <Input value={mailFromAddress} onChange={e => setMailFromAddress(e.target.value)} placeholder="noreply@domain.com" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>From Name</Label>
+              <Input value={mailFromName} onChange={e => setMailFromName(e.target.value)} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Queue Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Konfigurasi Queue</CardTitle>
+          <CardDescription>Pengaturan antrian dan rate limiting email</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-lg border">
+            <div>
+              <p className="font-medium">Queue Aktif</p>
+              <p className="text-sm text-muted-foreground">Aktifkan sistem antrian email</p>
+            </div>
+            <Switch checked={queueEnabled} onCheckedChange={setQueueEnabled} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Rate Limit (email/hari)</Label>
+              <Input type="number" value={dailyRateLimit} onChange={e => setDailyRateLimit(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Retry Attempts</Label>
+              <Input type="number" value={retryMaxAttempts} onChange={e => setRetryMaxAttempts(Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Retry Delay (detik)</Label>
+              <Input type="number" value={retryDelaySeconds} onChange={e => setRetryDelaySeconds(Number(e.target.value))} />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t">
+            <h4 className="font-medium mb-3">Email Flow & Delay</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Jenis Email</th>
+                    <th className="text-center py-2">Queue</th>
+                    <th className="text-center py-2">Delay</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { type: "Verifikasi Email", delay: "0–10 detik" },
+                    { type: "Reset Password", delay: "0 detik" },
+                    { type: "Notifikasi Status", delay: "5–30 detik" },
+                    { type: "Reminder", delay: "Scheduled" },
+                    { type: "Login Notifikasi", delay: "0–5 detik" },
+                  ].map(item => (
+                    <tr key={item.type} className="border-b last:border-0">
+                      <td className="py-2">{item.type}</td>
+                      <td className="text-center py-2">✅</td>
+                      <td className="text-center py-2 text-muted-foreground">{item.delay}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          {saveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          Simpan Pengaturan Email
+        </Button>
+      </div>
+    </>
   );
 }

@@ -139,7 +139,8 @@ export default function ArticlesManagement() {
           published_at,
           author_id,
           approved_by,
-          approved_at
+          approved_at,
+          author_display_name
         `
         )
         .order("created_at", { ascending: false });

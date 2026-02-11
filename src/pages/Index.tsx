@@ -10,6 +10,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
+import { useCountUp } from "@/hooks/useCountUp";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -109,10 +110,10 @@ const Index = () => {
 
   // Static content
   const stats = [
-    { icon: Calendar, value: "2003", label: "Berdiri Sejak" },
-    { icon: Users, value: "> 34", label: "Angkatan" },
-    { icon: MapPin, value: regionalCount?.toString() || "61", label: "Regional" },
-    { icon: Award, value: "4000+", label: "Alumni" },
+    { icon: Calendar, value: 2003, prefix: "", suffix: "", label: "Berdiri Sejak" },
+    { icon: Users, value: 34, prefix: "> ", suffix: "", label: "Angkatan" },
+    { icon: MapPin, value: regionalCount || 61, prefix: "", suffix: "", label: "Regional" },
+    { icon: Award, value: 4000, prefix: "", suffix: "+", label: "Alumni" },
   ];
 
   // Alumni testimonials with concrete data
@@ -303,11 +304,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
-              <div key={stat.label} className="bg-card rounded-xl p-6 text-center shadow-lg animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-                <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
+              <HomeStatItem key={stat.label} stat={stat} index={index} />
             ))}
           </div>
         </div>
@@ -473,7 +470,7 @@ const Index = () => {
                         src={partner.logo_url} 
                         alt={partner.name} 
                         loading="lazy"
-                        className="max-h-full max-w-full object-contain grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" 
+                        className="max-h-full max-w-full object-contain opacity-80 hover:opacity-100 transition-all"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
@@ -491,7 +488,7 @@ const Index = () => {
                         src={logo} 
                         alt={`Partner ${(index % partnerLogos.length) + 1}`} 
                         loading="lazy"
-                        className="max-h-full max-w-full object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all" 
+                        className="max-h-full max-w-full object-contain opacity-80 hover:opacity-100 transition-all" 
                       />
                     </div>
                   </div>
@@ -524,5 +521,26 @@ const Index = () => {
     </Layout>
   );
 };
+
+function HomeStatItem({ stat, index }: { stat: { icon: React.ComponentType<{ className?: string }>; value: number; prefix: string; suffix: string; label: string }; index: number }) {
+  const { ref, formattedCount } = useCountUp({
+    end: stat.value,
+    duration: 2000,
+    prefix: stat.prefix,
+    suffix: stat.suffix,
+  });
+
+  return (
+    <div
+      ref={ref}
+      className="bg-card rounded-xl p-6 text-center shadow-lg animate-fade-in"
+      style={{ animationDelay: `${index * 0.1}s` }}
+    >
+      <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
+      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{formattedCount}</div>
+      <div className="text-sm text-muted-foreground">{stat.label}</div>
+    </div>
+  );
+}
 
 export default Index;
