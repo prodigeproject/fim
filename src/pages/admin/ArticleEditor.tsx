@@ -98,7 +98,7 @@ export default function ArticleEditor() {
   const [scheduleTime, setScheduleTime] = useState('09:00');
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
 
-  const [formData, setFormData] = useState<ArticleFormData>({
+  const [formData, setFormData] = useState<ArticleFormData & { author_display_name?: string }>({
     title: '',
     slug: '',
     content: '',
@@ -110,6 +110,7 @@ export default function ArticleEditor() {
     related_region: '',
     status: 'draft',
     scheduled_at: null,
+    author_display_name: '',
   });
 
   // Fetch existing article if editing
@@ -143,6 +144,7 @@ export default function ArticleEditor() {
         related_region: article.related_region || '',
         status: article.status as ArticleStatus,
         scheduled_at: article.scheduled_at ? new Date(article.scheduled_at) : null,
+        author_display_name: (article as any).author_display_name || '',
       });
       if (article.scheduled_at) {
         const scheduledDate = new Date(article.scheduled_at);
@@ -253,10 +255,13 @@ export default function ArticleEditor() {
         revision_notes: needsApproval ? null : undefined,
       };
 
-      // Handle published_at - only set when first publishing
-      if (status === 'published' && (!article?.published_at || article.status !== 'published')) {
-        articleData.published_at = new Date().toISOString();
+      // Handle published_at - allow past dates for uploading old articles
+      if (status === 'published' && !article?.published_at) {
+        articleData.published_at = fd.scheduled_at ? fd.scheduled_at.toISOString() : new Date().toISOString();
       }
+      
+      // Save author_display_name
+      articleData.author_display_name = (fd as any).author_display_name || null;
 
       // If editing, save current version before updating
       if (isEditing && article) {
@@ -403,8 +408,9 @@ export default function ArticleEditor() {
     scheduledAt.setHours(hours, minutes, 0, 0);
 
     if (scheduledAt <= new Date()) {
-      toast.error('Waktu jadwal harus di masa depan');
-      return;
+      // Allow past dates for uploading old articles
+      // toast.error('Waktu jadwal harus di masa depan');
+      // return;
     }
 
     if (!formData.title.trim() || !formData.content.trim() || !formData.featured_image_url) {
@@ -547,7 +553,7 @@ export default function ArticleEditor() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Jadwalkan Publikasi</DialogTitle>
+                <DialogTitle>Jadwalkan / Atur Tanggal Publikasi</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
@@ -556,7 +562,6 @@ export default function ArticleEditor() {
                     mode="single"
                     selected={scheduleDate}
                     onSelect={setScheduleDate}
-                    disabled={(date) => date < new Date()}
                     className="rounded-md border mt-2"
                   />
                 </div>
@@ -731,6 +736,21 @@ export default function ArticleEditor() {
                   <SelectItem value="tips">Tips & Trik</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Author Display Name */}
+            <div className="bg-muted/30 rounded-lg p-4">
+              <Label htmlFor="authorDisplayName">Nama Penulis (Tampil)</Label>
+              <Input
+                id="authorDisplayName"
+                value={(formData as any).author_display_name || ''}
+                onChange={(e) => updateFormField('author_display_name' as any, e.target.value)}
+                placeholder={profile?.full_name || profile?.username || 'Nama penulis...'}
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Kosongkan untuk menggunakan nama akun
+              </p>
             </div>
 
             {/* Author Affiliation */}

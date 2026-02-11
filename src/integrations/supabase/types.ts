@@ -464,6 +464,7 @@ export type Database = {
           author_affiliation:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
+          author_display_name: string | null
           author_id: string
           category: Database["public"]["Enums"]["article_category"]
           content: string
@@ -498,6 +499,7 @@ export type Database = {
           author_affiliation?:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
+          author_display_name?: string | null
           author_id: string
           category: Database["public"]["Enums"]["article_category"]
           content: string
@@ -532,6 +534,7 @@ export type Database = {
           author_affiliation?:
             | Database["public"]["Enums"]["author_affiliation"]
             | null
+          author_display_name?: string | null
           author_id?: string
           category?: Database["public"]["Enums"]["article_category"]
           content?: string
@@ -777,6 +780,57 @@ export type Database = {
           is_system?: boolean | null
           label?: string
           name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_settings: {
+        Row: {
+          created_at: string | null
+          daily_rate_limit: number
+          id: string
+          mail_encryption: string
+          mail_from_address: string | null
+          mail_from_name: string
+          mail_host: string
+          mail_password_encrypted: string | null
+          mail_port: number
+          mail_username: string | null
+          queue_enabled: boolean
+          retry_delay_seconds: number
+          retry_max_attempts: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_rate_limit?: number
+          id?: string
+          mail_encryption?: string
+          mail_from_address?: string | null
+          mail_from_name?: string
+          mail_host?: string
+          mail_password_encrypted?: string | null
+          mail_port?: number
+          mail_username?: string | null
+          queue_enabled?: boolean
+          retry_delay_seconds?: number
+          retry_max_attempts?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_rate_limit?: number
+          id?: string
+          mail_encryption?: string
+          mail_from_address?: string | null
+          mail_from_name?: string
+          mail_host?: string
+          mail_password_encrypted?: string | null
+          mail_port?: number
+          mail_username?: string | null
+          queue_enabled?: boolean
+          retry_delay_seconds?: number
+          retry_max_attempts?: number
           updated_at?: string | null
         }
         Relationships: []
@@ -1369,6 +1423,7 @@ export type Database = {
       notification_queue: {
         Row: {
           created_at: string | null
+          delay_seconds: number | null
           error_message: string | null
           id: string
           max_retries: number | null
@@ -1384,6 +1439,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          delay_seconds?: number | null
           error_message?: string | null
           id?: string
           max_retries?: number | null
@@ -1399,6 +1455,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          delay_seconds?: number | null
           error_message?: string | null
           id?: string
           max_retries?: number | null

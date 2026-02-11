@@ -20,7 +20,6 @@ import {
   Calendar,
   Info,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BatchTimeline } from "@/components/registration/BatchTimeline";
@@ -29,6 +28,7 @@ import { format, parseISO, differenceInDays, differenceInHours, differenceInMinu
 import { id as idLocale } from "date-fns/locale";
 import { enUS } from "date-fns/locale";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 interface RegistrationSettings {
   id: string;
@@ -48,26 +48,47 @@ interface RegistrationSettings {
   final_result_announcement_date: string | null;
 }
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  }),
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+};
+
 export default function RegistrationLanding() {
   const { t, language } = useLanguage();
   const currentLocale = language === 'en' ? enUS : idLocale;
-  // First try to get pinned batch, then fall back to active batch
   const { data: batchData, isLoading } = useQuery({
     queryKey: ["registration-landing-batch"],
     queryFn: async () => {
-      // First, try to get pinned batch
-      const { data: pinnedBatch, error: pinnedError } = await supabase
+      const { data: pinnedBatch } = await supabase
         .from("registration_settings")
         .select("*")
         .eq("is_pinned", true)
         .limit(1)
         .maybeSingle();
 
-      if (pinnedBatch) {
-        return pinnedBatch as RegistrationSettings;
-      }
+      if (pinnedBatch) return pinnedBatch as RegistrationSettings;
 
-      // Fall back to latest active batch
       const { data, error } = await supabase
         .from("registration_settings")
         .select("*")
@@ -87,7 +108,6 @@ export default function RegistrationLanding() {
   const registrationEndDate = batchData?.registration_end_date;
   const registrationStartDate = batchData?.registration_start_date;
 
-  // Countdown logic
   const [countdown, setCountdown] = useState<string>("");
 
   useEffect(() => {
@@ -97,7 +117,6 @@ export default function RegistrationLanding() {
     const updateCountdown = () => {
       const target = parseISO(targetDate);
       const now = new Date();
-      
       const days = differenceInDays(target, now);
       const hours = differenceInHours(target, now) % 24;
       const minutes = differenceInMinutes(target, now) % 60;
@@ -106,14 +125,9 @@ export default function RegistrationLanding() {
         setCountdown("");
         return;
       }
-
-      if (days > 0) {
-        setCountdown(`${days} hari ${hours} jam lagi`);
-      } else if (hours > 0) {
-        setCountdown(`${hours} jam ${minutes} menit lagi`);
-      } else {
-        setCountdown(`${minutes} menit lagi`);
-      }
+      if (days > 0) setCountdown(`${days} hari ${hours} jam lagi`);
+      else if (hours > 0) setCountdown(`${hours} jam ${minutes} menit lagi`);
+      else setCountdown(`${minutes} menit lagi`);
     };
 
     updateCountdown();
@@ -122,22 +136,10 @@ export default function RegistrationLanding() {
   }, [isOpen, registrationEndDate, registrationStartDate]);
 
   const benefits = [
-    {
-      title: "Pengembangan Karakter",
-      desc: "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan",
-    },
-    {
-      title: "Pengembangan Kompetensi",
-      desc: "Meningkatkan skill kepemimpinan, kebijakan publik, dan soft skills",
-    },
-    {
-      title: "Jaringan Nasional",
-      desc: "Terhubung dengan ribuan alumni dari 61 regional di Indonesia",
-    },
-    {
-      title: "Dampak Nyata",
-      desc: "Kesempatan untuk berkontribusi melalui proyek sosial",
-    },
+    { title: "Pengembangan Karakter", desc: "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan" },
+    { title: "Pengembangan Kompetensi", desc: "Meningkatkan skill kepemimpinan, kebijakan publik, dan soft skills" },
+    { title: "Jaringan Nasional", desc: "Terhubung dengan ribuan alumni dari 61 regional di Indonesia" },
+    { title: "Dampak Nyata", desc: "Kesempatan untuk berkontribusi melalui proyek sosial" },
   ];
 
   const requirements = [
@@ -165,7 +167,12 @@ export default function RegistrationLanding() {
 
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="container mx-auto px-4 py-6 relative z-20">
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="container mx-auto px-4 py-6 relative z-20"
+        >
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <img src={logoFim} alt="FIM Logo" className="h-10" />
@@ -193,210 +200,242 @@ export default function RegistrationLanding() {
               )}
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        {/* Hero Section with Leadership Image */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden">
-          {/* Background Image with Red Overlay */}
           <div className="absolute inset-0 z-0">
-            <img 
-              src={heroLeadership} 
-              alt="" 
-              className="w-full h-full object-cover"
-              aria-hidden="true"
-            />
-            {/* Gradient Overlay */}
+            <img src={heroLeadership} alt="" className="w-full h-full object-cover" aria-hidden="true" />
             <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-primary/95" />
-            {/* Additional shadow effect */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
           </div>
-          
-          {/* Content */}
+
           <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24">
             <div className="max-w-4xl mx-auto text-center">
-            {/* Status Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-card/90 shadow-md mb-6 backdrop-blur-sm">
-              {isOpen ? (
-                <>
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-supporting opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-supporting" />
+              {/* Status Badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-card/90 shadow-md mb-6 backdrop-blur-sm"
+              >
+                {isOpen ? (
+                  <>
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-supporting opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-supporting" />
+                    </span>
+                    <span className="text-sm font-medium text-supporting">
+                      {t('portal.statusOpen', 'Pendaftaran Dibuka')}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {t('portal.statusClosed', 'Pendaftaran Belum Dibuka')}
+                    </span>
+                  </>
+                )}
+              </motion.div>
+
+              {/* Main Title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="text-4xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg"
+              >
+                {batchData?.batch_name || "Forum Indonesia Muda"}
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="text-lg lg:text-xl text-white/90 mb-6 max-w-2xl mx-auto drop-shadow"
+              >
+                {batchData?.description ||
+                  t('portal.defaultDescription', 'Program kepemimpinan untuk membentuk pemuda Indonesia yang berkarakter dan berdampak')}
+              </motion.p>
+
+              {/* Countdown */}
+              {countdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white mb-8 border border-white/30"
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="font-semibold">
+                    {isOpen
+                      ? t('portal.closesIn', 'Pendaftaran ditutup dalam')
+                      : t('portal.opensIn', 'Pendaftaran dibuka dalam')}:{" "}
+                    {countdown}
                   </span>
-                  <span className="text-sm font-medium text-supporting">
-                    {t('portal.statusOpen', 'Pendaftaran Dibuka')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {t('portal.statusClosed', 'Pendaftaran Belum Dibuka')}
-                  </span>
-                </>
+                </motion.div>
               )}
-            </div>
 
-            {/* Main Title */}
-            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-              {batchData?.batch_name || "Forum Indonesia Muda"}
-            </h1>
-            <p className="text-lg lg:text-xl text-white/90 mb-6 max-w-2xl mx-auto drop-shadow">
-              {batchData?.description ||
-                t('portal.defaultDescription', 'Program kepemimpinan untuk membentuk pemuda Indonesia yang berkarakter dan berdampak')}
-            </p>
-
-            {/* Countdown / Status */}
-            {countdown && (
-              <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white mb-8 border border-white/30">
-                <Calendar className="h-5 w-5" />
-                <span className="font-semibold">
-                  {isOpen 
-                    ? t('portal.closesIn', 'Pendaftaran ditutup dalam') 
-                    : t('portal.opensIn', 'Pendaftaran dibuka dalam')}:{" "}
-                  {countdown}
-                </span>
-              </div>
-            )}
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isOpen ? (
-                <>
-                  <Link to="/portal/signup">
-                    <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
-                      {t('portal.registerNow', 'Daftar Sekarang')}
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link to="/portal/login">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
-                      <LogIn className="mr-2 h-5 w-5" />
-                      {t('portal.hasAccount', 'Sudah Punya Akun')}
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <a
-                    href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
-                      <MessageSquare className="mr-2 h-5 w-5" />
-                      {t('portal.getNotification', 'Dapatkan Notifikasi')}
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                  </a>
-                  <Link to="/program/pelatihan">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
-                      <BookOpen className="mr-2 h-5 w-5" />
-                      {t('portal.learnProgram', 'Pelajari Program')}
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+              {/* CTA Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+              >
+                {isOpen ? (
+                  <>
+                    <Link to="/portal/signup">
+                      <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
+                        {t('portal.registerNow', 'Daftar Sekarang')}
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
+                    <Link to="/portal/login">
+                      <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
+                        <LogIn className="mr-2 h-5 w-5" />
+                        {t('portal.hasAccount', 'Sudah Punya Akun')}
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <a href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T" target="_blank" rel="noopener noreferrer">
+                      <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 min-h-[48px]">
+                        <MessageSquare className="mr-2 h-5 w-5" />
+                        {t('portal.getNotification', 'Dapatkan Notifikasi')}
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Button>
+                    </a>
+                    <Link to="/program/pelatihan">
+                      <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
+                        <BookOpen className="mr-2 h-5 w-5" />
+                        {t('portal.learnProgram', 'Pelajari Program')}
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </motion.div>
             </div>
           </div>
         </section>
 
         {/* Stats Section */}
-        <section className="container mx-auto px-4 py-8">
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={staggerContainer}
+          className="container mx-auto px-4 py-8"
+        >
           <RegistrationStats />
-        </section>
+        </motion.section>
 
         {/* Timeline Section */}
         {batchData && (
-          <section className="container mx-auto px-4 py-12">
+          <motion.section
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={fadeUp}
+            className="container mx-auto px-4 py-12"
+          >
             <div className="max-w-4xl mx-auto">
               <BatchTimeline batchData={batchData} />
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Benefits & Requirements */}
         <section className="container mx-auto px-4 py-12">
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8"
+          >
             {/* Benefits */}
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
+            <motion.div variants={scaleIn} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
               <div className="flex items-center gap-2 mb-6">
                 <CheckCircle className="h-5 w-5 text-supporting" />
-                <h3 className="text-lg font-semibold text-foreground">
-                  Manfaat Mengikuti FIM
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground">Manfaat Mengikuti FIM</h3>
               </div>
               <div className="space-y-4">
-                {benefits.map((benefit) => (
-                  <div key={benefit.title} className="flex items-start gap-3">
+                {benefits.map((benefit, i) => (
+                  <motion.div
+                    key={benefit.title}
+                    variants={fadeUp}
+                    custom={i}
+                    className="flex items-start gap-3"
+                  >
                     <div className="w-6 h-6 rounded-full bg-supporting/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="h-4 w-4 text-supporting" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">
-                        {benefit.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {benefit.desc}
-                      </p>
+                      <p className="font-medium text-foreground">{benefit.title}</p>
+                      <p className="text-sm text-muted-foreground">{benefit.desc}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* Requirements */}
-            <div className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
+            <motion.div variants={scaleIn} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
               <div className="flex items-center gap-2 mb-6">
                 <Users className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold text-foreground">
-                  Persyaratan Pendaftar
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground">Persyaratan Pendaftar</h3>
               </div>
               <div className="space-y-3">
                 {requirements.map((req, index) => (
-                  <div key={index} className="flex items-start gap-3">
+                  <motion.div key={index} variants={fadeUp} custom={index} className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">
-                        {index + 1}
-                      </span>
+                      <span className="text-xs font-bold text-primary">{index + 1}</span>
                     </div>
                     <p className="text-muted-foreground">{req}</p>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* Info Box when closed */}
         {!isOpen && registrationStartDate && (
-          <section className="container mx-auto px-4 py-8">
+          <motion.section
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="container mx-auto px-4 py-8"
+          >
             <div className="max-w-2xl mx-auto">
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex items-start gap-4">
                 <Info className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">
-                    Pendaftaran Akan Dibuka
-                  </h3>
+                  <h3 className="font-semibold text-foreground mb-2">Pendaftaran Akan Dibuka</h3>
                   <p className="text-muted-foreground">
                     Pendaftaran untuk {batchData?.batch_name} akan dibuka pada{" "}
                     <span className="font-semibold text-foreground">
-                      {format(parseISO(registrationStartDate), "d MMMM yyyy", {
-                        locale: currentLocale,
-                      })}
+                      {format(parseISO(registrationStartDate), "d MMMM yyyy", { locale: currentLocale })}
                     </span>
-                    . Ikuti channel WA untuk mendapatkan notifikasi saat
-                    pendaftaran dibuka.
+                    . Ikuti channel WA untuk mendapatkan notifikasi saat pendaftaran dibuka.
                   </p>
                 </div>
               </div>
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* WA Channel Banner */}
-        <section className="container mx-auto px-4 py-8">
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="container mx-auto px-4 py-8"
+        >
           <div className="max-w-2xl mx-auto">
             <a
               href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T"
@@ -406,25 +445,29 @@ export default function RegistrationLanding() {
             >
               <MessageSquare className="h-5 w-5 text-supporting" />
               <span className="text-sm font-medium">
-                📢 Ikuti Channel WA <strong>FIMers Update</strong> untuk info
-                terbaru!
+                📢 Ikuti Channel WA <strong>FIMers Update</strong> untuk info terbaru!
               </span>
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
-        </section>
+        </motion.section>
 
         {/* Bottom CTA */}
-        <section className="container mx-auto px-4 py-12">
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="container mx-auto px-4 py-12"
+        >
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
+            <motion.h2 variants={fadeUp} className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
               Siap Menjadi Bagian dari FIM?
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Bergabunglah dengan ribuan alumni FIM yang telah berkontribusi
-              untuk Indonesia.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-muted-foreground mb-6">
+              Bergabunglah dengan ribuan alumni FIM yang telah berkontribusi untuk Indonesia.
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               {isOpen ? (
                 <Link to="/portal/signup">
                   <Button size="lg">
@@ -433,11 +476,7 @@ export default function RegistrationLanding() {
                   </Button>
                 </Link>
               ) : (
-                <a
-                  href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href="https://whatsapp.com/channel/0029VbAqbD78PgsCdYd6hK2T" target="_blank" rel="noopener noreferrer">
                   <Button size="lg">
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Dapatkan Notifikasi
@@ -450,27 +489,19 @@ export default function RegistrationLanding() {
                   FAQ
                 </Button>
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Footer */}
         <footer className="container mx-auto px-4 py-8 border-t border-border">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} Forum Indonesia Muda</p>
             <div className="flex items-center gap-6">
-              <Link to="/program/pelatihan" className="hover:text-foreground">
-                Program
-              </Link>
-              <Link to="/cerita-alumni" className="hover:text-foreground">
-                Alumni
-              </Link>
-              <Link to="/faq" className="hover:text-foreground">
-                FAQ
-              </Link>
-              <Link to="/" className="hover:text-foreground">
-                Beranda
-              </Link>
+              <Link to="/program/pelatihan" className="hover:text-foreground">Program</Link>
+              <Link to="/cerita-alumni" className="hover:text-foreground">Alumni</Link>
+              <Link to="/faq" className="hover:text-foreground">FAQ</Link>
+              <Link to="/" className="hover:text-foreground">Beranda</Link>
             </div>
           </div>
         </footer>
