@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchDialog } from "@/components/SearchDialog";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 import logoFim from "@/assets/logo-fim.png";
 
 const Navbar = () => {
@@ -12,33 +13,34 @@ const Navbar = () => {
   const [tentangOpen, setTentangOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   const location = useLocation();
+  const { t } = useLanguage();
 
   const isActive = (path: string) => location.pathname === path;
   const isActiveParent = (paths: string[]) => paths.some(p => location.pathname.startsWith(p));
 
   const navLinks = [
-    { name: "Beranda", path: "/" },
+    { name: t("nav.home", "Beranda"), path: "/" },
     {
-      name: "Tentang",
+      name: t("nav.about", "Tentang"),
       path: "/tentang",
       children: [
-        { name: "Tentang FIM", path: "/tentang" },
+        { name: t("nav.about", "Tentang FIM"), path: "/tentang" },
         { name: "Regional FIM", path: "/tentang/regional" },
         { name: "FIM Club", path: "/tentang/fim-club" },
       ],
     },
     {
-      name: "Program",
+      name: t("nav.program", "Program"),
       path: "/program",
       children: [
-        { name: "Pelatihan FIM", path: "/program/pelatihan" },
-        { name: "Program Unggulan", path: "/program/program-unggulan" },
+        { name: t("nav.training", "Pelatihan FIM"), path: "/program/pelatihan" },
+        { name: t("nav.flagship", "Program Unggulan"), path: "/program/program-unggulan" },
       ],
     },
-    { name: "Alumni", path: "/cerita-alumni" },
-    { name: "Blog", path: "/blog" },
-    { name: "FAQ", path: "/faq" },
-    { name: "Relawan", path: "/gabung-relawan" },
+    { name: t("nav.alumni", "Alumni"), path: "/cerita-alumni" },
+    { name: t("nav.blog", "Blog"), path: "/blog" },
+    { name: t("nav.faq", "FAQ"), path: "/faq" },
+    { name: t("nav.volunteer", "Relawan"), path: "/gabung-relawan" },
   ];
 
   return (
@@ -116,12 +118,12 @@ const Navbar = () => {
             <ThemeToggle />
             <Link to="/portal">
               <Button variant="outline" className="font-semibold">
-                Daftar
+                {t("nav.register", "Daftar")}
               </Button>
             </Link>
             <Link to="/donasi">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-                Donasi
+                {t("nav.donate", "Donasi")}
               </Button>
             </Link>
           </div>

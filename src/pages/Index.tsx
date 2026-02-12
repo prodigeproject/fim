@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useLanguage } from "@/contexts/LanguageContext";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -43,6 +44,21 @@ import logo27 from "@/assets/partners/logo-27.png";
 import logo28 from "@/assets/partners/logo-28.png";
 import logo29 from "@/assets/partners/logo-29.png";
 
+const heroTitle = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" as const } },
+};
+
+const heroSubtitle = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.3, ease: "easeOut" as const } },
+};
+
+const heroCTA = {
+  hidden: { opacity: 0, y: 20, scale: 0.9 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, delay: 0.5, ease: "easeOut" as const } },
+};
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number = 0) => ({
@@ -69,6 +85,8 @@ const Index = () => {
       return count || 61;
     },
   });
+
+  const { t } = useLanguage();
 
   const { data: featuredArticles } = useQuery({
     queryKey: ["homepage-pinned-articles"],
@@ -110,10 +128,10 @@ const Index = () => {
   });
 
   const stats = [
-    { icon: Calendar, value: 2003, prefix: "", suffix: "", label: "Berdiri Sejak" },
-    { icon: Users, value: 34, prefix: "> ", suffix: "", label: "Angkatan" },
-    { icon: MapPin, value: regionalCount || 61, prefix: "", suffix: "", label: "Regional" },
-    { icon: Award, value: 4000, prefix: "", suffix: "+", label: "Alumni" },
+    { icon: Calendar, value: 2003, prefix: "", suffix: "", label: t("home.stats.foundedSince", "Berdiri Sejak") },
+    { icon: Users, value: 34, prefix: "> ", suffix: "", label: t("home.stats.batches", "Angkatan") },
+    { icon: MapPin, value: regionalCount || 61, prefix: "", suffix: "", label: t("home.stats.regional", "Regional") },
+    { icon: Award, value: 4000, prefix: "", suffix: "+", label: t("home.stats.alumni", "Alumni") },
   ];
 
   const alumniTestimonials = [
@@ -135,9 +153,9 @@ const Index = () => {
   ];
 
   const programUnggulan = [
-    { title: "Pelatihan Kepemimpinan", description: "Program kaderisasi intensif untuk membentuk karakter dan jiwa kepemimpinan pemuda Indonesia.", icon: GraduationCap, link: "/program/pelatihan" },
-    { title: "Mentoring Alumni", description: "Bimbingan langsung dari alumni FIM yang sukses di berbagai bidang karir dan profesi.", icon: Users, link: "/program/program-unggulan" },
-    { title: "Diskusi Publik", description: "Forum diskusi untuk membahas isu-isu strategis dan solusi bagi permasalahan bangsa.", icon: MessageSquare, link: "/program/program-unggulan" },
+    { title: t("home.programs.leadership", "Pelatihan Kepemimpinan"), description: t("home.programs.leadershipDesc", "Program kaderisasi intensif untuk membentuk karakter dan jiwa kepemimpinan pemuda Indonesia."), icon: GraduationCap, link: "/program/pelatihan" },
+    { title: t("home.programs.mentoring", "Mentoring Alumni"), description: t("home.programs.mentoringDesc", "Bimbingan langsung dari alumni FIM yang sukses di berbagai bidang karir dan profesi."), icon: Users, link: "/program/program-unggulan" },
+    { title: t("home.programs.discussion", "Diskusi Publik"), description: t("home.programs.discussionDesc", "Forum diskusi untuk membahas isu-isu strategis dan solusi bagi permasalahan bangsa."), icon: MessageSquare, link: "/program/program-unggulan" },
   ];
 
   const partnerLogos = [
@@ -172,43 +190,90 @@ const Index = () => {
         title="Forum Indonesia Muda - Membangun Pemimpin Masa Depan Indonesia" 
         description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      {/* Hero Section with enhanced motion */}
+      <section className="relative overflow-hidden min-h-[70vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-hero opacity-95" />
-        <div className="absolute top-20 right-10 w-32 h-32 bg-accent/20 rounded-full blur-3xl animate-glow" />
-        <div className="absolute bottom-20 left-10 w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-glow" style={{ animationDelay: "1s" }} />
+        <motion.div 
+          className="absolute top-20 right-10 w-40 h-40 bg-accent/20 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute bottom-20 left-10 w-56 h-56 bg-accent/10 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        />
+        <motion.div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px]"
+          animate={{ scale: [0.8, 1.1, 0.8] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
         
-        <div className="relative container mx-auto px-4 py-12 lg:py-28">
-          <motion.div 
-            className="flex flex-col items-center text-center"
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-          >
-            <motion.img variants={fadeUp} custom={0} src={logoFim} alt="Forum Indonesia Muda" className="h-24 lg:h-32 mb-8 brightness-0 invert" />
-            <motion.h1 variants={fadeUp} custom={1} className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4">
-              Forum Indonesia Muda<br />
-              <span className="text-accent">Membangun Pemimpin Masa Depan</span>
+        <div className="relative container mx-auto px-4 py-16 lg:py-32">
+          <div className="flex flex-col items-center text-center">
+            <motion.img 
+              variants={heroTitle} 
+              initial="hidden" 
+              animate="visible" 
+              src={logoFim} 
+              alt="Forum Indonesia Muda" 
+              className="h-24 lg:h-36 mb-8 brightness-0 invert drop-shadow-2xl" 
+            />
+            <motion.h1 
+              variants={heroTitle} 
+              initial="hidden" 
+              animate="visible" 
+              className="text-4xl lg:text-7xl font-bold text-primary-foreground mb-4 leading-tight"
+            >
+              {t("home.hero.title", "Forum Indonesia Muda")}<br />
+              <motion.span 
+                className="text-accent inline-block"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
+              >
+                Membangun Pemimpin Masa Depan
+              </motion.span>
             </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-sm lg:text-base text-accent font-semibold mb-4">
+            <motion.p 
+              variants={heroSubtitle} 
+              initial="hidden" 
+              animate="visible" 
+              className="text-sm lg:text-base text-accent font-semibold mb-4"
+            >
               Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia
             </motion.p>
-            <motion.p variants={fadeUp} custom={3} className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6">
-              Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.
+            <motion.p 
+              variants={heroSubtitle} 
+              initial="hidden" 
+              animate="visible" 
+              className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6"
+            >
+              {t("home.hero.subtitle", "Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.")}
             </motion.p>
-            <motion.div variants={fadeUp} custom={4} className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block">
+            <motion.div 
+              variants={heroCTA} 
+              initial="hidden" 
+              animate="visible"
+              className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block"
+            >
               <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
                 <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
               </p>
             </motion.div>
-            <motion.div variants={fadeUp} custom={5} className="flex flex-col sm:flex-row gap-4">
+            <motion.div 
+              variants={heroCTA} 
+              initial="hidden" 
+              animate="visible" 
+              className="flex flex-col sm:flex-row gap-4"
+            >
               <Link to="/tentang">
                 <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                  Pelajari Lebih Lanjut <ArrowRight className="ml-2 h-5 w-5" />
+                  {t("home.hero.learnMore", "Pelajari Lebih Lanjut")} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -273,7 +338,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto text-center">
             <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
             <blockquote className="text-xl lg:text-2xl text-foreground italic mb-4">
-              "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia."
+              "{t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"
             </blockquote>
             <div className="w-16 h-1 bg-accent mx-auto" />
           </div>
@@ -283,9 +348,9 @@ const Index = () => {
       {/* Alumni Testimonials */}
       <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Jejak Alumni FIM</motion.h2>
+          <motion.h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.alumniSection.title", "Jejak Alumni FIM")}</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
-            Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia
+            {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
           </motion.p>
           <motion.div 
             className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
@@ -323,8 +388,8 @@ const Index = () => {
       {/* Program Unggulan */}
       <section className="py-16 bg-background" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Program Unggulan</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Berbagai program untuk mengembangkan potensi pemuda Indonesia</motion.p>
+          <motion.h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.programs.title", "Program Unggulan")}</motion.h2>
+          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</motion.p>
           <motion.div 
             className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
             initial="hidden"
@@ -347,7 +412,7 @@ const Index = () => {
             ))}
           </motion.div>
           <div className="text-center mt-8">
-            <Link to="/program/program-unggulan"><Button variant="outline">Lihat Semua Program <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link to="/program/program-unggulan"><Button variant="outline">{t("home.programs.viewAll", "Lihat Semua Program")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
         </div>
       </section>
@@ -355,8 +420,8 @@ const Index = () => {
       {/* Kabar FIM */}
       <section className="py-16 bg-secondary" aria-labelledby="news-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Kabar FIM</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Berita dan kegiatan terbaru dari Forum Indonesia Muda</motion.p>
+          <motion.h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.news.title", "Kabar FIM")}</motion.h2>
+          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.news.subtitle", "Berita dan kegiatan terbaru dari Forum Indonesia Muda")}</motion.p>
           <motion.div 
             className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
             initial="hidden"
@@ -369,7 +434,7 @@ const Index = () => {
                 <Link to={`/blog/${article.slug}`} className="group">
                   <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 relative">
                     {article.is_pinned && (
-                      <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">Unggulan</div>
+                      <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">{t("home.news.featured", "Unggulan")}</div>
                     )}
                     <img src={article.featured_image_url || "https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&h=250&fit=crop"} alt={article.title} className="w-full h-40 object-cover" loading="lazy" />
                     <div className="p-5">
@@ -396,7 +461,7 @@ const Index = () => {
             )}
           </motion.div>
           <div className="text-center mt-8">
-            <Link to="/blog"><Button variant="outline">Lihat Semua Berita <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link to="/blog"><Button variant="outline">{t("home.news.viewAll", "Lihat Semua Berita")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
         </div>
       </section>
@@ -404,8 +469,8 @@ const Index = () => {
       {/* Mitra & Kolaborator - 3D hover effect */}
       <section className="py-12 bg-background overflow-hidden" aria-labelledby="partners-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="partners-section-heading" className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Mitra & Kolaborator</motion.h2>
-          <motion.p className="text-muted-foreground text-center text-sm mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Bersama membangun Indonesia yang lebih baik</motion.p>
+          <motion.h2 id="partners-section-heading" className="text-2xl lg:text-3xl font-bold text-center text-foreground mb-2" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.partners.title", "Mitra & Kolaborator")}</motion.h2>
+          <motion.p className="text-muted-foreground text-center text-sm mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.partners.subtitle", "Bersama membangun Indonesia yang lebih baik")}</motion.p>
         </div>
         <div className="relative">
           <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10" />
@@ -414,17 +479,23 @@ const Index = () => {
           <div className="flex animate-scroll-x hover:pause-animation">
             {partners?.length ? (
               <>
-                {[...partners, ...partners, ...partners].map((partner, index) => (
-                  <a key={`${partner.id}-${index}`} href={partner.website_url || "#"} target={partner.website_url ? "_blank" : undefined} rel="noopener noreferrer" className="flex-shrink-0 mx-4 md:mx-6 group" title={partner.name}>
-                    <motion.div 
-                      className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3 transition-shadow group-hover:shadow-xl"
-                      whileHover={{ scale: 1.2, z: 50, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
-                      <img src={partner.logo_url} alt={partner.name} loading="lazy" className="max-h-full max-w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    </motion.div>
-                  </a>
-                ))}
+                {[...partners, ...partners, ...partners].map((partner, index) => {
+                  const hasUrl = partner.website_url && partner.website_url !== "#";
+                  const Wrapper = hasUrl ? "a" : "span";
+                  const wrapperProps = hasUrl ? { href: partner.website_url!, target: "_blank" as const, rel: "noopener noreferrer" } : {};
+                  return (
+                    <Wrapper key={`${partner.id}-${index}`} {...wrapperProps} className="flex-shrink-0 mx-4 md:mx-6 group cursor-pointer" title={partner.name}>
+                      <motion.div 
+                        className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3"
+                        style={{ perspective: 800 }}
+                        whileHover={{ scale: 1.25, y: -10, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <img src={partner.logo_url} alt={partner.name} loading="lazy" className="max-h-full max-w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </motion.div>
+                    </Wrapper>
+                  );
+                })}
               </>
             ) : (
               <>
@@ -432,8 +503,9 @@ const Index = () => {
                   <div key={index} className="flex-shrink-0 mx-4 md:mx-6">
                     <motion.div 
                       className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3"
-                      whileHover={{ scale: 1.2, z: 50, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      style={{ perspective: 800 }}
+                      whileHover={{ scale: 1.25, y: -10, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     >
                       <img src={logo} alt={`Partner ${(index % partnerLogos.length) + 1}`} loading="lazy" className="max-h-full max-w-full object-contain" />
                     </motion.div>
@@ -455,17 +527,17 @@ const Index = () => {
         variants={staggerContainer}
       >
         <div className="container mx-auto px-4 text-center">
-          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">Siap Bergabung dengan FIM?</motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="text-primary-foreground/90 max-w-xl mx-auto mb-8">Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi</motion.p>
+          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
+          <motion.p variants={fadeUp} custom={1} className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("home.cta.subtitle", "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi")}</motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/portal">
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
-                Daftar Sekarang <ArrowRight className="ml-2 h-5 w-5" />
+                {t("home.cta.register", "Daftar Sekarang")} <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/donasi">
               <Button size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold">
-                Dukung FIM
+                {t("home.cta.support", "Dukung FIM")}
               </Button>
             </Link>
           </motion.div>
