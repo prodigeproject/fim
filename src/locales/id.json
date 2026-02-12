@@ -40,13 +40,19 @@
     "upload": "Unggah",
     "refresh": "Segarkan",
     "language": "Bahasa",
-    "settings": "Pengaturan"
+    "settings": "Pengaturan",
+    "readMore": "Selengkapnya",
+    "viewAll": "Lihat Semua",
+    "seeAll": "Lihat Semua"
   },
   "nav": {
     "home": "Beranda",
     "about": "Tentang",
+    "aboutFim": "Tentang FIM",
+    "regionalFim": "Regional FIM",
+    "fimClub": "FIM Club",
     "program": "Program",
-    "training": "Pelatihan",
+    "training": "Pelatihan FIM",
     "flagship": "Program Unggulan",
     "alumni": "Alumni",
     "blog": "Blog",
@@ -60,34 +66,93 @@
   "home": {
     "hero": {
       "title": "Forum Indonesia Muda",
-      "subtitle": "Tumbuh bersama, berkolaborasi, dan menjadi kunang-kunang untuk Indonesia",
+      "subtitle": "Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.",
       "cta": "Bergabung Sekarang",
-      "learnMore": "Pelajari Lebih Lanjut"
+      "learnMore": "Pelajari Lebih Lanjut",
+      "trusted": "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia",
+      "announcement": "Pendaftaran Angkatan Baru Segera Dibuka!"
     },
     "stats": {
-      "alumni": "Alumni",
+      "foundedSince": "Berdiri Sejak",
+      "batches": "Angkatan",
       "regional": "Regional",
-      "years": "Tahun",
-      "programs": "Program"
+      "alumni": "Alumni"
     },
-    "about": {
-      "title": "Tentang FIM",
-      "description": "Forum Indonesia Muda adalah organisasi kepemimpinan pemuda yang didirikan sejak tahun 2003"
+    "quote": "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.",
+    "alumniSection": {
+      "title": "Jejak Alumni FIM",
+      "subtitle": "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia"
     },
     "programs": {
-      "title": "Program Kami",
-      "training": "Pelatihan Kepemimpinan",
-      "community": "Komunitas Alumni"
+      "title": "Program Unggulan",
+      "subtitle": "Berbagai program untuk mengembangkan potensi pemuda Indonesia",
+      "leadership": "Pelatihan Kepemimpinan",
+      "leadershipDesc": "Program kaderisasi intensif untuk membentuk karakter dan jiwa kepemimpinan pemuda Indonesia.",
+      "mentoring": "Mentoring Alumni",
+      "mentoringDesc": "Bimbingan langsung dari alumni FIM yang sukses di berbagai bidang karir dan profesi.",
+      "discussion": "Diskusi Publik",
+      "discussionDesc": "Forum diskusi untuk membahas isu-isu strategis dan solusi bagi permasalahan bangsa.",
+      "viewAll": "Lihat Semua Program"
+    },
+    "news": {
+      "title": "Kabar FIM",
+      "subtitle": "Berita dan kegiatan terbaru dari Forum Indonesia Muda",
+      "featured": "Unggulan",
+      "viewAll": "Lihat Semua Berita"
     },
     "partners": {
-      "title": "Mitra Kami"
+      "title": "Mitra & Kolaborator",
+      "subtitle": "Bersama membangun Indonesia yang lebih baik"
+    },
+    "cta": {
+      "title": "Siap Bergabung dengan FIM?",
+      "subtitle": "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi",
+      "register": "Daftar Sekarang",
+      "support": "Dukung FIM"
     },
     "newsletter": {
       "title": "Dapatkan Info Terbaru",
+      "subtitle": "Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.",
       "placeholder": "Masukkan email Anda",
       "subscribe": "Berlangganan",
       "success": "Terima kasih telah berlangganan!"
     }
+  },
+  "about": {
+    "hero": {
+      "title": "Tentang FIM",
+      "subtitle": "Forum Indonesia Muda adalah organisasi kepemimpinan pemuda yang didirikan sejak tahun 2003"
+    },
+    "vision": "Visi",
+    "mission": "Misi",
+    "values": "Nilai Inti",
+    "history": "Sejarah",
+    "structure": "Struktur Organisasi"
+  },
+  "blog": {
+    "title": "Blog & Berita",
+    "subtitle": "Berita, artikel, dan kegiatan terbaru dari Forum Indonesia Muda",
+    "search": "Cari artikel...",
+    "noResults": "Tidak ada artikel ditemukan",
+    "readMore": "Selengkapnya",
+    "category": "Kategori",
+    "allCategories": "Semua Kategori"
+  },
+  "faq": {
+    "title": "Pertanyaan yang Sering Diajukan",
+    "subtitle": "Temukan jawaban untuk pertanyaan umum tentang FIM"
+  },
+  "donation": {
+    "title": "Dukung FIM",
+    "subtitle": "Kontribusi Anda membantu kami mengembangkan pemimpin masa depan Indonesia"
+  },
+  "volunteer": {
+    "title": "Gabung Relawan",
+    "subtitle": "Jadilah bagian dari gerakan membangun masa depan Indonesia"
+  },
+  "alumni": {
+    "title": "Cerita Alumni",
+    "subtitle": "Kisah inspiratif dari alumni FIM di seluruh Indonesia"
   },
   "portal": {
     "login": "Masuk",
@@ -178,9 +243,19 @@
     "contact": "Kontak",
     "social": "Media Sosial",
     "links": "Tautan",
+    "navigation": "Navigasi",
+    "contactUs": "Hubungi Kami",
+    "getUpdates": "Dapatkan Update Terbaru",
+    "getUpdatesDesc": "Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.",
+    "subscribe": "Langganan",
+    "processing": "Memproses...",
+    "supportFim": "Dukung FIM",
     "copyright": "Hak Cipta",
+    "madeWith": "Dibuat dengan",
+    "forIndonesia": "untuk Indonesia",
     "privacy": "Kebijakan Privasi",
-    "terms": "Syarat & Ketentuan"
+    "terms": "Syarat & Ketentuan",
+    "allRightsReserved": "Hak cipta dilindungi."
   },
   "accessibility": {
     "skipToContent": "Langsung ke konten utama",

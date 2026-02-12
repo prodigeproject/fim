@@ -40,13 +40,19 @@
     "upload": "Upload",
     "refresh": "Refresh",
     "language": "Language",
-    "settings": "Settings"
+    "settings": "Settings",
+    "readMore": "Read More",
+    "viewAll": "View All",
+    "seeAll": "See All"
   },
   "nav": {
     "home": "Home",
     "about": "About",
+    "aboutFim": "About FIM",
+    "regionalFim": "FIM Regionals",
+    "fimClub": "FIM Club",
     "program": "Programs",
-    "training": "Training",
+    "training": "FIM Training",
     "flagship": "Flagship Programs",
     "alumni": "Alumni",
     "blog": "Blog",
@@ -60,34 +66,93 @@
   "home": {
     "hero": {
       "title": "Indonesia Youth Forum",
-      "subtitle": "Growing, collaborating, and becoming fireflies for Indonesia",
+      "subtitle": "A community of Indonesian youth committed to contributing to national development through leadership, innovation, and real action.",
       "cta": "Join Now",
-      "learnMore": "Learn More"
+      "learnMore": "Learn More",
+      "trusted": "Trusted by 4000+ alumni across 60+ regionals in Indonesia",
+      "announcement": "New Batch Registration Opening Soon!"
     },
     "stats": {
-      "alumni": "Alumni",
+      "foundedSince": "Founded Since",
+      "batches": "Batches",
       "regional": "Regionals",
-      "years": "Years",
-      "programs": "Programs"
+      "alumni": "Alumni"
     },
-    "about": {
-      "title": "About FIM",
-      "description": "Forum Indonesia Muda is a youth leadership organization established since 2003"
+    "quote": "Like fireflies that are small yet able to illuminate the darkness, we believe every youth has a light to brighten Indonesia.",
+    "alumniSection": {
+      "title": "FIM Alumni Footprint",
+      "subtitle": "Thousands of alumni have contributed across various strategic sectors in Indonesia"
     },
     "programs": {
-      "title": "Our Programs",
-      "training": "Leadership Training",
-      "community": "Alumni Community"
+      "title": "Flagship Programs",
+      "subtitle": "Various programs to develop the potential of Indonesian youth",
+      "leadership": "Leadership Training",
+      "leadershipDesc": "Intensive cadre program to build character and leadership spirit of Indonesian youth.",
+      "mentoring": "Alumni Mentoring",
+      "mentoringDesc": "Direct guidance from successful FIM alumni in various career fields and professions.",
+      "discussion": "Public Discussion",
+      "discussionDesc": "Discussion forum to address strategic issues and solutions for the nation's challenges.",
+      "viewAll": "View All Programs"
+    },
+    "news": {
+      "title": "FIM News",
+      "subtitle": "Latest news and activities from Forum Indonesia Muda",
+      "featured": "Featured",
+      "viewAll": "View All News"
     },
     "partners": {
-      "title": "Our Partners"
+      "title": "Partners & Collaborators",
+      "subtitle": "Together building a better Indonesia"
+    },
+    "cta": {
+      "title": "Ready to Join FIM?",
+      "subtitle": "Be part of Indonesia's influential youth community and make a contribution",
+      "register": "Register Now",
+      "support": "Support FIM"
     },
     "newsletter": {
       "title": "Get Latest Updates",
+      "subtitle": "Subscribe to our newsletter for the latest activities, registrations, and news from FIM.",
       "placeholder": "Enter your email",
       "subscribe": "Subscribe",
       "success": "Thank you for subscribing!"
     }
+  },
+  "about": {
+    "hero": {
+      "title": "About FIM",
+      "subtitle": "Forum Indonesia Muda is a youth leadership organization founded in 2003"
+    },
+    "vision": "Vision",
+    "mission": "Mission",
+    "values": "Core Values",
+    "history": "History",
+    "structure": "Organization Structure"
+  },
+  "blog": {
+    "title": "Blog & News",
+    "subtitle": "Latest news, articles, and activities from Forum Indonesia Muda",
+    "search": "Search articles...",
+    "noResults": "No articles found",
+    "readMore": "Read More",
+    "category": "Category",
+    "allCategories": "All Categories"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to common questions about FIM"
+  },
+  "donation": {
+    "title": "Support FIM",
+    "subtitle": "Your contribution helps us develop Indonesia's future leaders"
+  },
+  "volunteer": {
+    "title": "Join as Volunteer",
+    "subtitle": "Be part of the movement to build Indonesia's future"
+  },
+  "alumni": {
+    "title": "Alumni Stories",
+    "subtitle": "Inspiring stories from FIM alumni across Indonesia"
   },
   "portal": {
     "login": "Login",
@@ -178,9 +243,19 @@
     "contact": "Contact",
     "social": "Social Media",
     "links": "Links",
+    "navigation": "Navigation",
+    "contactUs": "Contact Us",
+    "getUpdates": "Get Latest Updates",
+    "getUpdatesDesc": "Subscribe to our newsletter for the latest activities, registrations, and news from FIM.",
+    "subscribe": "Subscribe",
+    "processing": "Processing...",
+    "supportFim": "Support FIM",
     "copyright": "Copyright",
+    "madeWith": "Made with",
+    "forIndonesia": "for Indonesia",
     "privacy": "Privacy Policy",
-    "terms": "Terms & Conditions"
+    "terms": "Terms & Conditions",
+    "allRightsReserved": "All rights reserved."
   },
   "accessibility": {
     "skipToContent": "Skip to main content",
