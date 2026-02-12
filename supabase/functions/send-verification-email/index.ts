@@ -13,36 +13,67 @@ interface VerificationRequest {
   token?: string;
 }
 
-// Send email using Gmail SMTP
-async function sendGmailEmail(to: string, subject: string, html: string) {
-  const gmailUser = Deno.env.get("GMAIL_USER");
-  const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
+// Get SMTP config from database or fallback to env
+async function getSmtpConfig(supabase: any) {
+  try {
+    const { data } = await supabase
+      .from("email_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
 
-  if (!gmailUser || !gmailPassword) {
-    console.error("Gmail credentials not configured");
+    if (data && data.mail_username && data.mail_password_encrypted) {
+      return {
+        host: data.mail_host || "smtp.gmail.com",
+        port: data.mail_port || 465,
+        tls: (data.mail_encryption || "TLS").toUpperCase() !== "NONE",
+        username: data.mail_username,
+        password: data.mail_password_encrypted,
+        fromAddress: data.mail_from_address || data.mail_username,
+        fromName: data.mail_from_name || "Forum Indonesia Muda",
+      };
+    }
+  } catch (e) {
+    console.log("Could not fetch email_settings, using env fallback:", e);
+  }
+
+  // Fallback to environment variables
+  return {
+    host: "smtp.gmail.com",
+    port: 465,
+    tls: true,
+    username: Deno.env.get("GMAIL_USER") || "",
+    password: Deno.env.get("GMAIL_APP_PASSWORD") || "",
+    fromAddress: Deno.env.get("GMAIL_USER") || "",
+    fromName: "Forum Indonesia Muda",
+  };
+}
+
+async function sendEmail(config: any, to: string, subject: string, html: string) {
+  if (!config.username || !config.password) {
     throw new Error("Email service not configured");
   }
 
   const client = new SMTPClient({
     connection: {
-      hostname: "smtp.gmail.com",
-      port: 465,
-      tls: true,
+      hostname: config.host,
+      port: config.port,
+      tls: config.tls,
       auth: {
-        username: gmailUser,
-        password: gmailPassword,
+        username: config.username,
+        password: config.password,
       },
     },
   });
 
   try {
     await client.send({
-      from: gmailUser,
+      from: `${config.fromName} <${config.fromAddress}>`,
       to: to,
       subject: subject,
       html: html,
     });
-    console.log(`Email sent successfully to ${to}`);
+    console.log(`Email sent successfully to ${to} from ${config.fromAddress}`);
   } finally {
     await client.close();
   }
@@ -68,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!verificationToken) {
       const { data: regData, error: regError } = await supabase
         .from("fim_registrations")
-        .select("email_verification_token, full_name")
+        .select("email_verification_token, full_name, email_verification_expires_at")
         .eq("email", email.toLowerCase())
         .single();
 
@@ -83,18 +114,25 @@ const handler = async (req: Request): Promise<Response> => {
       verificationToken = regData.email_verification_token;
       registrantName = regData.full_name;
 
-      // Generate new token if not exists
-      if (!verificationToken) {
-        verificationToken = crypto.randomUUID();
-        await supabase
-          .from("fim_registrations")
-          .update({ email_verification_token: verificationToken })
-          .eq("email", email.toLowerCase());
-      }
+      // Always generate a new token and reset expiration on resend
+      verificationToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+      await supabase
+        .from("fim_registrations")
+        .update({ 
+          email_verification_token: verificationToken,
+          email_verification_expires_at: expiresAt,
+          verification_attempts: 0,
+        })
+        .eq("email", email.toLowerCase());
     }
 
-    const baseUrl = Deno.env.get("SITE_URL") || "https://fim.lovable.app";
+    // Use the production domain
+    const baseUrl = Deno.env.get("SITE_URL") || "https://forumindonesiamuda.org";
     const verificationLink = `${baseUrl}/portal/verify?token=${verificationToken}`;
+
+    // Get SMTP config from database
+    const smtpConfig = await getSmtpConfig(supabase);
 
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -110,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         <p>Atau salin link berikut ke browser Anda:</p>
         <p style="word-break: break-all; color: #666;">${verificationLink}</p>
-        <p>Link ini akan kedaluwarsa dalam 24 jam.</p>
+        <p>Link ini akan kedaluwarsa dalam 7 hari.</p>
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
         <p style="color: #666; font-size: 12px;">
           Jika Anda tidak mendaftar di FIM, abaikan email ini.
@@ -118,13 +156,14 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    await sendGmailEmail(
+    await sendEmail(
+      smtpConfig,
       email,
       "Verifikasi Email Pendaftaran FIM",
       emailHtml
     );
 
-    console.log("Verification email sent via Gmail SMTP");
+    console.log("Verification email sent via SMTP");
 
     return new Response(
       JSON.stringify({ success: true, message: "Email verifikasi telah dikirim" }),

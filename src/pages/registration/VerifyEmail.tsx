@@ -36,12 +36,21 @@ export default function VerifyEmail() {
           return;
         }
 
-        // Check if token has expired
+        // Check if token has expired (generous 7-day window)
         if (registration.email_verification_expires_at) {
           const expiresAt = new Date(registration.email_verification_expires_at);
           if (expiresAt < new Date()) {
-            setStatus("error");
-            setMessage("Token verifikasi sudah kedaluwarsa. Silakan minta email verifikasi baru.");
+            // Auto-regenerate token and resend
+            try {
+              await supabase.functions.invoke("send-verification-email", {
+                body: { email: registration.email }
+              });
+              setStatus("error");
+              setMessage("Token sudah kedaluwarsa. Email verifikasi baru telah dikirim ke email Anda.");
+            } catch {
+              setStatus("error");
+              setMessage("Token verifikasi sudah kedaluwarsa. Silakan minta email verifikasi baru dari halaman login.");
+            }
             return;
           }
         }

@@ -2,7 +2,13 @@ import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import { Target, Compass, User, Users, Briefcase, Building2, Heart, Shield, Star, Handshake, Scale, UserCheck, MessageSquare, BookOpen, Brain, Clipboard, Network } from "lucide-react";
+import { motion } from "framer-motion";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.1, ease: "easeOut" as const } }),
+};
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 const Tentang = () => {
   const pilarKarakter = [
@@ -14,7 +20,6 @@ const Tentang = () => {
     { icon: Scale, name: "Keadilan", desc: "Menegakkan kebenaran dan kesetaraan" },
     { icon: UserCheck, name: "Keteladanan", desc: "Menjadi contoh yang baik bagi sesama" },
   ];
-
   const pilarKepemimpinan = [
     { icon: Users, name: "Mengenal Diri", desc: "Memahami kekuatan dan kelemahan diri" },
     { icon: MessageSquare, name: "Komunikasi", desc: "Menyampaikan pesan dengan efektif" },
@@ -24,7 +29,6 @@ const Tentang = () => {
     { icon: Clipboard, name: "Manajerial", desc: "Mengelola sumber daya dengan efisien" },
     { icon: Network, name: "Pengorganisasian", desc: "Membangun tim dan sistem yang solid" },
   ];
-
   const sejarah = [
     { year: "2003", event: "Forum Indonesia Muda didirikan oleh sepasang suami istri Elmir Amien dan Tatty Elmir, yang disupport pakar leadership Buchori Nasution, dan rekan-rekannya sesama jurnalis di Jakarta News FM. Pelatihan pertama di Graha Pemuda Cibodas Jakarta." },
     { year: "2004", event: "FIM ke-2 kegiatan dipindahkan ke Wiladatika Jakarta, agar mudah diakses para mentor dan undangan." },
@@ -36,27 +40,20 @@ const Tentang = () => {
     { year: "2023", event: "Momentum 2 dekade FIM, telah menghasilkan 30 lebih angkatan pelatihan FIM, lebih dari 60 regional, dan hampir 4000 alumni." },
     { year: "2025", event: "Perdana pelatihan FIM tematik Kebijakan Publik bekerjasama dengan Nalar Institute untuk menghasilkan ahli kebijakan publik di level intermediate & advance." },
   ];
-
   const strukturYayasan = [
     { name: "Elmir Amien", position: "Founder / Ketua Dewan Pembina" },
     { name: "Tatty Elmir", position: "Founder / Anggota Dewan Pembina" },
     { name: "Mandira Bienna Elmir", position: "Ketua Pengurus Yayasan" },
   ];
-
   const bph = [
     { name: "Dicky Adra Pratama", position: "Direktur Eksekutif" },
     { name: "Anisah Fitriana Rakhman", position: "Sekretaris Bendahara" },
     { name: "M Rafif Quthronada", position: "Sekretaris Jenderal" },
     { name: "Umi Rif'atus S", position: "Wakil Sekretaris Jenderal" },
   ];
-
   const biroInternal = [
-    { name: "Chairul Sinaga" },
-    { name: "Aisyah Hasim" },
-    { name: "Arian Handika" },
-    { name: "Dita Amallya" },
+    { name: "Chairul Sinaga" }, { name: "Aisyah Hasim" }, { name: "Arian Handika" }, { name: "Dita Amallya" },
   ];
-
   const divisi = [
     { name: "Nurul Aini", position: "Kepala Biro Media & Komunikasi" },
     { name: "Ayu Rahma Dania", position: "Kepala Divisi Pelatihan" },
@@ -72,95 +69,56 @@ const Tentang = () => {
 
   return (
     <Layout>
-      <SEO 
-        title="Tentang FIM" 
-        description="Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda. Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin sejak 2003."
-      />
-      <PageHero
-        title="Tentang Forum Indonesia Muda"
-        subtitle="Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin"
-      />
+      <SEO title="Tentang FIM" description="Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda. Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin sejak 2003." />
+      <PageHero title="Tentang Forum Indonesia Muda" subtitle="Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin" />
 
-      {/* Visi Misi Section */}
+      {/* Visi Misi */}
       <section className="py-16 lg:py-20 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Visi */}
-            <div className="bg-card rounded-2xl p-8 shadow-lg animate-fade-in">
-              <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                <Target className="h-8 w-8 text-primary" />
-              </div>
+          <motion.div className="grid lg:grid-cols-2 gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
+              <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6"><Target className="h-8 w-8 text-primary" /></div>
               <h2 className="text-2xl font-bold text-foreground mb-4">Visi</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, 
-                berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. 
-                Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik 
-                dan berkepribadian dalam kebudayaan.
-              </p>
-            </div>
-
-            {/* Misi */}
-            <div className="bg-card rounded-2xl p-8 shadow-lg animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6">
-                <Compass className="h-8 w-8 text-supporting" />
-              </div>
+              <p className="text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
+            </motion.div>
+            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
+              <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6"><Compass className="h-8 w-8 text-supporting" /></div>
               <h2 className="text-2xl font-bold text-foreground mb-4">Misi</h2>
               <ul className="space-y-3 text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary font-bold">1.</span>
-                  Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary font-bold">2.</span>
-                  Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary font-bold">3.</span>
-                  Menyatukan dan mengoptimalkan berbagai potensi pemuda dan mahasiswa dalam forum silaturahim dengan berbagai latar belakang.
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary font-bold">4.</span>
-                  Membuhul solidaritas sosial untuk saling menguatkan antar sesama saudara sebangsa dan setanah air.
-                </li>
+                <li className="flex items-start gap-2"><span className="text-primary font-bold">1.</span>Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.</li>
+                <li className="flex items-start gap-2"><span className="text-primary font-bold">2.</span>Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).</li>
+                <li className="flex items-start gap-2"><span className="text-primary font-bold">3.</span>Menyatukan dan mengoptimalkan berbagai potensi pemuda dan mahasiswa dalam forum silaturahim dengan berbagai latar belakang.</li>
+                <li className="flex items-start gap-2"><span className="text-primary font-bold">4.</span>Membuhul solidaritas sosial untuk saling menguatkan antar sesama saudara sebangsa dan setanah air.</li>
               </ul>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Kunang-kunang Quote */}
-      <section className="py-16 bg-background">
+      <motion.section className="py-16 bg-background" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <div className="relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-8 lg:p-12">
               <div className="absolute top-4 left-4 text-6xl text-accent/30">"</div>
-              <blockquote className="text-xl lg:text-2xl text-foreground font-medium italic mb-6">
-                Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, 
-                kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat 
-                menerangi jalan bagi sesama dan bangsa.
-              </blockquote>
+              <blockquote className="text-xl lg:text-2xl text-foreground font-medium italic mb-6">Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa.</blockquote>
               <div className="w-16 h-1 bg-accent mx-auto mb-4" />
               <p className="text-muted-foreground font-semibold">Filosofi Kunang-Kunang FIM</p>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* 7 Pilar + Perjalanan Kami - Compact Side by Side Layout */}
+      {/* 7 Pilar + Perjalanan */}
       <section className="py-10 bg-secondary">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start">
-            {/* Left Column: 7 Pilar - Takes 2 columns */}
-            <div className="lg:col-span-2">
+          <motion.div className="grid lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div className="lg:col-span-2" variants={fadeUp}>
               <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Nilai & Pilar FIM</h2>
               <p className="text-muted-foreground mb-4 text-xs">Fondasi karakter dan kepemimpinan</p>
-              
               <div className="grid grid-cols-2 gap-2">
-                {/* 7 Pilar Karakter - Ultra Compact */}
                 <div>
-                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1">
-                    <Heart className="h-3 w-3 text-primary" /> Karakter
-                  </h4>
+                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1"><Heart className="h-3 w-3 text-primary" /> Karakter</h4>
                   <div className="space-y-1">
                     {pilarKarakter.map((item) => (
                       <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
@@ -170,12 +128,8 @@ const Tentang = () => {
                     ))}
                   </div>
                 </div>
-                
-                {/* 7 Pilar Kepemimpinan - Ultra Compact */}
                 <div>
-                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1">
-                    <Star className="h-3 w-3 text-supporting" /> Kepemimpinan
-                  </h4>
+                  <h4 className="font-semibold text-foreground text-xs mb-2 flex items-center gap-1"><Star className="h-3 w-3 text-supporting" /> Kepemimpinan</h4>
                   <div className="space-y-1">
                     {pilarKepemimpinan.map((item) => (
                       <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
@@ -186,13 +140,10 @@ const Tentang = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right Column: Perjalanan Kami (Timeline) - Takes 3 columns */}
-            <div className="lg:col-span-3">
+            </motion.div>
+            <motion.div className="lg:col-span-3" variants={fadeUp}>
               <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Perjalanan Kami</h2>
               <p className="text-muted-foreground mb-4 text-xs">Sejarah Forum Indonesia Muda</p>
-              
               <div className="grid grid-cols-3 gap-2">
                 {sejarah.map((item) => (
                   <div key={item.year} className="bg-card rounded-lg p-2 shadow-sm border-l-2 border-primary">
@@ -201,141 +152,87 @@ const Tentang = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Struktur Pengurus Section - Modern Design */}
+      {/* Struktur Pengurus */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            Struktur Pengurus
-          </h2>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-            Organisasi yang menggerakkan Forum Indonesia Muda
-          </p>
+          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Struktur Pengurus</motion.h2>
+          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
 
-          {/* Struktur Yayasan */}
+          {/* Yayasan */}
           <div className="max-w-6xl mx-auto mb-16">
             <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-primary" />
-              </div>
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
               <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
             </div>
-            
-            {/* Modern Grid Layout for Yayasan */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
               {strukturYayasan.map((person, index) => (
-                <div 
-                  key={person.name} 
-                  className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all animate-fade-in ${
-                    index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
+                <motion.div key={person.name} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      index < 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                    }`}>
-                      <User className="h-8 w-8" />
-                    </div>
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${index < 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}><User className="h-8 w-8" /></div>
                     <div>
                       <h4 className="font-bold text-foreground">{person.name}</h4>
-                      <p className={`text-sm ${index < 2 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                        {person.position}
-                      </p>
+                      <p className={`text-sm ${index < 2 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
 
-          {/* Struktur Pengurus FIM */}
+          {/* Pengurus FIM */}
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6 text-supporting" />
-              </div>
+              <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center"><Users className="h-6 w-6 text-supporting" /></div>
               <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
             </div>
-
-            {/* BPH Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <motion.div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
               {bph.map((person, index) => (
-                <div 
-                  key={person.name}
-                  className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all animate-fade-in ${
-                    index === 0 ? 'lg:col-span-4 bg-gradient-to-r from-primary/5 to-supporting/5 border-2 border-primary/20' : ''
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
+                <motion.div key={person.name} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index === 0 ? 'lg:col-span-4 bg-gradient-to-r from-primary/5 to-supporting/5 border-2 border-primary/20' : ''}`}>
                   <div className={`flex ${index === 0 ? 'flex-row items-center' : 'flex-col items-center text-center'} gap-4`}>
-                    <div className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full flex items-center justify-center flex-shrink-0 ${
-                      index === 0 ? 'bg-primary text-primary-foreground' : 'bg-supporting/20'
-                    }`}>
-                      <User className={index === 0 ? 'h-10 w-10' : 'h-8 w-8'} />
-                    </div>
+                    <div className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full flex items-center justify-center flex-shrink-0 ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-supporting/20'}`}><User className={index === 0 ? 'h-10 w-10' : 'h-8 w-8'} /></div>
                     <div className={index === 0 ? '' : 'text-center'}>
                       <h4 className={`font-bold text-foreground ${index === 0 ? 'text-lg' : ''}`}>{person.name}</h4>
-                      <p className={`text-sm ${index === 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                        {person.position}
-                      </p>
+                      <p className={`text-sm ${index === 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Biro Internal */}
             <div className="mb-8">
-              <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                <Briefcase className="h-4 w-4 text-primary" />
-                Biro Internal
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                {biroInternal.map((person, index) => (
-                  <div key={person.name} className="bg-muted rounded-xl p-4 text-center animate-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
+              <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2"><Briefcase className="h-4 w-4 text-primary" />Biro Internal</h4>
+              <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                {biroInternal.map((person) => (
+                  <motion.div key={person.name} variants={fadeUp} className="bg-muted rounded-xl p-4 text-center">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2"><User className="h-6 w-6 text-primary" /></div>
                     <h5 className="font-medium text-sm text-foreground">{person.name}</h5>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
-            
-            {/* Kepala Divisi/Biro */}
+
+            {/* Kepala Divisi */}
             <div className="w-full">
               <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-                {divisi.map((person, index) => (
-                  <div
-                    key={person.name + person.position}
-                    className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border animate-fade-in"
-                    style={{ animationDelay: `${index * 0.03}s` }}
-                  >
+              <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                {divisi.map((person) => (
+                  <motion.div key={person.name + person.position} variants={fadeUp} className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="h-6 w-6 text-accent" />
-                      </div>
+                      <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0"><User className="h-6 w-6 text-accent" /></div>
                       <div>
                         <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
                         <p className="text-xs text-muted-foreground">{person.position}</p>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
-
-            {/* Note */}
-            <div className="bg-gradient-to-r from-primary/5 to-supporting/5 rounded-2xl p-6 text-center mt-12">
-              <p className="text-muted-foreground">
-                Di bawah struktur FIM Pusat terdapat <span className="font-semibold text-foreground">60 Regional + 1 Diaspora</span> dan <span className="font-semibold text-foreground">18 FIM Club</span>
-              </p>
+              </motion.div>
             </div>
           </div>
         </div>
