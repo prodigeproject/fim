@@ -110,7 +110,22 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
   }
+}
+
+/* PWA Safe Areas */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @layer utilities {

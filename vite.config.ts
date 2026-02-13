@@ -2,7 +2,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,7 +11,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon.png', 'logo-fim.png'],
@@ -20,7 +18,7 @@ export default defineConfig(({ mode }) => ({
         name: 'Forum Indonesia Muda',
         short_name: 'FIM',
         description: 'Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang',
-        theme_color: '#1e3a5f',
+        theme_color: '#E60012',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
@@ -31,21 +29,22 @@ export default defineConfig(({ mode }) => ({
             src: '/favicon.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
           },
           {
             src: '/favicon.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
-          }
+            purpose: 'any maskable',
+          },
         ],
         categories: ['education', 'social', 'community'],
         lang: 'id',
         dir: 'ltr',
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/atfrjhydmhpdwfepbkij\.supabase\.co\/rest\/v1\/.*/i,
@@ -54,7 +53,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 5, // 5 minutes
+                maxAgeSeconds: 60 * 5,
               },
               networkTimeoutSeconds: 10,
             },
@@ -66,7 +65,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'supabase-storage-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
             },
           },
@@ -92,6 +91,7 @@ export default defineConfig(({ mode }) => ({
           'vendor-charts': ['recharts'],
           'vendor-motion': ['framer-motion'],
           'vendor-i18n': ['i18next', 'react-i18next'],
+          'vendor-pwa': ['vite-plugin-pwa'],
         }
       }
     }

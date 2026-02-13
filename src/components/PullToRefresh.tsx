@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, ReactNode } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { RefreshCw, Loader2 } from "lucide-react";
+import { useIsStandalone, haptic } from "@/hooks/usePWA";
 
 interface PullToRefreshProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ export function PullToRefresh({
   threshold = 80,
   className = "",
 }: PullToRefreshProps) {
+  const isStandalone = useIsStandalone();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,7 +29,7 @@ export function PullToRefresh({
   const rotation = useTransform(currentY, [0, threshold], [0, 360]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (disabled || isRefreshing) return;
+    if (disabled || isRefreshing || !isStandalone) return;
     
     const container = containerRef.current;
     if (container && container.scrollTop === 0) {
@@ -55,6 +57,7 @@ export function PullToRefresh({
     setIsPulling(false);
     
     if (pullDistance >= threshold) {
+      haptic();
       setIsRefreshing(true);
       try {
         await onRefresh();

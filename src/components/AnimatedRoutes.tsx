@@ -21,6 +21,7 @@ const Donasi = lazy(() => import("@/pages/Donasi"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const NewsletterUnsubscribe = lazy(() => import("@/pages/NewsletterUnsubscribe"));
+const Install = lazy(() => import("@/pages/Install"));
 
 // Lazy load Admin imports
 const AdminLogin = lazy(() => import("@/pages/admin/AdminLogin"));
@@ -117,6 +118,7 @@ const AnimatedRoutes = () => {
           <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
           <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
           <Route path="/unsubscribe" element={<PageTransition><NewsletterUnsubscribe /></PageTransition>} />
+          <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
           
           {/* Legacy routes redirect */}
           <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
