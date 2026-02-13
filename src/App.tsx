@@ -12,6 +12,9 @@ import { SkipToContent } from "@/components/SkipToContent";
 
 const queryClient = new QueryClient();
 
+import { PWASplashScreen } from "@/components/PWASplashScreen";
+import { OfflineBanner } from "@/components/OfflineBanner";
+
 const App = () => (
   <HelmetProvider>
     <ThemeProvider defaultTheme="system">
@@ -19,6 +22,8 @@ const App = () => (
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <ErrorBoundary>
+              <PWASplashScreen />
+              <OfflineBanner />
               <SkipToContent />
               <Toaster />
               <Sonner />

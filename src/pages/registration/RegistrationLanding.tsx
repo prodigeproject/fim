@@ -292,7 +292,7 @@ export default function RegistrationLanding() {
                       </Button>
                     </Link>
                     <Link to="/portal/login">
-                      <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/20 min-h-[48px]">
+                      <Button size="lg" variant="ghost" className="w-full sm:w-auto border border-white text-white hover:bg-white/20 min-h-[48px]">
                         <LogIn className="mr-2 h-5 w-5" />
                         {t('portal.hasAccount', 'Sudah Punya Akun')}
                       </Button>
