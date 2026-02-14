@@ -13,6 +13,7 @@ import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 import { ReCaptcha } from "@/components/ReCaptcha";
 import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 export default function RegistrationLogin() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function RegistrationLogin() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Dynamic error state
   const [errorType, setErrorType] = useState<string | null>(null);
@@ -52,6 +54,26 @@ export default function RegistrationLogin() {
     setErrorType(null);
     setErrorMessage("");
     setRemainingAttempts(null);
+
+    // Validate Turnstile
+    if (!turnstileToken) {
+      toast.error("Silakan selesaikan verifikasi Turnstile");
+      return;
+    }
+
+    try {
+      const { data: tsData, error: tsError } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token: turnstileToken },
+      });
+      if (tsError || !tsData?.success) {
+        toast.error("Verifikasi Turnstile gagal. Silakan coba lagi.");
+        setTurnstileToken(null);
+        return;
+      }
+    } catch {
+      toast.error("Gagal memverifikasi Turnstile");
+      return;
+    }
 
     // Validate reCAPTCHA if enabled
     if (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key) {
@@ -327,10 +349,15 @@ export default function RegistrationLogin() {
                     onError={() => setRecaptchaToken(null)}
                   />
                 )}
+                <TurnstileWidget
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key && !recaptchaToken)}
+                  disabled={isSubmitting || !turnstileToken || (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key && !recaptchaToken)}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
