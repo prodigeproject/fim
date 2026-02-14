@@ -81,6 +81,7 @@ import { RegistrationAuthProvider } from "@/contexts/RegistrationAuthContext";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 import { RequireAdmin } from "@/components/admin/RequireAdmin";
 import RegistrationGate from "@/components/RegistrationGate";
+import TurnstileGuard from "@/components/TurnstileGuard";
 
 // Loading fallback component
 const PageLoader = () => (
@@ -125,9 +126,9 @@ const AnimatedRoutes = () => {
           <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
           {/* Registration routes - /portal */}
-          <Route path="/portal" element={<RegistrationLanding />} />
-          <Route path="/portal/login" element={<RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate>} />
-          <Route path="/portal/signup" element={<RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate>} />
+          <Route path="/portal" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mengakses Portal Pendaftaran FIM"><RegistrationLanding /></TurnstileGuard>} />
+          <Route path="/portal/login" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk masuk ke Portal Pendaftaran"><RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
+          <Route path="/portal/signup" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mendaftar di Portal FIM"><RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
           <Route path="/portal/closed" element={<RegistrationClosed />} />
           <Route path="/portal/success" element={<RegistrationSuccess />} />
           <Route path="/portal/verify" element={<VerifyEmail />} />
@@ -139,7 +140,7 @@ const AnimatedRoutes = () => {
           
           {/* Legacy /daftar routes removed - all redirects handled by _redirects */}
           {/* Admin routes - wrapped in AdminAuthProvider */}
-          <Route path="/admin" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+          <Route path="/admin" element={<TurnstileGuard title="Verifikasi Keamanan Admin" description="Selesaikan verifikasi untuk mengakses Panel Admin FIM"><AdminAuthProvider><AdminLogin /></AdminAuthProvider></TurnstileGuard>} />
           <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
           <Route path="/admin/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
           <Route path="/admin/*" element={

@@ -12,6 +12,7 @@ import { SEO } from "@/components/SEO";
 import { z } from "zod";
 import { ReCaptcha } from "@/components/ReCaptcha";
 import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
@@ -31,6 +32,7 @@ export default function AdminLogin() {
   const [attempts, setAttempts] = useState(0);
   const [redirecting, setRedirecting] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Redirect if already logged in with role
   useEffect(() => {
@@ -62,6 +64,29 @@ export default function AdminLogin() {
     }
 
     setIsLoading(true);
+
+    // Validate Turnstile
+    if (!turnstileToken) {
+      setError("Silakan selesaikan verifikasi Turnstile");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data: tsData, error: tsError } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token: turnstileToken },
+      });
+      if (tsError || !tsData?.success) {
+        setError("Verifikasi Turnstile gagal. Silakan coba lagi.");
+        setTurnstileToken(null);
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      setError("Gagal memverifikasi Turnstile");
+      setIsLoading(false);
+      return;
+    }
 
     // Validate reCAPTCHA if enabled
     if (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key) {
@@ -223,10 +248,16 @@ export default function AdminLogin() {
                 />
               )}
 
+              <TurnstileWidget
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || attempts >= 5 || (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key && !recaptchaToken)}
+                disabled={isLoading || attempts >= 5 || !turnstileToken || (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key && !recaptchaToken)}
               >
                 {isLoading ? (
                   <>

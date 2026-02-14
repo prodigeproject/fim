@@ -13,6 +13,7 @@ import logoFim from "@/assets/logo-fim.png";
 import PhoneInput from "@/components/PhoneInput";
 import { ReCaptcha } from "@/components/ReCaptcha";
 import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -50,6 +51,7 @@ export default function RegistrationSignup() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [signupCompleted, setSignupCompleted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Only redirect if already logged in AND not during/after signup process
   useEffect(() => {
@@ -146,6 +148,26 @@ export default function RegistrationSignup() {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Password dan konfirmasi password tidak cocok");
+      return;
+    }
+
+    // Validate Turnstile
+    if (!turnstileToken) {
+      toast.error("Silakan selesaikan verifikasi Turnstile");
+      return;
+    }
+
+    try {
+      const { data: tsData, error: tsError } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token: turnstileToken },
+      });
+      if (tsError || !tsData?.success) {
+        toast.error("Verifikasi Turnstile gagal. Silakan coba lagi.");
+        setTurnstileToken(null);
+        return;
+      }
+    } catch {
+      toast.error("Gagal memverifikasi Turnstile");
       return;
     }
 
@@ -375,10 +397,15 @@ export default function RegistrationSignup() {
                     onError={() => setRecaptchaToken(null)}
                   />
                 )}
+                <TurnstileWidget
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail || (recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key && !recaptchaToken)}
+                  disabled={isSubmitting || !!phoneError || !!emailError || !passwordStrength.isValid || isCheckingEmail || !turnstileToken || (recaptchaConfig?.enabled_signup && recaptchaConfig?.site_key && !recaptchaToken)}
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
