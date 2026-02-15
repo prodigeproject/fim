@@ -52,13 +52,13 @@ const Footer = () => {
   };
 
   const quickLinks = [
-    { name: "Tentang FIM", path: "/tentang" },
-    { name: "Regional FIM", path: "/tentang/regional" },
-    { name: "FIM Club", path: "/tentang/fim-club" },
-    { name: "Pelatihan FIM", path: "/program/pelatihan" },
-    { name: "Relawan", path: "/gabung-relawan" },
-    { name: "Alumni", path: "/cerita-alumni" },
-    { name: "FAQ", path: "/faq" },
+    { name: t("nav.aboutFim", "Tentang FIM"), path: "/tentang" },
+    { name: t("nav.regionalFim", "Regional FIM"), path: "/tentang/regional" },
+    { name: t("nav.fimClub", "FIM Club"), path: "/tentang/fim-club" },
+    { name: t("nav.training", "Pelatihan FIM"), path: "/program/pelatihan" },
+    { name: t("nav.volunteer", "Relawan"), path: "/gabung-relawan" },
+    { name: t("nav.alumni", "Alumni"), path: "/cerita-alumni" },
+    { name: t("nav.faq", "FAQ"), path: "/faq" },
   ];
 
   const socialLinks = [

@@ -24,9 +24,9 @@ const Navbar = () => {
       name: t("nav.about", "Tentang"),
       path: "/tentang",
       children: [
-        { name: t("nav.about", "Tentang FIM"), path: "/tentang" },
-        { name: "Regional FIM", path: "/tentang/regional" },
-        { name: "FIM Club", path: "/tentang/fim-club" },
+        { name: t("nav.aboutFim", "Tentang FIM"), path: "/tentang" },
+        { name: t("nav.regionalFim", "Regional FIM"), path: "/tentang/regional" },
+        { name: t("nav.fimClub", "FIM Club"), path: "/tentang/fim-club" },
       ],
     },
     {
@@ -152,19 +152,19 @@ const Navbar = () => {
                   <>
                     <button
                       onClick={() => {
-                        if (link.name === "Tentang") setTentangOpen(!tentangOpen);
-                        if (link.name === "Program") setProgramOpen(!programOpen);
+                        if (link.path === "/tentang") setTentangOpen(!tentangOpen);
+                        if (link.path === "/program") setProgramOpen(!programOpen);
                       }}
                       className="flex items-center justify-between w-full px-4 py-3 text-foreground font-medium"
                     >
                       {link.name}
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${
-                          (link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen) ? "rotate-180" : ""
+                          (link.path === "/tentang" && tentangOpen) || (link.path === "/program" && programOpen) ? "rotate-180" : ""
                         }`}
                       />
                     </button>
-                    {((link.name === "Tentang" && tentangOpen) || (link.name === "Program" && programOpen)) && (
+                    {((link.path === "/tentang" && tentangOpen) || (link.path === "/program" && programOpen)) && (
                       <div className="pl-4 bg-muted/50">
                         {link.children.map((child) => (
                           <Link
@@ -199,12 +199,12 @@ const Navbar = () => {
             <div className="px-4 pt-4 space-y-2">
               <Link to="/portal" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Daftar
+                  {t("nav.register", "Daftar")}
                 </Button>
               </Link>
               <Link to="/donasi" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-primary text-primary-foreground">
-                  Donasi
+                  {t("nav.donate", "Donasi")}
                 </Button>
               </Link>
             </div>

@@ -136,18 +136,18 @@ export default function RegistrationLanding() {
   }, [isOpen, registrationEndDate, registrationStartDate]);
 
   const benefits = [
-    { title: "Pengembangan Karakter", desc: "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan" },
-    { title: "Pengembangan Kompetensi", desc: "Meningkatkan skill kepemimpinan, kebijakan publik, dan soft skills" },
-    { title: "Jaringan Nasional", desc: "Terhubung dengan ribuan alumni dari 61 regional di Indonesia" },
-    { title: "Dampak Nyata", desc: "Kesempatan untuk berkontribusi melalui proyek sosial" },
+    { title: t("portal.benefits.character", "Pengembangan Karakter"), desc: t("portal.benefits.characterDesc", "Membangun integritas, kepedulian, dan nilai-nilai kepemimpinan") },
+    { title: t("portal.benefits.competency", "Pengembangan Kompetensi"), desc: t("portal.benefits.competencyDesc", "Meningkatkan skill kepemimpinan, kebijakan publik, dan soft skills") },
+    { title: t("portal.benefits.network", "Jaringan Nasional"), desc: t("portal.benefits.networkDesc", "Terhubung dengan ribuan alumni dari 61 regional di Indonesia") },
+    { title: t("portal.benefits.impact", "Dampak Nyata"), desc: t("portal.benefits.impactDesc", "Kesempatan untuk berkontribusi melalui proyek sosial") },
   ];
 
   const requirements = [
-    "WNI usia 18-35 tahun",
-    "Pendidikan minimal SMA/sederajat",
-    "Berkomitmen mengikuti seluruh rangkaian program",
-    "Memiliki kepedulian terhadap isu sosial",
-    "Bersedia berkontribusi di ekosistem FIM",
+    t("portal.requirements.age", "WNI usia 18-35 tahun"),
+    t("portal.requirements.education", "Pendidikan minimal SMA/sederajat"),
+    t("portal.requirements.commitment", "Berkomitmen mengikuti seluruh rangkaian program"),
+    t("portal.requirements.concern", "Memiliki kepedulian terhadap isu sosial"),
+    t("portal.requirements.contribute", "Bersedia berkontribusi di ekosistem FIM"),
   ];
 
   if (isLoading) {
@@ -359,7 +359,7 @@ export default function RegistrationLanding() {
             <motion.div variants={scaleIn} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
               <div className="flex items-center gap-2 mb-6">
                 <CheckCircle className="h-5 w-5 text-supporting" />
-                <h3 className="text-lg font-semibold text-foreground">Manfaat Mengikuti FIM</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("portal.benefits.title", "Manfaat Mengikuti FIM")}</h3>
               </div>
               <div className="space-y-4">
                 {benefits.map((benefit, i) => (
@@ -385,7 +385,7 @@ export default function RegistrationLanding() {
             <motion.div variants={scaleIn} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg">
               <div className="flex items-center gap-2 mb-6">
                 <Users className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold text-foreground">Persyaratan Pendaftar</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("portal.requirements.title", "Persyaratan Pendaftar")}</h3>
               </div>
               <div className="space-y-3">
                 {requirements.map((req, index) => (
@@ -414,13 +414,11 @@ export default function RegistrationLanding() {
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex items-start gap-4">
                 <Info className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">Pendaftaran Akan Dibuka</h3>
+                  <h3 className="font-semibold text-foreground mb-2">{t("portal.registrationWillOpen", "Pendaftaran Akan Dibuka")}</h3>
                   <p className="text-muted-foreground">
-                    Pendaftaran untuk {batchData?.batch_name} akan dibuka pada{" "}
-                    <span className="font-semibold text-foreground">
-                      {format(parseISO(registrationStartDate), "d MMMM yyyy", { locale: currentLocale })}
-                    </span>
-                    . Ikuti channel WA untuk mendapatkan notifikasi saat pendaftaran dibuka.
+                    {t("portal.registrationWillOpenDesc", "Pendaftaran untuk {batchName} akan dibuka pada {date}. Ikuti channel WA untuk mendapatkan notifikasi saat pendaftaran dibuka.")
+                      .replace("{batchName}", batchData?.batch_name || "")
+                      .replace("{date}", format(parseISO(registrationStartDate), "d MMMM yyyy", { locale: currentLocale }))}
                   </p>
                 </div>
               </div>
@@ -445,7 +443,7 @@ export default function RegistrationLanding() {
             >
               <MessageSquare className="h-5 w-5 text-supporting" />
               <span className="text-sm font-medium">
-                📢 Ikuti Channel WA <strong>FIMers Update</strong> untuk info terbaru!
+                📢 {t("portal.followWaChannel", "Ikuti Channel WA FIMers Update untuk info terbaru!")}
               </span>
               <ExternalLink className="h-4 w-4" />
             </a>
