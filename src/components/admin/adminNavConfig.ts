@@ -58,6 +58,7 @@ export const adminNavConfig: NavItem[] = [
       { label: "Regional", href: "/admin/regionals", icon: MapPin, permissionKey: "regionals" },
       { label: "Alumni", href: "/admin/alumni", icon: Users, permissionKey: "alumni" },
       { label: "Mitra", href: "/admin/partners", icon: Handshake, permissionKey: "partners" },
+      { label: "Pengurus (About)", href: "/admin/about-profiles", icon: Users, permissionKey: "about_profiles" },
     ],
   },
   { label: "Video Featured", href: "/admin/featured-videos", icon: Video, permissionKey: "featured_videos" },

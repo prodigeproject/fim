@@ -3,6 +3,11 @@ import PageHero from "@/components/PageHero";
 import { SEO } from "@/components/SEO";
 import { Target, Compass, User, Users, Briefcase, Building2, Heart, Shield, Star, Handshake, Scale, UserCheck, MessageSquare, BookOpen, Brain, Clipboard, Network } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -10,7 +15,50 @@ const fadeUp = {
 };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
+interface AboutProfile {
+  id: string;
+  name: string;
+  position: string;
+  section: string;
+  photo_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
 const Tentang = () => {
+  const { t } = useLanguage();
+  const queryClient = useQueryClient();
+
+  const { data: profiles } = useQuery({
+    queryKey: ["about-profiles-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("about_profiles")
+        .select("*")
+        .eq("is_active", true)
+        .order("section")
+        .order("sort_order");
+      if (error) throw error;
+      return data as AboutProfile[];
+    },
+  });
+
+  // Realtime updates
+  useEffect(() => {
+    const channel = supabase
+      .channel("about-profiles-public-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "about_profiles" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["about-profiles-public"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  const strukturYayasan = profiles?.filter(p => p.section === "yayasan") || [];
+  const bph = profiles?.filter(p => p.section === "bph") || [];
+  const biroInternal = profiles?.filter(p => p.section === "biro_internal") || [];
+  const divisi = profiles?.filter(p => p.section === "divisi") || [];
+
   const pilarKarakter = [
     { icon: Heart, name: "Cinta Kasih", desc: "Mencintai sesama dan berbagi kebaikan" },
     { icon: Shield, name: "Integritas", desc: "Konsisten dalam nilai dan tindakan" },
@@ -40,37 +88,11 @@ const Tentang = () => {
     { year: "2023", event: "Momentum 2 dekade FIM, telah menghasilkan 30 lebih angkatan pelatihan FIM, lebih dari 60 regional, dan hampir 4000 alumni." },
     { year: "2025", event: "Perdana pelatihan FIM tematik Kebijakan Publik bekerjasama dengan Nalar Institute untuk menghasilkan ahli kebijakan publik di level intermediate & advance." },
   ];
-  const strukturYayasan = [
-    { name: "Elmir Amien", position: "Founder / Ketua Dewan Pembina" },
-    { name: "Tatty Elmir", position: "Founder / Anggota Dewan Pembina" },
-    { name: "Mandira Bienna Elmir", position: "Ketua Pengurus Yayasan" },
-  ];
-  const bph = [
-    { name: "Dicky Adra Pratama", position: "Direktur Eksekutif" },
-    { name: "Anisah Fitriana Rakhman", position: "Sekretaris Bendahara" },
-    { name: "M Rafif Quthronada", position: "Sekretaris Jenderal" },
-    { name: "Umi Rif'atus S", position: "Wakil Sekretaris Jenderal" },
-  ];
-  const biroInternal = [
-    { name: "Chairul Sinaga" }, { name: "Aisyah Hasim" }, { name: "Arian Handika" }, { name: "Dita Amallya" },
-  ];
-  const divisi = [
-    { name: "Nurul Aini", position: "Kepala Biro Media & Komunikasi" },
-    { name: "Ayu Rahma Dania", position: "Kepala Divisi Pelatihan" },
-    { name: "Mutia Intan Permana G", position: "Kepala Divisi Partnership & Eksternal" },
-    { name: "M Aridha Firdaus", position: "Wakil Kepala Divisi Partnership & Eksternal" },
-    { name: "Ilham Ramodhan", position: "Kepala Divisi Pengembangan Regional" },
-    { name: "RM Agung Dian Perdana", position: "Wakil Kepala Divisi Pengembangan Regional" },
-    { name: "Ulfa Rodiah", position: "Kepala Divisi Pengembangan Komunitas" },
-    { name: "Arif Setiawan", position: "Kepala Divisi Tanggap Bencana dan Kemanusiaan" },
-    { name: "Helmi Anwar R.W.", position: "Wakil Kepala Divisi Tanggap Bencana dan Kemanusiaan" },
-    { name: "RM Kuncoro Probojati", position: "Kepala Bisnis Usaha" },
-  ];
 
   return (
     <Layout>
-      <SEO title="Tentang FIM" description="Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda. Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin sejak 2003." />
-      <PageHero title="Tentang Forum Indonesia Muda" subtitle="Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin" />
+      <SEO title={t("about.hero.title", "Tentang FIM")} description={t("about.hero.subtitle", "Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda.")} />
+      <PageHero title={t("about.hero.title", "Tentang Forum Indonesia Muda")} subtitle={t("about.hero.subtitle", "Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin")} />
 
       {/* Visi Misi */}
       <section className="py-16 lg:py-20 bg-secondary">
@@ -78,12 +100,12 @@ const Tentang = () => {
           <motion.div className="grid lg:grid-cols-2 gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
               <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6"><Target className="h-8 w-8 text-primary" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">Visi</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.vision", "Visi")}</h2>
               <p className="text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
             </motion.div>
             <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
               <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6"><Compass className="h-8 w-8 text-supporting" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">Misi</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.mission", "Misi")}</h2>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">1.</span>Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.</li>
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">2.</span>Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).</li>
@@ -114,7 +136,7 @@ const Tentang = () => {
         <div className="container mx-auto px-4">
           <motion.div className="grid lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             <motion.div className="lg:col-span-2" variants={fadeUp}>
-              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Nilai & Pilar FIM</h2>
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">{t("about.values", "Nilai & Pilar FIM")}</h2>
               <p className="text-muted-foreground mb-4 text-xs">Fondasi karakter dan kepemimpinan</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -142,7 +164,7 @@ const Tentang = () => {
               </div>
             </motion.div>
             <motion.div className="lg:col-span-3" variants={fadeUp}>
-              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">Perjalanan Kami</h2>
+              <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">{t("about.history", "Perjalanan Kami")}</h2>
               <p className="text-muted-foreground mb-4 text-xs">Sejarah Forum Indonesia Muda</p>
               <div className="grid grid-cols-3 gap-2">
                 {sejarah.map((item) => (
@@ -157,84 +179,100 @@ const Tentang = () => {
         </div>
       </section>
 
-      {/* Struktur Pengurus */}
+      {/* Struktur Pengurus - Now from DB */}
       <section className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
-          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Struktur Pengurus</motion.h2>
+          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("about.structure", "Struktur Pengurus")}</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
 
           {/* Yayasan */}
-          <div className="max-w-6xl mx-auto mb-16">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
-              <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
-            </div>
-            <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-              {strukturYayasan.map((person, index) => (
-                <motion.div key={person.name} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ${index < 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}><User className="h-8 w-8" /></div>
-                    <div>
-                      <h4 className="font-bold text-foreground">{person.name}</h4>
-                      <p className={`text-sm ${index < 2 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Pengurus FIM */}
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center"><Users className="h-6 w-6 text-supporting" /></div>
-              <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
-            </div>
-            <motion.div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-              {bph.map((person, index) => (
-                <motion.div key={person.name} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index === 0 ? 'lg:col-span-4 bg-gradient-to-r from-primary/5 to-supporting/5 border-2 border-primary/20' : ''}`}>
-                  <div className={`flex ${index === 0 ? 'flex-row items-center' : 'flex-col items-center text-center'} gap-4`}>
-                    <div className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full flex items-center justify-center flex-shrink-0 ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-supporting/20'}`}><User className={index === 0 ? 'h-10 w-10' : 'h-8 w-8'} /></div>
-                    <div className={index === 0 ? '' : 'text-center'}>
-                      <h4 className={`font-bold text-foreground ${index === 0 ? 'text-lg' : ''}`}>{person.name}</h4>
-                      <p className={`text-sm ${index === 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Biro Internal */}
-            <div className="mb-8">
-              <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2"><Briefcase className="h-4 w-4 text-primary" />Biro Internal</h4>
-              <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                {biroInternal.map((person) => (
-                  <motion.div key={person.name} variants={fadeUp} className="bg-muted rounded-xl p-4 text-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2"><User className="h-6 w-6 text-primary" /></div>
-                    <h5 className="font-medium text-sm text-foreground">{person.name}</h5>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
-
-            {/* Kepala Divisi */}
-            <div className="w-full">
-              <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
-              <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                {divisi.map((person) => (
-                  <motion.div key={person.name + person.position} variants={fadeUp} className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0"><User className="h-6 w-6 text-accent" /></div>
+          {strukturYayasan.length > 0 && (
+            <div className="max-w-6xl mx-auto mb-16">
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
+                <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
+              </div>
+              <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                {strukturYayasan.map((person, index) => (
+                  <motion.div key={person.id} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${index < 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        {person.photo_url ? <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" /> : <User className="h-8 w-8" />}
+                      </div>
                       <div>
-                        <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
-                        <p className="text-xs text-muted-foreground">{person.position}</p>
+                        <h4 className="font-bold text-foreground">{person.name}</h4>
+                        <p className={`text-sm ${index < 2 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
                       </div>
                     </div>
                   </motion.div>
                 ))}
               </motion.div>
             </div>
-          </div>
+          )}
+
+          {/* Pengurus FIM */}
+          {bph.length > 0 && (
+            <div className="max-w-6xl mx-auto">
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-supporting/10 rounded-lg flex items-center justify-center"><Users className="h-6 w-6 text-supporting" /></div>
+                <h3 className="text-2xl font-bold text-foreground">Struktur Pengurus FIM</h3>
+              </div>
+              <motion.div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                {bph.map((person, index) => (
+                  <motion.div key={person.id} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index === 0 ? 'lg:col-span-4 bg-gradient-to-r from-primary/5 to-supporting/5 border-2 border-primary/20' : ''}`}>
+                    <div className={`flex ${index === 0 ? 'flex-row items-center' : 'flex-col items-center text-center'} gap-4`}>
+                      <div className={`${index === 0 ? 'w-20 h-20' : 'w-16 h-16'} rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-supporting/20'}`}>
+                        {person.photo_url ? <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" /> : <User className={index === 0 ? 'h-10 w-10' : 'h-8 w-8'} />}
+                      </div>
+                      <div className={index === 0 ? '' : 'text-center'}>
+                        <h4 className={`font-bold text-foreground ${index === 0 ? 'text-lg' : ''}`}>{person.name}</h4>
+                        <p className={`text-sm ${index === 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{person.position}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Biro Internal */}
+              {biroInternal.length > 0 && (
+                <div className="mb-8">
+                  <h4 className="text-center font-semibold text-foreground mb-4 flex items-center justify-center gap-2"><Briefcase className="h-4 w-4 text-primary" />Biro Internal</h4>
+                  <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                    {biroInternal.map((person) => (
+                      <motion.div key={person.id} variants={fadeUp} className="bg-muted rounded-xl p-4 text-center">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 overflow-hidden">
+                          {person.photo_url ? <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" /> : <User className="h-6 w-6 text-primary" />}
+                        </div>
+                        <h5 className="font-medium text-sm text-foreground">{person.name}</h5>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Kepala Divisi */}
+              {divisi.length > 0 && (
+                <div className="w-full">
+                  <h4 className="text-center font-semibold text-foreground mb-6">Kepala Divisi & Biro</h4>
+                  <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+                    {divisi.map((person) => (
+                      <motion.div key={person.id} variants={fadeUp} className="bg-card rounded-xl p-4 shadow-md hover:shadow-lg transition-all border border-border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {person.photo_url ? <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" /> : <User className="h-6 w-6 text-accent" />}
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-foreground text-sm">{person.name}</h5>
+                            <p className="text-xs text-muted-foreground">{person.position}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
     </Layout>

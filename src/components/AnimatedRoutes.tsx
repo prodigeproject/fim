@@ -61,6 +61,7 @@ const InterviewCalendar = lazy(() => import("@/pages/admin/InterviewCalendar"));
 const RecruiterAssignmentsManagement = lazy(() => import("@/pages/admin/RecruiterAssignmentsManagement"));
 const ToolsSettings = lazy(() => import("@/pages/admin/ToolsSettings"));
 const ArticleSchedulingCalendar = lazy(() => import("@/pages/admin/ArticleSchedulingCalendar"));
+const AboutProfilesManagement = lazy(() => import("@/pages/admin/AboutProfilesManagement"));
 
 // Lazy load Registration imports
 const RegistrationLanding = lazy(() => import("@/pages/registration/RegistrationLanding"));
@@ -184,6 +185,7 @@ const AnimatedRoutes = () => {
                   <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
                   <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
                   <Route path="tools" element={<RequireSuperAdmin><ToolsSettings /></RequireSuperAdmin>} />
+                  <Route path="about-profiles" element={<RequireAdmin permissionKey="about_profiles"><AboutProfilesManagement /></RequireAdmin>} />
                   <Route path="article-calendar" element={<RequireAdmin permissionKey="article_scheduling"><ArticleSchedulingCalendar /></RequireAdmin>} />
                   
                   <Route path="*" element={<AdminNotFound />} />
