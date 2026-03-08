@@ -156,7 +156,8 @@ export default function AdminDashboard() {
           </header>
 
           {/* Desktop Header with Notification */}
-          <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card">
+          <header className="hidden lg:flex items-center justify-between p-4 border-b bg-card">
+            <h1 className="text-lg font-semibold text-foreground">{pageTitle}</h1>
             <NotificationDropdown />
           </header>
 
