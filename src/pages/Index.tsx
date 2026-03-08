@@ -329,23 +329,27 @@ const Index = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <motion.section 
-        className="py-16 bg-background"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeUp}
-      >
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
-            <blockquote className="text-xl lg:text-2xl text-foreground italic mb-4">
-              "{t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"
-            </blockquote>
-            <div className="w-16 h-1 bg-accent mx-auto" />
+            <ScrollReveal type="scale">
+              <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
+            </ScrollReveal>
+            <TextReveal
+              as="p"
+              text={`"${t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"`}
+              className="text-xl lg:text-2xl text-foreground italic mb-4"
+              delay={0.2}
+            />
+            <ScrollReveal type="fade-up" delay={0.6}>
+              <div className="w-16 h-1 bg-accent mx-auto" />
+            </ScrollReveal>
           </div>
         </div>
-      </motion.section>
+      </section>
+
+      {/* FIM Journey Timeline */}
+      <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
       <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
