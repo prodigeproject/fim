@@ -177,11 +177,10 @@ export default function EmailSettings() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Alert variant="destructive">
+                <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Gmail memiliki batas pengiriman 500 email/hari untuk akun personal.
-                    Untuk pengiriman massal, gunakan Resend.
                   </AlertDescription>
                 </Alert>
 
