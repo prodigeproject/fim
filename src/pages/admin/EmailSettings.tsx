@@ -27,12 +27,9 @@ import {
 
 export default function EmailSettings() {
   const { isSuperAdmin } = useAdminAuth();
-  const [isTestingResend, setIsTestingResend] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   
-  // Email provider settings (stored in database in production)
-  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("gmail");
-  const [resendApiKey, setResendApiKey] = useState("");
   const [gmailEmail, setGmailEmail] = useState("");
   const [gmailAppPassword, setGmailAppPassword] = useState("");
   const [replyToAddress, setReplyToAddress] = useState("");
