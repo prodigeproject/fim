@@ -23,6 +23,24 @@ export default function AdminDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
+  // Resolve current page title from nav config
+  const pageTitle = useMemo(() => {
+    const path = location.pathname;
+    for (const item of adminNavConfig) {
+      if (item.href === path) return item.label;
+      if (item.children) {
+        for (const child of item.children) {
+          if (child.href === path || path.startsWith(child.href + "/")) return child.label;
+        }
+      }
+    }
+    // Fallback for special pages
+    if (path.includes("/profile")) return "Profil";
+    if (path.includes("/change-password")) return "Ubah Password";
+    if (path.includes("/article-editor")) return "Editor Artikel";
+    return "";
+  }, [location.pathname]);
+
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
   
