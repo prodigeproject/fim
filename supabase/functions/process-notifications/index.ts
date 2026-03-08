@@ -1,22 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendGmailEmail, getEmailTemplate, TemplateName } from "../_shared/notification-service.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
+import { sendEmailWithConfig, getSmtpConfig, getEmailTemplate, createServiceClient } from "../_shared/notification-service.ts";
+import type { TemplateName } from "../_shared/notification-service.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createServiceClient();
 
     // Fetch pending notifications
     const { data: notifications, error: fetchError } = await supabase
@@ -31,11 +25,13 @@ serve(async (req) => {
 
     console.log(`Processing ${notifications?.length || 0} notifications`);
 
+    // Get SMTP config once for all emails (reads DB config + env secrets)
+    const smtpConfig = await getSmtpConfig(supabase);
+
     let processed = 0;
     let failed = 0;
 
     for (const notification of notifications || []) {
-      // Mark as processing
       await supabase
         .from("notification_queue")
         .update({ status: "processing" })
@@ -48,7 +44,7 @@ serve(async (req) => {
             notification.payload as Record<string, string>
           );
 
-          const result = await sendGmailEmail({
+          const result = await sendEmailWithConfig(smtpConfig, {
             to: notification.recipient_email,
             subject: template.subject,
             html: template.html,
@@ -84,11 +80,11 @@ serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });
