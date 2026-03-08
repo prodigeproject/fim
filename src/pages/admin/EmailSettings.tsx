@@ -100,11 +100,23 @@ export default function EmailSettings() {
   };
 
   const handleSaveSettings = async () => {
+    setIsSaving(true);
     try {
-      // In production, save to database
+      const { error } = await supabase
+        .from("email_settings")
+        .update({
+          mail_from_name: fromName,
+          mail_from_address: gmailEmail || undefined,
+          reply_to_address: replyToAddress || null,
+        } as any)
+        .not("id", "is", null); // update all rows
+
+      if (error) throw error;
       toast.success("Pengaturan berhasil disimpan");
-    } catch (error) {
-      toast.error("Gagal menyimpan pengaturan");
+    } catch (error: any) {
+      toast.error("Gagal menyimpan: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
