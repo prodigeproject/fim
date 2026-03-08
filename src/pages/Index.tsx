@@ -312,10 +312,10 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-secondary">
+      <section className="py-16 bg-secondary/50">
         <div className="container mx-auto px-4">
           <motion.div 
-            className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
