@@ -377,8 +377,8 @@ export default function EmailSettings() {
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleSaveSettings}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button onClick={handleSaveSettings} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Simpan Pengaturan Provider
             </Button>
           </div>
