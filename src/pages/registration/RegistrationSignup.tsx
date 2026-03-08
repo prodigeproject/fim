@@ -52,6 +52,22 @@ export default function RegistrationSignup() {
   const [signupCompleted, setSignupCompleted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRetries, setTurnstileRetries] = useState(0);
+
+  const handleTurnstileError = () => {
+    setTurnstileError(true);
+    setTurnstileRetries(prev => prev + 1);
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
+  };
+
+  const handleTurnstileRetry = () => {
+    setTurnstileError(false);
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
+  };
 
   // Only redirect if already logged in AND not during/after signup process
   useEffect(() => {
