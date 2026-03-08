@@ -362,13 +362,13 @@ const Index = () => {
               {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
             </p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
+          <StaggerContainer className="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
               <StaggerItem key={testimonial.name}>
                 <motion.div
-                  className="bg-card rounded-xl p-6 shadow-lg relative group cursor-default h-full"
-                  whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="bg-card rounded-xl p-6 shadow-[var(--shadow-sm)] border border-border/40 relative group cursor-default h-full"
+                  whileHover={{ y: -6, boxShadow: "var(--shadow-xl)" }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
                   <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4 group-hover:text-accent/60 transition-colors" />
                   <div className="flex items-center gap-3 mb-4">
