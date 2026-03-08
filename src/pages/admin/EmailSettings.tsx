@@ -143,17 +143,20 @@ function ProviderTab() {
   const [fromName, setFromName] = useState("Forum Indonesia Muda");
   const [isSaving, setIsSaving] = useState(false);
 
+  const [hasDbPassword, setHasDbPassword] = useState(false);
+
   useEffect(() => {
     const loadSettings = async () => {
       const { data } = await supabase
         .from("email_settings")
-        .select("mail_from_name, mail_from_address, reply_to_address")
+        .select("mail_from_name, mail_from_address, mail_username, mail_password_encrypted, reply_to_address")
         .limit(1)
         .maybeSingle();
       if (data) {
         setFromName(data.mail_from_name || "Forum Indonesia Muda");
-        setGmailEmail(data.mail_from_address || "");
+        setGmailEmail((data as any).mail_username || data.mail_from_address || "");
         setReplyToAddress((data as any).reply_to_address || "");
+        setHasDbPassword(!!(data as any).mail_password_encrypted);
       }
     };
     loadSettings();
