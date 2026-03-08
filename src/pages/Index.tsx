@@ -301,7 +301,7 @@ const Index = () => {
             <div className="flex justify-center gap-3 mt-4">
               {bannerImages.map((_, index) => (
                 <button key={index} className="relative w-6 h-6 flex items-center justify-center" onClick={() => emblaApi?.scrollTo(index)} aria-label={`Go to slide ${index + 1}`}>
-                  <span className={`w-2 h-2 rounded-full transition-colors ${index === selectedIndex ? "bg-primary" : "bg-muted hover:bg-muted-foreground/50"}`} />
+                  <span className={`w-2.5 h-2.5 rounded-full transition-colors ${index === selectedIndex ? "bg-primary" : "bg-muted hover:bg-muted-foreground/50"}`} />
                 </button>
               ))}
             </div>
