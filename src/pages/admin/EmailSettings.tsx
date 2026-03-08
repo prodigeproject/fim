@@ -143,17 +143,20 @@ function ProviderTab() {
   const [fromName, setFromName] = useState("Forum Indonesia Muda");
   const [isSaving, setIsSaving] = useState(false);
 
+  const [hasDbPassword, setHasDbPassword] = useState(false);
+
   useEffect(() => {
     const loadSettings = async () => {
       const { data } = await supabase
         .from("email_settings")
-        .select("mail_from_name, mail_from_address, reply_to_address")
+        .select("mail_from_name, mail_from_address, mail_username, mail_password_encrypted, reply_to_address")
         .limit(1)
         .maybeSingle();
       if (data) {
         setFromName(data.mail_from_name || "Forum Indonesia Muda");
-        setGmailEmail(data.mail_from_address || "");
+        setGmailEmail((data as any).mail_username || data.mail_from_address || "");
         setReplyToAddress((data as any).reply_to_address || "");
+        setHasDbPassword(!!(data as any).mail_password_encrypted);
       }
     };
     loadSettings();
@@ -178,15 +181,22 @@ function ProviderTab() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
+      const updates: Record<string, any> = {
+        mail_from_name: fromName,
+        mail_from_address: gmailEmail || null,
+        mail_username: gmailEmail || null,
+        reply_to_address: replyToAddress || null,
+      };
+      // Only update password if user entered a new one
+      if (gmailAppPassword) {
+        updates.mail_password_encrypted = gmailAppPassword;
+      }
       const { error } = await supabase
         .from("email_settings")
-        .update({
-          mail_from_name: fromName,
-          mail_from_address: gmailEmail || undefined,
-          reply_to_address: replyToAddress || null,
-        } as any)
+        .update(updates)
         .not("id", "is", null);
       if (error) throw error;
+      setGmailAppPassword(""); // Clear password field after save
       toast.success("Pengaturan berhasil disimpan");
     } catch (error: any) {
       toast.error("Gagal menyimpan: " + (error.message || "Unknown error"));
@@ -251,8 +261,10 @@ function ProviderTab() {
             <Separator />
             <div className="space-y-2">
               <Label htmlFor="gmail-password">App Password</Label>
-              <Input id="gmail-password" type="password" value={gmailAppPassword} onChange={(e) => setGmailAppPassword(e.target.value)} placeholder="xxxx xxxx xxxx xxxx" />
-              <p className="text-xs text-muted-foreground">Kredensial disimpan sebagai secret. Kosongkan jika tidak ingin mengubah.</p>
+              <Input id="gmail-password" type="password" value={gmailAppPassword} onChange={(e) => setGmailAppPassword(e.target.value)} placeholder={hasDbPassword ? "••••••••••••••••" : "xxxx xxxx xxxx xxxx"} />
+              <p className="text-xs text-muted-foreground">
+                {hasDbPassword ? "App Password sudah tersimpan. Isi ulang hanya jika ingin mengubah." : "Masukkan App Password Gmail untuk akun pengirim."}
+              </p>
             </div>
           </div>
 
