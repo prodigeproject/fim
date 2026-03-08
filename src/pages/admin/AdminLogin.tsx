@@ -94,9 +94,6 @@ export default function AdminLogin() {
       setIsLoading(false);
       return;
     }
-      setIsLoading(false);
-      return;
-    }
 
     // Validate reCAPTCHA if enabled
     if (recaptchaConfig?.enabled_admin_login && recaptchaConfig?.site_key) {
