@@ -399,31 +399,39 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan */}
-      <section className="py-16 bg-background" aria-labelledby="program-section-heading">
+      <section className="py-16 bg-secondary" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.programs.title", "Program Unggulan")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</motion.p>
-          <motion.div 
-            className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
+          <ScrollReveal type="fade-up">
+            <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
+          </ScrollReveal>
+          <ScrollReveal type="fade-up" delay={0.1}>
+            <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</p>
+          </ScrollReveal>
+          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
             {programUnggulan.map((program) => (
-              <motion.div key={program.title} variants={fadeUp}>
-                <Link to={program.link} className="group">
-                  <article className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 h-full">
-                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+              <StaggerItem key={program.title}>
+                <Link to={program.link} className="group block h-full">
+                  <motion.article
+                    className="bg-card rounded-xl p-6 shadow-lg h-full border border-transparent group-hover:border-primary/20"
+                    whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <motion.div
+                      className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
+                      whileHover={{ rotate: -5, scale: 1.1 }}
+                    >
                       <program.icon className="h-7 w-7 text-primary" />
-                    </div>
+                    </motion.div>
                     <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">{program.title}</h3>
                     <p className="text-sm text-muted-foreground">{program.description}</p>
-                  </article>
+                    <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      Selengkapnya <ArrowRight className="ml-1 h-4 w-4" />
+                    </div>
+                  </motion.article>
                 </Link>
-              </motion.div>
+              </StaggerItem>
             ))}
-          </motion.div>
+          </StaggerContainer>
           <div className="text-center mt-8">
             <Link to="/program/program-unggulan"><Button variant="outline">{t("home.programs.viewAll", "Lihat Semua Program")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
