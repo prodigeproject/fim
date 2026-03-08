@@ -148,109 +148,28 @@ export default function EmailSettings() {
         <TabsContent value="provider" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Pilih Provider Email</CardTitle>
+              <CardTitle>Provider Email</CardTitle>
               <CardDescription>
-                Pilih layanan yang akan digunakan untuk mengirim email
+                Sistem menggunakan Gmail SMTP untuk mengirim semua email
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Resend Option */}
-                <div
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    emailProvider === "resend"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => setEmailProvider("resend")}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Resend</h4>
-                    {emailProvider === "resend" && (
-                      <Badge className="bg-green-100 text-green-800">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Aktif
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Layanan email modern dengan API yang mudah digunakan
-                  </p>
+            <CardContent>
+              <div className="p-4 border rounded-lg border-primary bg-primary/5">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">Gmail SMTP</h4>
+                  <Badge className="bg-green-100 text-green-800">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Aktif
+                  </Badge>
                 </div>
-
-                {/* Gmail SMTP Option */}
-                <div
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    emailProvider === "gmail"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => setEmailProvider("gmail")}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Gmail SMTP</h4>
-                    {emailProvider === "gmail" && (
-                      <Badge className="bg-green-100 text-green-800">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Aktif
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Gunakan akun Gmail untuk mengirim email
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Semua email dikirim melalui Gmail SMTP (newsletter, notifikasi, broadcast)
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Resend Configuration */}
-          {emailProvider === "resend" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Konfigurasi Resend
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertDescription>
-                    Resend API Key sudah dikonfigurasi melalui environment variables.
-                    Untuk mengubah, update secret RESEND_API_KEY.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-2">
-                  <Label htmlFor="resend-key">API Key (opsional - override)</Label>
-                  <Input
-                    id="resend-key"
-                    type="password"
-                    placeholder="re_xxxxxxxxxx"
-                    value={resendApiKey}
-                    onChange={(e) => setResendApiKey(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Kosongkan untuk menggunakan API key dari environment
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <Button variant="outline" asChild>
-                    <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Buka Resend Dashboard
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Gmail SMTP Configuration */}
-          {emailProvider === "gmail" && (
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5" />
