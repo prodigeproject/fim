@@ -352,39 +352,46 @@ const Index = () => {
       <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
-      <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
+      <section className="py-16 bg-background" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.alumniSection.title", "Jejak Alumni FIM")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
-            {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
-          </motion.p>
-          <motion.div 
-            className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
+          <ScrollReveal type="fade-up">
+            <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
+          </ScrollReveal>
+          <ScrollReveal type="fade-up" delay={0.1}>
+            <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+              {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
+            </p>
+          </ScrollReveal>
+          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
-              <motion.div key={testimonial.name} className="bg-card rounded-xl p-6 shadow-lg relative" variants={fadeUp}>
-                <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4" />
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <testimonial.icon className="h-6 w-6 text-primary" />
+              <StaggerItem key={testimonial.name}>
+                <motion.div
+                  className="bg-card rounded-xl p-6 shadow-lg relative group cursor-default h-full"
+                  whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4 group-hover:text-accent/60 transition-colors" />
+                  <div className="flex items-center gap-3 mb-4">
+                    <motion.div
+                      className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center"
+                      whileHover={{ rotate: 10, scale: 1.1 }}
+                    >
+                      <testimonial.icon className="h-6 w-6 text-primary" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{testimonial.name}</h3>
+                      <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">{testimonial.name}</h3>
-                    <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
+                  <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
+                  <div className="border-t pt-3">
+                    <p className="text-xs font-medium text-foreground">{testimonial.position}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.company}</p>
                   </div>
-                </div>
-                <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-foreground">{testimonial.position}</p>
-                  <p className="text-xs text-muted-foreground">{testimonial.company}</p>
-                </div>
-              </motion.div>
+                </motion.div>
+              </StaggerItem>
             ))}
-          </motion.div>
+          </StaggerContainer>
           <div className="text-center mt-8">
             <Link to="/cerita-alumni"><Button variant="outline">Lihat Semua Alumni <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
