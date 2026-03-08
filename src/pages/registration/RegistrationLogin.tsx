@@ -77,6 +77,7 @@ export default function RegistrationLogin() {
     // Validate Turnstile
     if (!turnstileToken) {
       toast.error("Silakan selesaikan verifikasi Turnstile");
+      setIsSubmitting(false);
       return;
     }
 
