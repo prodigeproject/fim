@@ -260,8 +260,6 @@ export default function EmailSettings() {
                 </div>
               </CardContent>
             </Card>
-          )}
-
           {/* Test Email */}
           <Card>
             <CardHeader>
