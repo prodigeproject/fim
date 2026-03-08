@@ -225,7 +225,7 @@ export default function TechnicalDocumentation() {
         "Routing: React Router DOM v6",
         "Backend: Supabase (PostgreSQL + Auth + Storage)",
         "Edge Functions: Deno Runtime",
-        "Email: Resend API",
+        "Email: Gmail SMTP (denomailer)",
         "PDF Export: jsPDF",
         "Excel Export: xlsx (SheetJS)",
         "Animation: Framer Motion",
