@@ -73,11 +73,14 @@ export default function RegistrationLogin() {
       });
       if (tsError || !tsData?.success) {
         toast.error("Verifikasi Turnstile gagal. Silakan coba lagi.");
-        setTurnstileToken(null);
+        resetTurnstile();
+        setIsSubmitting(false);
         return;
       }
     } catch {
       toast.error("Gagal memverifikasi Turnstile");
+      resetTurnstile();
+      setIsSubmitting(false);
       return;
     }
 
