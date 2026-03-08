@@ -89,7 +89,7 @@ const Navbar = () => {
 
                 {/* Dropdown */}
                 {link.children && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-card rounded-lg shadow-xl border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  <div className="absolute top-full left-0 mt-2 w-52 bg-card/95 backdrop-blur-xl rounded-xl shadow-[var(--shadow-xl)] border border-border/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                     <div className="py-2">
                       {link.children.map((child) => (
                         <Link
