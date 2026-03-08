@@ -574,12 +574,14 @@ function HomeStatItem({ stat, index }: { stat: { icon: React.ComponentType<{ cla
   return (
     <motion.div
       ref={ref}
-      className="bg-card rounded-xl p-6 text-center shadow-lg"
+      className="bg-card rounded-xl p-6 text-center shadow-[var(--shadow-sm)] border border-border/40"
       variants={fadeUp}
       custom={index}
     >
-      <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{formattedCount}</div>
+      <div className="w-12 h-12 rounded-xl bg-primary/8 flex items-center justify-center mx-auto mb-3">
+        <stat.icon className="h-6 w-6 text-primary" />
+      </div>
+      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1 tracking-tight">{formattedCount}</div>
       <div className="text-sm text-muted-foreground">{stat.label}</div>
     </motion.div>
   );
