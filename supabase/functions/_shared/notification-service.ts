@@ -62,6 +62,7 @@ export async function getSmtpConfig(supabase?: any): Promise<SmtpConfig> {
           password: envPassword,
           fromAddress: data.mail_from_address || data.mail_username || envUser,
           fromName: data.mail_from_name || "Forum Indonesia Muda",
+          replyTo: data.reply_to_address || undefined,
         };
       }
     } catch (e) {
