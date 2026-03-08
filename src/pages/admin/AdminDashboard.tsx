@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
 import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { adminNavConfig } from "@/components/admin/adminNavConfig";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
