@@ -375,7 +375,7 @@ export default function DashboardHome() {
       {/* Article Stats Charts */}
       {isSuperAdmin && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">Statistik Artikel</h2>
+          <h2 className="text-lg font-semibold mb-4">Grafik Performa Artikel</h2>
           <ArticleStatsCharts />
         </div>
       )}

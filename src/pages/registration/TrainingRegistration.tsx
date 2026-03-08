@@ -554,6 +554,9 @@ export default function TrainingRegistration() {
                   <span className="text-xs mt-1 text-center">{step.title}</span>
                 </button>
               ))}
+              </div>
+              {/* Mobile scroll hint gradient */}
+              <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none md:hidden" />
             </div>
           </div>
         </header>

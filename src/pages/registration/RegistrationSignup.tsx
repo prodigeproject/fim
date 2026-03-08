@@ -414,10 +414,42 @@ export default function RegistrationSignup() {
                   />
                 )}
                 <TurnstileWidget
-                  onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => setTurnstileToken(null)}
-                  onError={() => setTurnstileToken(null)}
+                  key={turnstileKey}
+                  onVerify={(token) => { setTurnstileToken(token); setTurnstileError(false); }}
+                  onExpire={() => handleTurnstileError()}
+                  onError={() => handleTurnstileError()}
                 />
+                {turnstileError && (
+                  <div className="text-center space-y-2">
+                    {turnstileRetries >= 3 ? (
+                      <div className="text-sm text-destructive">
+                        <p>Verifikasi gagal berulang kali.</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => window.location.reload()}
+                        >
+                          Muat Ulang Halaman
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        <p>Verifikasi gagal dimuat.</p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto"
+                          onClick={handleTurnstileRetry}
+                        >
+                          Coba Lagi Verifikasi
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
                 <Button 
                   type="submit" 
                   className="w-full" 
