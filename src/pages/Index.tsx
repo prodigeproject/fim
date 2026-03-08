@@ -258,7 +258,7 @@ const Index = () => {
               className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block"
             >
               <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
-                <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
+                <span className="animate-pulse">🔥</span> {t("home.hero.registrationBanner", "Pendaftaran Angkatan Baru Segera Dibuka!")}
               </p>
             </motion.div>
             <motion.div 
