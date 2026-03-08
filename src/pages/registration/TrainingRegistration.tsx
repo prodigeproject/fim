@@ -534,7 +534,8 @@ export default function TrainingRegistration() {
             </div>
 
             {/* Step Indicators */}
-            <div className="flex justify-between mt-4 overflow-x-auto pb-2">
+            <div className="relative mt-4">
+              <div className="flex justify-between overflow-x-auto pb-2 scrollbar-hide">
               {STEPS.map((step) => (
                 <button
                   key={step.id}
