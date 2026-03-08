@@ -272,7 +272,20 @@ export default function EmailSettings() {
 
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="gmail-email">Email Gmail</Label>
+                    <Label htmlFor="from-name">Nama Pengirim</Label>
+                    <Input
+                      id="from-name"
+                      type="text"
+                      placeholder="Forum Indonesia Muda"
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Nama yang muncul sebagai pengirim email
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail-email">Email Pengirim (From)</Label>
                     <Input
                       id="gmail-email"
                       type="email"
@@ -281,6 +294,22 @@ export default function EmailSettings() {
                       onChange={(e) => setGmailEmail(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reply-to">Reply-To Address</Label>
+                    <Input
+                      id="reply-to"
+                      type="email"
+                      placeholder="info@forumindonesiamuda.org"
+                      value={replyToAddress}
+                      onChange={(e) => setReplyToAddress(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Alamat email tujuan balasan. Kosongkan jika sama dengan email pengirim.
+                    </p>
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-2">
                     <Label htmlFor="gmail-password">App Password</Label>
                     <Input
@@ -291,7 +320,7 @@ export default function EmailSettings() {
                       onChange={(e) => setGmailAppPassword(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Buat App Password di Google Account → Security → 2-Step Verification → App Passwords
+                      Kredensial disimpan sebagai secret dan tidak ditampilkan. Kosongkan jika tidak ingin mengubah.
                     </p>
                   </div>
                 </div>
