@@ -18,11 +18,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const {
-      moderator_email,
-      moderator_name,
-      article_title,
-      revision_notes,
-      admin_name,
+      moderator_email, moderator_name, article_title, revision_notes, admin_name,
     }: RevisionNotificationRequest = await req.json();
 
     console.log("Sending revision notification to:", moderator_email);
@@ -40,9 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: template.html,
     });
 
-    if (!result.success) {
-      throw new Error(result.error || "Failed to send email");
-    }
+    if (!result.success) throw new Error(result.error || "Failed to send email");
 
     console.log("Revision notification sent successfully");
 

@@ -1,12 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
+import { sendGmailEmail, getEmailTemplate, wrapEmailLayout, emailGreeting, emailParagraph, emailInfoBox } from "../_shared/notification-service.ts";
 
 interface SelectionStageRequest {
   registrantEmail: string;
@@ -19,19 +13,14 @@ interface SelectionStageRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
-    const { 
-      registrantEmail, 
-      registrantName, 
-      stage, 
-      passed, 
-      interviewDate,
-      note,
-      finalResult 
+    const {
+      registrantEmail, registrantName, stage, passed, interviewDate, note, finalResult,
     }: SelectionStageRequest = await req.json();
 
     if (!registrantEmail || !registrantName || !stage) {
@@ -42,171 +31,120 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     let subject = "";
-    let content = "";
+    let emailHtml = "";
     const isPassed = passed === true || stage === "lolos_administrasi";
-    let statusColor = isPassed ? "#22c55e" : "#ef4444";
-    let statusEmoji = isPassed ? "✅" : "❌";
 
     if (stage === "administrasi" || stage === "lolos_administrasi") {
       if (isPassed) {
-        subject = "Selamat! Anda Lolos Seleksi Administrasi FIM";
-        content = `
-          <p>Selamat! Anda telah <strong style="color: #22c55e;">LOLOS SELEKSI ADMINISTRASI</strong> Forum Indonesia Muda.</p>
-          <p>Tahap selanjutnya adalah <strong>Seleksi Wawancara</strong>.</p>
-          ${interviewDate ? `
-          <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Wawancara:</p>
-            <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #166534;">${interviewDate}</p>
-          </div>
-          ` : '<p>Tim kami akan segera menghubungi Anda untuk jadwal wawancara.</p>'}
-          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-        `;
+        subject = "✅ Selamat! Anda Lolos Seleksi Administrasi FIM";
+        emailHtml = wrapEmailLayout({
+          title: "✅ Lolos Seleksi Administrasi",
+          headerColor: "#16A34A",
+          headerGradientEnd: "#15803D",
+          preheader: "Selamat! Anda lolos seleksi administrasi Forum Indonesia Muda.",
+          body: `
+            ${emailGreeting(registrantName)}
+            ${emailInfoBox({
+              color: "#22C55E", bgColor: "#F0FDF4",
+              content: `<p style="margin:0;font-size:17px;font-weight:700;color:#16A34A;">✅ Anda LOLOS Seleksi Administrasi!</p>`,
+            })}
+            ${emailParagraph("Tahap selanjutnya adalah <strong>Seleksi Wawancara</strong>.")}
+            ${interviewDate ? emailInfoBox({
+              color: "#3B82F6", bgColor: "#EFF6FF",
+              content: `<p style="margin:0 0 4px;font-size:13px;color:#9CA3AF;">Jadwal Wawancara</p><p style="margin:0;font-size:18px;font-weight:700;color:#2563EB;">${interviewDate}</p>`,
+            }) : emailParagraph("Tim kami akan segera menghubungi Anda untuk jadwal wawancara.")}
+            ${note ? emailParagraph(`<strong>Catatan:</strong> ${note}`) : ""}
+            <p style="color:#9CA3AF;font-size:14px;margin-top:24px;">Salam hangat,<br><strong style="color:#111827;">Tim Forum Indonesia Muda</strong></p>
+          `,
+        });
       } else {
         subject = "Informasi Seleksi Administrasi FIM";
-        content = `
-          <p>Terima kasih atas keikutsertaan Anda dalam seleksi Forum Indonesia Muda.</p>
-          <p>Dengan berat hati, kami informasikan bahwa Anda <strong style="color: #ef4444;">belum lolos seleksi administrasi</strong> pada periode ini.</p>
-          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-          <p>Jangan berkecil hati, Anda dapat mencoba kembali di periode pendaftaran berikutnya.</p>
-        `;
+        emailHtml = wrapEmailLayout({
+          title: "Hasil Seleksi Administrasi",
+          preheader: "Informasi hasil seleksi administrasi Forum Indonesia Muda.",
+          body: `
+            ${emailGreeting(registrantName)}
+            ${emailParagraph("Terima kasih atas keikutsertaan Anda dalam seleksi Forum Indonesia Muda.")}
+            ${emailInfoBox({
+              color: "#EF4444", bgColor: "#FEF2F2",
+              content: `<p style="margin:0;font-size:15px;color:#DC2626;">Dengan berat hati, kami informasikan bahwa Anda <strong>belum lolos seleksi administrasi</strong> pada periode ini.</p>`,
+            })}
+            ${note ? emailParagraph(`<strong>Catatan:</strong> ${note}`) : ""}
+            ${emailParagraph("Jangan berkecil hati — Anda dapat mencoba kembali di periode pendaftaran berikutnya.")}
+            <p style="color:#9CA3AF;font-size:14px;margin-top:24px;">Salam hangat,<br><strong style="color:#111827;">Tim Forum Indonesia Muda</strong></p>
+          `,
+        });
       }
-    } else if (stage === "wawancara") {
-      if (interviewDate) {
-        subject = "Undangan Wawancara Forum Indonesia Muda";
-        statusColor = "#3b82f6";
-        statusEmoji = "📅";
-        content = `
-          <p>Anda diundang untuk mengikuti <strong>Sesi Wawancara</strong> Forum Indonesia Muda.</p>
-          <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Wawancara:</p>
-            <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #1e40af;">${interviewDate}</p>
-          </div>
-          <p>Pastikan Anda hadir tepat waktu dan mempersiapkan diri dengan baik.</p>
-          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-        `;
-      }
+    } else if (stage === "wawancara" && interviewDate) {
+      // Use the centralized template for interview-scheduled
+      const template = getEmailTemplate("interview-scheduled", {
+        full_name: registrantName,
+        date: interviewDate,
+        time: "",
+        location: "",
+        meeting_link: "",
+      });
+      subject = template.subject;
+      emailHtml = template.html;
     } else if (stage === "interview_reschedule") {
-      subject = "📅 Perubahan Jadwal Wawancara Forum Indonesia Muda";
-      statusColor = "#f59e0b";
-      statusEmoji = "🔄";
-      content = `
-        <p>Kami menginformasikan bahwa jadwal wawancara Anda telah <strong style="color: #f59e0b;">diubah</strong>.</p>
-        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-          <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Baru:</p>
-          <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #b45309;">${interviewDate || 'Akan dikonfirmasi'}</p>
-        </div>
-        <p>Mohon pastikan Anda hadir sesuai jadwal baru yang telah ditetapkan.</p>
-        ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-      `;
+      subject = "📅 Perubahan Jadwal Wawancara FIM";
+      emailHtml = wrapEmailLayout({
+        title: "🔄 Jadwal Diubah",
+        headerColor: "#D97706",
+        headerGradientEnd: "#B45309",
+        body: `
+          ${emailGreeting(registrantName)}
+          ${emailParagraph("Kami menginformasikan bahwa jadwal wawancara Anda telah <strong>diubah</strong>.")}
+          ${emailInfoBox({
+            color: "#F59E0B", bgColor: "#FFFBEB",
+            content: `<p style="margin:0 0 4px;font-size:13px;color:#9CA3AF;">Jadwal Baru</p><p style="margin:0;font-size:18px;font-weight:700;color:#D97706;">${interviewDate || "Akan dikonfirmasi"}</p>`,
+          })}
+          ${note ? emailParagraph(`<strong>Catatan:</strong> ${note}`) : ""}
+          ${emailParagraph("Mohon pastikan Anda hadir sesuai jadwal baru yang telah ditetapkan.")}
+          <p style="color:#9CA3AF;font-size:14px;margin-top:24px;">Salam hangat,<br><strong style="color:#111827;">Tim Forum Indonesia Muda</strong></p>
+        `,
+      });
     } else if (stage === "interview_reminder") {
-      subject = "⏰ Pengingat Wawancara FIM - Besok!";
-      statusColor = "#8b5cf6";
-      statusEmoji = "⏰";
-      content = `
-        <p>Ini adalah <strong>pengingat</strong> untuk jadwal wawancara Anda besok.</p>
-        <div style="background-color: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-          <p style="margin: 0; font-size: 14px; color: #6b7280;">Jadwal Wawancara:</p>
-          <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #6d28d9;">${interviewDate || ''}</p>
-        </div>
-        <p>Pastikan Anda sudah siap dan tepat waktu. Semoga sukses!</p>
-        ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-      `;
+      const template = getEmailTemplate("interview-reminder", {
+        full_name: registrantName,
+        date: interviewDate || "",
+        time: "",
+        meeting_link: "",
+      });
+      subject = template.subject;
+      emailHtml = template.html;
     } else if (stage === "pengumuman") {
-      if (finalResult === "lolos") {
-        subject = "🎉 Selamat! Anda Diterima di Forum Indonesia Muda";
-        statusColor = "#22c55e";
-        statusEmoji = "🎉";
-        content = `
-          <p>Selamat! Anda telah resmi <strong style="color: #22c55e;">DITERIMA</strong> sebagai peserta Forum Indonesia Muda! 🎉</p>
-          <p>Kami sangat senang menyambut Anda dalam komunitas kami.</p>
-          <p>Tim FIM akan segera menghubungi Anda untuk informasi lebih lanjut mengenai program pelatihan.</p>
-          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-        `;
-      } else {
-        subject = "Informasi Hasil Seleksi FIM";
-        statusColor = "#ef4444";
-        statusEmoji = "❌";
-        content = `
-          <p>Terima kasih telah mengikuti seluruh rangkaian seleksi Forum Indonesia Muda.</p>
-          <p>Dengan berat hati, kami informasikan bahwa Anda <strong style="color: #ef4444;">belum dapat diterima</strong> pada periode ini.</p>
-          ${note ? `<p><strong>Catatan:</strong> ${note}</p>` : ''}
-          <p>Kami mengapresiasi semangat dan usaha Anda. Jangan menyerah, terus kembangkan diri dan coba lagi di periode berikutnya!</p>
-        `;
-      }
+      const template = getEmailTemplate("final-result", {
+        full_name: registrantName,
+        result: finalResult || "tidak_lolos",
+      });
+      subject = template.subject;
+      emailHtml = template.html;
     }
 
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <tr>
-            <td style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">FIM Indonesia</h1>
-              <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 14px;">Forum Indonesia Muda</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 24px;">Halo, ${registrantName}! ${statusEmoji}</h2>
-              ${content}
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
-                © ${new Date().getFullYear()} Forum Indonesia Muda. All rights reserved.
-              </p>
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                Email ini dikirim secara otomatis. Jika ada pertanyaan, silakan hubungi tim kami.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `;
+    if (!subject || !emailHtml) {
+      return new Response(
+        JSON.stringify({ error: "Invalid stage or missing data" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "FIM Indonesia <noreply@resend.dev>",
-        to: [registrantEmail],
-        subject: subject,
-        html: emailHtml,
-      }),
+    const result = await sendGmailEmail({
+      to: registrantEmail,
+      subject,
+      html: emailHtml,
     });
 
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error("Resend API error:", errorData);
-      throw new Error(`Email sending failed: ${errorData}`);
-    }
+    if (!result.success) throw new Error(result.error || "Failed to send email");
 
-    const emailData = await emailResponse.json();
-    console.log("Selection stage email sent successfully:", emailData);
+    console.log("Selection stage email sent successfully");
 
     return new Response(
-      JSON.stringify({ success: true, data: emailData }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error in notify-selection-stage function:", error);
+    console.error("Error in notify-selection-stage:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
