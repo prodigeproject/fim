@@ -223,10 +223,6 @@ export default function ToolsSettings() {
             <Shield className="h-4 w-4" />
             reCAPTCHA
           </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            Email & Queue
-          </TabsTrigger>
           <TabsTrigger value="backup" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Backup Data
