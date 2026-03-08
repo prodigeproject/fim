@@ -27,25 +27,30 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ── Auth & role check ───────────────────────────────
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return json({ error: "Unauthorized" }, 401);
-    }
-
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+    const token = authHeader.replace("Bearer ", "");
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data: isSuperAdmin } = await supabaseAdmin.rpc("has_role", {
-      _user_id: user.id,
-      _role: "super_admin",
-    });
-    if (!isSuperAdmin) return json({ error: "Forbidden" }, 403);
+    // Allow service role key OR super_admin user
+    const isServiceRole = token === supabaseServiceKey;
+    if (!isServiceRole) {
+      if (!authHeader.startsWith("Bearer ")) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
+      if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+
+      const { data: isSuperAdmin } = await supabaseAdmin.rpc("has_role", {
+        _user_id: user.id,
+        _role: "super_admin",
+      });
+      if (!isSuperAdmin) return json({ error: "Forbidden" }, 403);
+    }
 
     // ── Find orphaned registrant auth users ─────────────
     // Get all auth_user_ids from fim_registrations
