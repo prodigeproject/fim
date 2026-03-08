@@ -126,7 +126,19 @@
     font-family: 'Inter', system-ui, sans-serif;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  h1 { @apply text-4xl lg:text-6xl font-bold leading-tight; }
+  h2 { @apply text-3xl lg:text-4xl font-bold leading-tight; }
+  h3 { @apply text-xl lg:text-2xl font-semibold; }
 }
 
 /* PWA Safe Areas */
