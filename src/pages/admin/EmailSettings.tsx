@@ -75,9 +75,8 @@ export default function EmailSettings() {
       return;
     }
 
-    setIsTestingResend(true);
+    setIsTesting(true);
     try {
-      // Call edge function to test email
       const { error } = await supabase.functions.invoke("newsletter-subscribe", {
         body: {
           email: testEmail,
@@ -92,7 +91,7 @@ export default function EmailSettings() {
     } catch (error: any) {
       toast.error(`Gagal mengirim email: ${error.message || "Unknown error"}`);
     } finally {
-      setIsTestingResend(false);
+      setIsTesting(false);
     }
   };
 
