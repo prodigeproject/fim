@@ -145,7 +145,7 @@ const Tentang = () => {
                     {pilarKarakter.map((item) => (
                       <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
                         <item.icon className="h-3 w-3 text-primary flex-shrink-0" />
-                        <span className="text-[10px] font-medium text-foreground leading-tight">{item.name}</span>
+                        <span className="text-xs font-medium text-foreground leading-tight">{item.name}</span>
                       </div>
                     ))}
                   </div>
@@ -156,7 +156,7 @@ const Tentang = () => {
                     {pilarKepemimpinan.map((item) => (
                       <div key={item.name} className="flex items-center gap-1.5 bg-card rounded px-2 py-1.5 shadow-sm">
                         <item.icon className="h-3 w-3 text-supporting flex-shrink-0" />
-                        <span className="text-[10px] font-medium text-foreground leading-tight">{item.name}</span>
+                        <span className="text-xs font-medium text-foreground leading-tight">{item.name}</span>
                       </div>
                     ))}
                   </div>
