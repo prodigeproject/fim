@@ -261,8 +261,10 @@ function ProviderTab() {
             <Separator />
             <div className="space-y-2">
               <Label htmlFor="gmail-password">App Password</Label>
-              <Input id="gmail-password" type="password" value={gmailAppPassword} onChange={(e) => setGmailAppPassword(e.target.value)} placeholder="xxxx xxxx xxxx xxxx" />
-              <p className="text-xs text-muted-foreground">Kredensial disimpan sebagai secret. Kosongkan jika tidak ingin mengubah.</p>
+              <Input id="gmail-password" type="password" value={gmailAppPassword} onChange={(e) => setGmailAppPassword(e.target.value)} placeholder={hasDbPassword ? "••••••••••••••••" : "xxxx xxxx xxxx xxxx"} />
+              <p className="text-xs text-muted-foreground">
+                {hasDbPassword ? "App Password sudah tersimpan. Isi ulang hanya jika ingin mengubah." : "Masukkan App Password Gmail untuk akun pengirim."}
+              </p>
             </div>
           </div>
 

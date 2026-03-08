@@ -45,22 +45,38 @@ export async function getSmtpConfig(supabase?: any): Promise<SmtpConfig> {
   const envUser = Deno.env.get("GMAIL_USER") || "";
   const envPassword = Deno.env.get("GMAIL_APP_PASSWORD") || "";
 
-  if (supabase) {
+  // If no supabase client passed, create one to always read DB config
+  let client = supabase;
+  if (!client) {
     try {
-      const { data } = await supabase
+      client = createServiceClient();
+    } catch {
+      // Can't create client, use env fallback
+    }
+  }
+
+  if (client) {
+    try {
+      const { data } = await client
         .from("email_settings")
-        .select("mail_host, mail_port, mail_encryption, mail_from_address, mail_from_name, mail_username, reply_to_address")
+        .select("mail_host, mail_port, mail_encryption, mail_from_address, mail_from_name, mail_username, mail_password_encrypted, reply_to_address")
         .limit(1)
         .maybeSingle();
 
       if (data) {
+        // DB credentials take priority over env secrets
+        const dbUsername = data.mail_username || "";
+        const dbPassword = data.mail_password_encrypted || "";
+        const username = dbUsername || envUser;
+        const password = dbPassword || envPassword;
+
         return {
           host: data.mail_host || "smtp.gmail.com",
           port: data.mail_port || 465,
           tls: (data.mail_encryption || "TLS").toUpperCase() !== "NONE",
-          username: data.mail_username || envUser,
-          password: envPassword,
-          fromAddress: data.mail_from_address || data.mail_username || envUser,
+          username,
+          password,
+          fromAddress: data.mail_from_address || username,
           fromName: data.mail_from_name || "Forum Indonesia Muda",
           replyTo: data.reply_to_address || undefined,
         };
