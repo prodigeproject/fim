@@ -352,7 +352,7 @@ const Index = () => {
       <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
-      <section className="py-16 bg-background" aria-labelledby="alumni-section-heading">
+      <section className="py-20 bg-background" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
           <ScrollReveal type="fade-up">
             <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
