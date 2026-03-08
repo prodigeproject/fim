@@ -166,11 +166,11 @@ const Tentang = () => {
             <motion.div className="lg:col-span-3" variants={fadeUp}>
               <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-1">{t("about.history", "Perjalanan Kami")}</h2>
               <p className="text-muted-foreground mb-4 text-xs">Sejarah Forum Indonesia Muda</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {sejarah.map((item) => (
-                  <div key={item.year} className="bg-card rounded-lg p-2 shadow-sm border-l-2 border-primary">
+                  <div key={item.year} className="bg-card rounded-lg p-3 shadow-sm border-l-2 border-primary">
                     <div className="font-bold text-primary text-sm mb-0.5">{item.year}</div>
-                    <p className="text-foreground text-[10px] leading-tight line-clamp-4">{item.event}</p>
+                    <p className="text-foreground text-xs leading-relaxed line-clamp-4">{item.event}</p>
                   </div>
                 ))}
               </div>

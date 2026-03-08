@@ -242,7 +242,7 @@ export default function FeaturedVideoSection() {
               <div className="bg-card rounded-xl p-5 shadow-lg border border-border">
                 <div className="flex items-center gap-2 text-primary text-xs font-semibold mb-2">
                   <Play className="h-3 w-3" />
-                  <span>SEDANG DIPUTAR</span>
+                  <span>{isPlaying ? "SEDANG DIPUTAR" : "VIDEO PILIHAN"}</span>
                 </div>
                 <h3 className="font-bold text-foreground text-lg mb-2 line-clamp-2">
                   {currentVideo.title}

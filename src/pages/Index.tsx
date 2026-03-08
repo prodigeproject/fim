@@ -499,16 +499,11 @@ const Index = () => {
               </>
             ) : (
               <>
-                {[...partnerLogos, ...partnerLogos, ...partnerLogos].map((logo, index) => (
+                {Array.from({ length: 12 }).map((_, index) => (
                   <div key={index} className="flex-shrink-0 mx-4 md:mx-6">
-                    <motion.div 
-                      className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3"
-                      style={{ perspective: 800 }}
-                      whileHover={{ scale: 1.25, y: -10, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
-                      <img src={logo} alt={`Partner ${(index % partnerLogos.length) + 1}`} loading="lazy" className="max-h-full max-w-full object-contain" />
-                    </motion.div>
+                    <div className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3 animate-pulse">
+                      <div className="h-8 w-20 bg-muted rounded" />
+                    </div>
                   </div>
                 ))}
               </>
