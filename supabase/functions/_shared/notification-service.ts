@@ -18,6 +18,7 @@ export interface SmtpConfig {
   password: string;
   fromAddress: string;
   fromName: string;
+  replyTo?: string;
 }
 
 export interface EmailParams {
