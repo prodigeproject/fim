@@ -178,15 +178,22 @@ function ProviderTab() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
+      const updates: Record<string, any> = {
+        mail_from_name: fromName,
+        mail_from_address: gmailEmail || null,
+        mail_username: gmailEmail || null,
+        reply_to_address: replyToAddress || null,
+      };
+      // Only update password if user entered a new one
+      if (gmailAppPassword) {
+        updates.mail_password_encrypted = gmailAppPassword;
+      }
       const { error } = await supabase
         .from("email_settings")
-        .update({
-          mail_from_name: fromName,
-          mail_from_address: gmailEmail || undefined,
-          reply_to_address: replyToAddress || null,
-        } as any)
+        .update(updates)
         .not("id", "is", null);
       if (error) throw error;
+      setGmailAppPassword(""); // Clear password field after save
       toast.success("Pengaturan berhasil disimpan");
     } catch (error: any) {
       toast.error("Gagal menyimpan: " + (error.message || "Unknown error"));
