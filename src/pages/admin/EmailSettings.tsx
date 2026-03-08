@@ -31,10 +31,30 @@ export default function EmailSettings() {
   const [testEmail, setTestEmail] = useState("");
   
   // Email provider settings (stored in database in production)
-  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("resend");
+  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("gmail");
   const [resendApiKey, setResendApiKey] = useState("");
   const [gmailEmail, setGmailEmail] = useState("");
   const [gmailAppPassword, setGmailAppPassword] = useState("");
+  const [replyToAddress, setReplyToAddress] = useState("");
+  const [fromName, setFromName] = useState("Forum Indonesia Muda");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await supabase
+        .from("email_settings")
+        .select("mail_from_name, mail_from_address, reply_to_address")
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setFromName(data.mail_from_name || "Forum Indonesia Muda");
+        setGmailEmail(data.mail_from_address || "");
+        setReplyToAddress((data as any).reply_to_address || "");
+      }
+    };
+    loadSettings();
+  }, []);
   
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
