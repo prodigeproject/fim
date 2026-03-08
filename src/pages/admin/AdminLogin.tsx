@@ -84,12 +84,16 @@ export default function AdminLogin() {
       });
       if (tsError || !tsData?.success) {
         setError("Verifikasi Turnstile gagal. Silakan coba lagi.");
-        setTurnstileToken(null);
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
     } catch {
       setError("Gagal memverifikasi Turnstile");
+      resetTurnstile();
+      setIsLoading(false);
+      return;
+    }
       setIsLoading(false);
       return;
     }
