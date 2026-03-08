@@ -28,10 +28,23 @@ export default function RegistrationLogin() {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileKey, setTurnstileKey] = useState(0);
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRetries, setTurnstileRetries] = useState(0);
 
   const resetTurnstile = () => {
     setTurnstileToken(null);
     setTurnstileKey(prev => prev + 1);
+  };
+
+  const handleTurnstileError = () => {
+    setTurnstileError(true);
+    setTurnstileRetries(prev => prev + 1);
+    resetTurnstile();
+  };
+
+  const handleTurnstileRetry = () => {
+    setTurnstileError(false);
+    resetTurnstile();
   };
 
   // Dynamic error state
