@@ -439,7 +439,7 @@ const Index = () => {
       </section>
 
       {/* Kabar FIM */}
-      <section className="py-16 bg-secondary" aria-labelledby="news-section-heading">
+      <section className="py-20 bg-background" aria-labelledby="news-section-heading">
         <div className="container mx-auto px-4">
           <motion.h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.news.title", "Kabar FIM")}</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.news.subtitle", "Berita dan kegiatan terbaru dari Forum Indonesia Muda")}</motion.p>
