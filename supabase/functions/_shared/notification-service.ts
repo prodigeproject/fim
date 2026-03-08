@@ -135,7 +135,7 @@ export async function sendEmailWithConfig(config: SmtpConfig, params: EmailParam
       subject: params.subject,
       content: params.text || "",
       html: params.html,
-      replyTo: params.replyTo,
+      replyTo: params.replyTo || config.replyTo,
     });
 
     return {
