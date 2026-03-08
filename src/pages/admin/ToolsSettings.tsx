@@ -22,7 +22,6 @@ import {
   Globe,
   FileText,
   Database,
-  Key
 } from "lucide-react";
 
 interface RecaptchaSettings {
