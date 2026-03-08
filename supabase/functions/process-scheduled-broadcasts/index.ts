@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-// No CORS headers - this function should only be called via Supabase Cron or service role
-// Removing wildcard CORS prevents unauthorized browser requests
+import {
+  getSmtpConfig,
+  sendEmailWithConfig,
+  wrapEmailLayout,
+  emailParagraph,
+} from "../_shared/notification-service.ts";
 
 function escapeHtml(input: string) {
   return input
@@ -14,44 +17,29 @@ function escapeHtml(input: string) {
 }
 
 function buildEmailHtml(name: string | null, safeHtml: string) {
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </head>
-      <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#111;max-width:640px;margin:0 auto;padding:24px;">
-        <p>Halo${name ? ` <strong>${escapeHtml(name)}</strong>` : ""},</p>
-        <div style="margin-top:16px;">${safeHtml}</div>
-        <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
-        <p style="color:#666;font-size:12px;">
-          Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.
-        </p>
-      </body>
-    </html>
-  `;
+  return wrapEmailLayout({
+    title: "Newsletter",
+    body: `
+      ${emailParagraph(`Halo${name ? ` <strong>${escapeHtml(name)}</strong>` : ""},`)}
+      <div style="margin-top:16px;">${safeHtml}</div>
+    `,
+    footerText: "Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.",
+  });
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Verify authorization - only allow service_role or cron secret
   const authHeader = req.headers.get("Authorization") ?? "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  
-  // Check if this is a service_role call (from Supabase Cron or internal)
+
   const isServiceRole = authHeader === `Bearer ${supabaseServiceKey}`;
-  
-  // For authenticated user requests, verify super_admin role
+
   if (!isServiceRole) {
-    // Try to get user from auth header
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    
     if (userError || !user) {
       console.error("Unauthorized access attempt to process-scheduled-broadcasts");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -59,14 +47,11 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json" },
       });
     }
-    
-    // Verify super_admin role
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { data: isSuperAdmin, error: roleError } = await supabase.rpc(
       "has_role",
       { _user_id: user.id, _role: "super_admin" }
     );
-    
     if (roleError || !isSuperAdmin) {
       console.error(`Forbidden: User ${user.id} attempted to trigger broadcasts without super_admin role`);
       return new Response(JSON.stringify({ error: "Forbidden - Super admin access required" }), {
@@ -77,10 +62,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const smtpConfig = await getSmtpConfig(supabase);
 
-    // Find pending broadcasts that are due
     const { data: pendingBroadcasts, error: fetchErr } = await supabase
       .from("scheduled_broadcasts")
       .select("*")
@@ -96,7 +80,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log(`Found ${pendingBroadcasts?.length || 0} pending broadcasts`);
-
     let processed = 0;
 
     for (const broadcast of pendingBroadcasts ?? []) {
@@ -123,7 +106,6 @@ const handler = async (req: Request): Promise<Response> => {
       }));
 
       const safeHtml = escapeHtml(broadcast.content).replace(/\n/g, "<br/>");
-      const from = "Forum Indonesia Muda <onboarding@resend.dev>";
 
       let sent = 0;
       let failed = 0;
@@ -131,26 +113,17 @@ const handler = async (req: Request): Promise<Response> => {
       for (const r of recipients) {
         try {
           const html = buildEmailHtml(r.name, safeHtml);
-          const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${resendApiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from,
-              to: [r.email],
-              subject: broadcast.subject,
-              html,
-            }),
+          const result = await sendEmailWithConfig(smtpConfig, {
+            to: r.email,
+            subject: broadcast.subject,
+            html,
           });
 
-          if (!res.ok) {
-            failed++;
-            const errData = await res.json().catch(() => ({}));
-            console.error("Resend error:", r.email, errData);
-          } else {
+          if (result.success) {
             sent++;
+          } else {
+            failed++;
+            console.error("Send error:", r.email, result.error);
           }
         } catch (e) {
           failed++;
@@ -169,7 +142,6 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq("id", broadcast.id);
 
-      // Audit log
       void supabase
         .rpc("log_audit_event", {
           p_user_id: broadcast.created_by,

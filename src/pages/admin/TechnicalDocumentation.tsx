@@ -132,7 +132,7 @@ const migrationSteps = [
   { step: 4, title: "Import Data", description: "Import data dari file backup ke database baru menggunakan Supabase dashboard" },
   { step: 5, title: "Configure Environment", description: "Set environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY)" },
   { step: 6, title: "Deploy Edge Functions", description: "Deploy semua edge functions dari folder supabase/functions" },
-  { step: 7, title: "Configure Secrets", description: "Set secrets (RESEND_API_KEY, dll) di Supabase dashboard" },
+  { step: 7, title: "Configure Secrets", description: "Set secrets (GMAIL_APP_PASSWORD, GMAIL_USER, dll) di environment" },
   { step: 8, title: "Deploy Frontend", description: "Deploy ke hosting (Vercel, Netlify, atau VPS)" },
   { step: 9, title: "Configure DNS", description: "Point domain ke hosting baru dan setup SSL" },
   { step: 10, title: "Testing", description: "Test semua fitur: login, CRUD, email, dll" },
@@ -225,7 +225,7 @@ export default function TechnicalDocumentation() {
         "Routing: React Router DOM v6",
         "Backend: Supabase (PostgreSQL + Auth + Storage)",
         "Edge Functions: Deno Runtime",
-        "Email: Resend API",
+        "Email: Gmail SMTP (denomailer)",
         "PDF Export: jsPDF",
         "Excel Export: xlsx (SheetJS)",
         "Animation: Framer Motion",
@@ -462,7 +462,7 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
 - **State Management**: TanStack Query
 - **Routing**: React Router DOM v6
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
-- **Email**: Resend API
+- **Email**: Gmail SMTP (denomailer)
 
 ## 2. Halaman Publik
 
@@ -628,7 +628,7 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Email</span>
-                  <span>Resend</span>
+                  <span>Gmail SMTP</span>
                 </div>
               </CardContent>
             </Card>
