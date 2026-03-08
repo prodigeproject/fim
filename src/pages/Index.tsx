@@ -11,6 +11,8 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
+import FIMJourneyTimeline from "@/components/FIMJourneyTimeline";
+import { ScrollReveal, TextReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLanguage } from "@/contexts/LanguageContext";
 // Import partner logos
@@ -327,58 +329,69 @@ const Index = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <motion.section 
-        className="py-16 bg-background"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={fadeUp}
-      >
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
-            <blockquote className="text-xl lg:text-2xl text-foreground italic mb-4">
-              "{t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"
-            </blockquote>
-            <div className="w-16 h-1 bg-accent mx-auto" />
+            <ScrollReveal type="scale">
+              <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
+            </ScrollReveal>
+            <TextReveal
+              as="p"
+              text={`"${t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"`}
+              className="text-xl lg:text-2xl text-foreground italic mb-4"
+              delay={0.2}
+            />
+            <ScrollReveal type="fade-up" delay={0.6}>
+              <div className="w-16 h-1 bg-accent mx-auto" />
+            </ScrollReveal>
           </div>
         </div>
-      </motion.section>
+      </section>
+
+      {/* FIM Journey Timeline */}
+      <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
-      <section className="py-16 bg-secondary" aria-labelledby="alumni-section-heading">
+      <section className="py-16 bg-background" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.alumniSection.title", "Jejak Alumni FIM")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
-            {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
-          </motion.p>
-          <motion.div 
-            className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
+          <ScrollReveal type="fade-up">
+            <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
+          </ScrollReveal>
+          <ScrollReveal type="fade-up" delay={0.1}>
+            <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+              {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
+            </p>
+          </ScrollReveal>
+          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
-              <motion.div key={testimonial.name} className="bg-card rounded-xl p-6 shadow-lg relative" variants={fadeUp}>
-                <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4" />
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <testimonial.icon className="h-6 w-6 text-primary" />
+              <StaggerItem key={testimonial.name}>
+                <motion.div
+                  className="bg-card rounded-xl p-6 shadow-lg relative group cursor-default h-full"
+                  whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4 group-hover:text-accent/60 transition-colors" />
+                  <div className="flex items-center gap-3 mb-4">
+                    <motion.div
+                      className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center"
+                      whileHover={{ rotate: 10, scale: 1.1 }}
+                    >
+                      <testimonial.icon className="h-6 w-6 text-primary" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{testimonial.name}</h3>
+                      <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">{testimonial.name}</h3>
-                    <p className="text-xs text-muted-foreground">{testimonial.batch}</p>
+                  <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
+                  <div className="border-t pt-3">
+                    <p className="text-xs font-medium text-foreground">{testimonial.position}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.company}</p>
                   </div>
-                </div>
-                <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
-                <div className="border-t pt-3">
-                  <p className="text-xs font-medium text-foreground">{testimonial.position}</p>
-                  <p className="text-xs text-muted-foreground">{testimonial.company}</p>
-                </div>
-              </motion.div>
+                </motion.div>
+              </StaggerItem>
             ))}
-          </motion.div>
+          </StaggerContainer>
           <div className="text-center mt-8">
             <Link to="/cerita-alumni"><Button variant="outline">Lihat Semua Alumni <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
@@ -386,31 +399,39 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan */}
-      <section className="py-16 bg-background" aria-labelledby="program-section-heading">
+      <section className="py-16 bg-secondary" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
-          <motion.h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.programs.title", "Program Unggulan")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</motion.p>
-          <motion.div 
-            className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-          >
+          <ScrollReveal type="fade-up">
+            <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
+          </ScrollReveal>
+          <ScrollReveal type="fade-up" delay={0.1}>
+            <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</p>
+          </ScrollReveal>
+          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
             {programUnggulan.map((program) => (
-              <motion.div key={program.title} variants={fadeUp}>
-                <Link to={program.link} className="group">
-                  <article className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 h-full">
-                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+              <StaggerItem key={program.title}>
+                <Link to={program.link} className="group block h-full">
+                  <motion.article
+                    className="bg-card rounded-xl p-6 shadow-lg h-full border border-transparent group-hover:border-primary/20"
+                    whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <motion.div
+                      className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
+                      whileHover={{ rotate: -5, scale: 1.1 }}
+                    >
                       <program.icon className="h-7 w-7 text-primary" />
-                    </div>
+                    </motion.div>
                     <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">{program.title}</h3>
                     <p className="text-sm text-muted-foreground">{program.description}</p>
-                  </article>
+                    <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      Selengkapnya <ArrowRight className="ml-1 h-4 w-4" />
+                    </div>
+                  </motion.article>
                 </Link>
-              </motion.div>
+              </StaggerItem>
             ))}
-          </motion.div>
+          </StaggerContainer>
           <div className="text-center mt-8">
             <Link to="/program/program-unggulan"><Button variant="outline">{t("home.programs.viewAll", "Lihat Semua Program")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
           </div>
