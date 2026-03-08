@@ -76,7 +76,7 @@ export const adminNavConfig: NavItem[] = [
       { label: "Statistik", href: "/admin/registration-stats", icon: BarChart3, permissionKey: "registration_stats" },
     ],
   },
-  { label: "Template Email", href: "/admin/email-templates", icon: Mail, permissionKey: "email_templates" },
+  
   {
     label: "Pengguna",
     href: "/admin/users",

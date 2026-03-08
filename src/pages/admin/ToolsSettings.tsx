@@ -463,10 +463,6 @@ export default function ToolsSettings() {
           </Card>
         </TabsContent>
 
-        {/* Email & Queue Settings Tab */}
-        <TabsContent value="email" className="space-y-6">
-          <EmailQueueSettings />
-        </TabsContent>
 
         {/* Backup Data Tab */}
         <TabsContent value="backup" className="space-y-6">
