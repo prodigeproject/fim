@@ -67,26 +67,26 @@
   }
 
   .dark {
-    --background: 0 0% 8%;
+    --background: 220 15% 7%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 12%;
+    --card: 220 15% 10%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 12%;
+    --popover: 220 15% 10%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 355 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 18%;
+    --secondary: 220 15% 14%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 51 100% 50%;
-    --accent-foreground: 0 0% 10%;
+    --accent-foreground: 0 0% 8%;
 
     --supporting: 125 55% 35%;
     --supporting-foreground: 0 0% 100%;
@@ -94,17 +94,24 @@
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
+    --border: 220 15% 16%;
+    --input: 220 15% 16%;
     --ring: 355 100% 50%;
 
-    --sidebar-background: 0 0% 10%;
+    /* Dark mode shadows */
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.15), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.25), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.3), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+
+    --sidebar-background: 220 15% 8%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 355 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 51 100% 50%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 220 15% 16%;
     --sidebar-ring: 355 100% 50%;
   }
 }
