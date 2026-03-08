@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import BackToTop from "./BackToTop";
 import ScrollProgress from "./ScrollProgress";
+import MobileStickyCTA from "./MobileStickyCtA";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className="flex-1">{children}</main>
       <Footer />
       <BackToTop />
+      <MobileStickyCTA />
     </div>
   );
 };

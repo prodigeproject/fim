@@ -440,11 +440,17 @@ const Blog = () => {
           ) : paginatedPosts.length > 0 ? (
             <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {paginatedPosts.map((post, index) => (
-                <article
+              {paginatedPosts.map((post, index) => {
+                const readTime = estimateReadingTime(post.content);
+                const catColor = categoryColors[post.category] || "bg-primary/10 text-primary border-primary/20";
+                return (
+                <motion.article
                   key={post.id}
-                  className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 animate-fade-in relative"
-                  style={{ animationDelay: `${index * 0.05}s` }}
+                  className="bg-card rounded-2xl overflow-hidden shadow-lg relative group"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.06, ease: [0.25, 0.4, 0.25, 1] }}
+                  whileHover={{ y: -6, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.12)" }}
                 >
                   {/* Pinned indicator */}
                   {post.is_pinned && (
@@ -454,23 +460,29 @@ const Blog = () => {
                     </div>
                   )}
 
-                  {/* Image */}
-                  <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden">
+                  {/* Image with overlay on hover */}
+                  <div className="h-48 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden relative">
                     {post.featured_image_url ? (
-                      <img src={post.featured_image_url} alt={post.title} className="w-full h-full object-cover" />
+                      <img src={post.featured_image_url} alt={post.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
                       <span className="text-4xl">📰</span>
                     )}
+                    {/* Hover overlay with reading time */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                      <span className="text-primary-foreground text-sm font-medium">
+                        ⏱ {readTime} menit baca
+                      </span>
+                    </div>
                   </div>
 
                   <div className="p-6">
-                    {/* Category */}
-                    <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-3">
+                    {/* Category with color coding */}
+                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full mb-3 border ${catColor}`}>
                       {categoryLabels[post.category] || post.category}
                     </span>
 
                     {/* Title */}
-                    <h2 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
+                    <h2 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                       {post.title}
                     </h2>
 
@@ -495,8 +507,8 @@ const Blog = () => {
                       </div>
                     )}
 
-                    {/* Meta */}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                    {/* Meta with reading time */}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                       <div className="flex items-center gap-1">
                         <User className="h-3 w-3" />
                         <span>{post.author_name}</span>
@@ -505,19 +517,22 @@ const Blog = () => {
                         <Calendar className="h-3 w-3" />
                         <span>{post.published_at ? new Date(post.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : '-'}</span>
                       </div>
+                      <span className="text-muted-foreground/60">·</span>
+                      <span>{readTime} min</span>
                     </div>
 
                     {/* Read More */}
                     <Link
                       to={`/blog/${post.slug}`}
-                      className="inline-flex items-center text-primary text-sm font-semibold hover:underline"
+                      className="inline-flex items-center text-primary text-sm font-semibold group-hover:gap-2 transition-all gap-1"
                     >
                       Baca Selengkapnya
-                      <ArrowRight className="h-4 w-4 ml-1" />
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>
-                </article>
-              ))}
+                </motion.article>
+                );
+              })}
             </div>
 
             {/* Pagination */}
