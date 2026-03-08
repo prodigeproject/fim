@@ -117,41 +117,42 @@ export default function RegistrationLogin() {
         setNeedsVerification(true);
         setIsBlocked(false);
         setErrorType("unverified");
+        resetTurnstile();
         setIsSubmitting(false);
         return;
       }
-      // Check for blocked account
       if (error.message.includes("diblokir") || error.message.includes("blocked")) {
         setIsBlocked(true);
         setNeedsVerification(false);
         setErrorType("blocked");
+        resetTurnstile();
         setIsSubmitting(false);
         return;
       }
-      // Check for invalid credentials
       if (error.message.includes("salah") || error.message.includes("Invalid login credentials")) {
         setErrorType("invalid_credentials");
         setErrorMessage("Email atau password salah. Silakan periksa kembali.");
+        resetTurnstile();
         setIsSubmitting(false);
         return;
       }
-      // Check for not registered
       if (error.message.includes("tidak terdaftar")) {
         setErrorType("not_registered");
         setErrorMessage(error.message);
+        resetTurnstile();
         setIsSubmitting(false);
         return;
       }
-      // Check for admin account
       if (error.message.includes("admin")) {
         setErrorType("admin_account");
         setErrorMessage(error.message);
+        resetTurnstile();
         setIsSubmitting(false);
         return;
       }
-      // Generic error
       setErrorType("generic");
       setErrorMessage(error.message);
+      resetTurnstile();
       setIsSubmitting(false);
     } else {
       toast.success("Login berhasil!");
