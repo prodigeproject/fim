@@ -148,7 +148,9 @@ export default function AdminDashboard() {
                   <AdminSidebar onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <h1 className="text-lg font-bold">FIM Admin</h1>
+              <h1 className="text-lg font-bold truncate">
+                {pageTitle || "FIM Admin"}
+              </h1>
             </div>
             <NotificationDropdown />
           </header>
