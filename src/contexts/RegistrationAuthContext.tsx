@@ -189,6 +189,11 @@ export function RegistrationAuthProvider({ children }: { children: ReactNode }) 
         throw new Error("Gagal memeriksa data pendaftaran");
       }
 
+      // Handle rate limiting
+      if (precheckData?.rate_limited) {
+        throw new Error(precheckData.error || "Terlalu banyak percobaan. Coba lagi dalam 15 menit.");
+      }
+
       // Step 2: Handle precheck results
       if (!precheckData) {
         throw new Error("Gagal memeriksa data pendaftaran");
