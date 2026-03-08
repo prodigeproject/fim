@@ -409,7 +409,7 @@ export default function RegistrationLogin() {
                       </div>
                     )}
                   </div>
-                )
+                )}
                 <Button 
                   type="submit" 
                   className="w-full" 
