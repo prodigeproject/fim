@@ -56,7 +56,7 @@ const RolesManagement = lazy(() => import("@/pages/admin/RolesManagement"));
 const RegistrationSettingsManagement = lazy(() => import("@/pages/admin/RegistrationSettingsManagement"));
 const PartnersManagement = lazy(() => import("@/pages/admin/PartnersManagement"));
 const FeaturedVideosManagement = lazy(() => import("@/pages/admin/FeaturedVideosManagement"));
-const EmailTemplatesManagement = lazy(() => import("@/pages/admin/EmailTemplatesManagement"));
+
 const InterviewCalendar = lazy(() => import("@/pages/admin/InterviewCalendar"));
 const RecruiterAssignmentsManagement = lazy(() => import("@/pages/admin/RecruiterAssignmentsManagement"));
 const ToolsSettings = lazy(() => import("@/pages/admin/ToolsSettings"));
@@ -174,7 +174,7 @@ const AnimatedRoutes = () => {
                   <Route path="registration-stats" element={<RequireAdmin permissionKey="registration_stats"><RegistrationStatsDashboard /></RequireAdmin>} />
                   <Route path="partners" element={<RequireAdmin permissionKey="partners"><PartnersManagement /></RequireAdmin>} />
                   <Route path="featured-videos" element={<RequireAdmin permissionKey="featured_videos"><FeaturedVideosManagement /></RequireAdmin>} />
-                  <Route path="email-templates" element={<RequireAdmin permissionKey="email_templates"><EmailTemplatesManagement /></RequireAdmin>} />
+                  {/* email-templates route removed - consolidated into email-settings */}
                   <Route path="interview-calendar" element={<RequireAdmin permissionKey="interview_calendar"><InterviewCalendar /></RequireAdmin>} />
                   <Route path="recruiter-assignments" element={<RequireAdmin permissionKey="recruiter_assignments"><RecruiterAssignmentsManagement /></RequireAdmin>} />
                   
