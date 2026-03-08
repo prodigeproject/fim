@@ -312,10 +312,10 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-secondary">
+      <section className="py-16 bg-secondary/50">
         <div className="container mx-auto px-4">
           <motion.div 
-            className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
@@ -352,7 +352,7 @@ const Index = () => {
       <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
-      <section className="py-16 bg-background" aria-labelledby="alumni-section-heading">
+      <section className="py-20 bg-background" aria-labelledby="alumni-section-heading">
         <div className="container mx-auto px-4">
           <ScrollReveal type="fade-up">
             <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
@@ -362,13 +362,13 @@ const Index = () => {
               {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
             </p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
+          <StaggerContainer className="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
               <StaggerItem key={testimonial.name}>
                 <motion.div
-                  className="bg-card rounded-xl p-6 shadow-lg relative group cursor-default h-full"
-                  whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="bg-card rounded-xl p-6 shadow-[var(--shadow-sm)] border border-border/40 relative group cursor-default h-full"
+                  whileHover={{ y: -6, boxShadow: "var(--shadow-xl)" }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
                   <Quote className="h-8 w-8 text-accent/30 absolute top-4 right-4 group-hover:text-accent/60 transition-colors" />
                   <div className="flex items-center gap-3 mb-4">
@@ -399,7 +399,7 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan */}
-      <section className="py-16 bg-secondary" aria-labelledby="program-section-heading">
+      <section className="py-20 bg-secondary/50" aria-labelledby="program-section-heading">
         <div className="container mx-auto px-4">
           <ScrollReveal type="fade-up">
             <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
@@ -412,9 +412,9 @@ const Index = () => {
               <StaggerItem key={program.title}>
                 <Link to={program.link} className="group block h-full">
                   <motion.article
-                    className="bg-card rounded-xl p-6 shadow-lg h-full border border-transparent group-hover:border-primary/20"
-                    whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="bg-card rounded-xl p-6 shadow-[var(--shadow-sm)] h-full border border-border/40 group-hover:border-primary/20 transition-colors"
+                    whileHover={{ y: -6, boxShadow: "var(--shadow-xl)" }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
                     <motion.div
                       className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
@@ -439,7 +439,7 @@ const Index = () => {
       </section>
 
       {/* Kabar FIM */}
-      <section className="py-16 bg-secondary" aria-labelledby="news-section-heading">
+      <section className="py-20 bg-background" aria-labelledby="news-section-heading">
         <div className="container mx-auto px-4">
           <motion.h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.news.title", "Kabar FIM")}</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.news.subtitle", "Berita dan kegiatan terbaru dari Forum Indonesia Muda")}</motion.p>
@@ -453,7 +453,7 @@ const Index = () => {
             {featuredArticles?.length ? featuredArticles.map((article) => (
               <motion.div key={article.id} variants={fadeUp}>
                 <Link to={`/blog/${article.slug}`} className="group">
-                  <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 relative">
+                  <div className="bg-card rounded-xl overflow-hidden shadow-[var(--shadow-sm)] border border-border/40 hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 relative">
                     {article.is_pinned && (
                       <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">{t("home.news.featured", "Unggulan")}</div>
                     )}
@@ -574,12 +574,14 @@ function HomeStatItem({ stat, index }: { stat: { icon: React.ComponentType<{ cla
   return (
     <motion.div
       ref={ref}
-      className="bg-card rounded-xl p-6 text-center shadow-lg"
+      className="bg-card rounded-xl p-6 text-center shadow-[var(--shadow-sm)] border border-border/40"
       variants={fadeUp}
       custom={index}
     >
-      <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{formattedCount}</div>
+      <div className="w-12 h-12 rounded-xl bg-primary/8 flex items-center justify-center mx-auto mb-3">
+        <stat.icon className="h-6 w-6 text-primary" />
+      </div>
+      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1 tracking-tight">{formattedCount}</div>
       <div className="text-sm text-muted-foreground">{stat.label}</div>
     </motion.div>
   );

@@ -44,7 +44,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-background/95 backdrop-blur-md border-b border-border sticky top-0 z-50">
+    <nav className="bg-background/80 backdrop-blur-xl border-b border-border/50 sticky top-0 z-50 shadow-[var(--shadow-xs)]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
@@ -89,7 +89,7 @@ const Navbar = () => {
 
                 {/* Dropdown */}
                 {link.children && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-card rounded-lg shadow-xl border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  <div className="absolute top-full left-0 mt-2 w-52 bg-card/95 backdrop-blur-xl rounded-xl shadow-[var(--shadow-xl)] border border-border/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                     <div className="py-2">
                       {link.children.map((child) => (
                         <Link

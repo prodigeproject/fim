@@ -13,28 +13,28 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    --foreground: 0 0% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover-foreground: 0 0% 15%;
 
     /* FIM Red - Primary brand color */
     --primary: 355 100% 45%;
     --primary-foreground: 0 0% 100%;
 
     /* Light gray for secondary elements */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 0 0% 15%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 0 0% 45%;
 
     /* Gold/Firefly - Accent color */
     --accent: 51 100% 50%;
-    --accent-foreground: 0 0% 15%;
+    --accent-foreground: 0 0% 12%;
 
     /* Dark Green - Supporting color */
     --supporting: 125 55% 24%;
@@ -43,43 +43,50 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 355 100% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
+
+    /* Modern shadow system */
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.05), 0 2px 4px -2px hsl(0 0% 0% / 0.04);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.06), 0 4px 6px -4px hsl(0 0% 0% / 0.04);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.07), 0 8px 10px -6px hsl(0 0% 0% / 0.04);
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
+    --sidebar-foreground: 0 0% 15%;
     --sidebar-primary: 355 100% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 51 100% 50%;
-    --sidebar-accent-foreground: 0 0% 15%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 12%;
+    --sidebar-border: 220 13% 91%;
     --sidebar-ring: 355 100% 45%;
   }
 
   .dark {
-    --background: 0 0% 8%;
+    --background: 220 15% 7%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 12%;
+    --card: 220 15% 10%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 12%;
+    --popover: 220 15% 10%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 355 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 18%;
+    --secondary: 220 15% 14%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 15% 14%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 51 100% 50%;
-    --accent-foreground: 0 0% 10%;
+    --accent-foreground: 0 0% 8%;
 
     --supporting: 125 55% 35%;
     --supporting-foreground: 0 0% 100%;
@@ -87,17 +94,24 @@
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
+    --border: 220 15% 16%;
+    --input: 220 15% 16%;
     --ring: 355 100% 50%;
 
-    --sidebar-background: 0 0% 10%;
+    /* Dark mode shadows */
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.15), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.25), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.3), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+
+    --sidebar-background: 220 15% 8%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 355 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 51 100% 50%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 220 15% 16%;
     --sidebar-ring: 355 100% 50%;
   }
 }
@@ -112,7 +126,19 @@
     font-family: 'Inter', system-ui, sans-serif;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  h1 { @apply text-4xl lg:text-6xl font-bold leading-tight; }
+  h2 { @apply text-3xl lg:text-4xl font-bold leading-tight; }
+  h3 { @apply text-xl lg:text-2xl font-semibold; }
 }
 
 /* PWA Safe Areas */
