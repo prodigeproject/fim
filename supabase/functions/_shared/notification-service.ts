@@ -1,12 +1,21 @@
 // =====================================================
 // CENTRALIZED NOTIFICATION SERVICE
 // Email sending via Gmail SMTP using denomailer
+// Reads config from email_settings table with env fallback
 // =====================================================
 
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const GMAIL_USER = Deno.env.get("GMAIL_USER");
-const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  tls: boolean;
+  username: string;
+  password: string;
+  fromAddress: string;
+  fromName: string;
+}
 
 export interface EmailParams {
   to: string | string[];
@@ -23,34 +32,104 @@ export interface NotificationResult {
 }
 
 /**
- * Send email via Gmail SMTP
+ * Get SMTP config from email_settings table, fallback to env secrets.
+ * NEVER stores passwords in DB — uses env secrets only.
  */
-export async function sendGmailEmail(params: EmailParams): Promise<NotificationResult> {
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error("Gmail credentials not configured");
-    return {
-      success: false,
-      error: "Gmail credentials not configured",
-    };
+export async function getSmtpConfig(supabase?: any): Promise<SmtpConfig> {
+  const envUser = Deno.env.get("GMAIL_USER") || "";
+  const envPassword = Deno.env.get("GMAIL_APP_PASSWORD") || "";
+
+  // Try reading non-sensitive config from DB (host, port, from name, etc.)
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from("email_settings")
+        .select("mail_host, mail_port, mail_encryption, mail_from_address, mail_from_name, mail_username")
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        return {
+          host: data.mail_host || "smtp.gmail.com",
+          port: data.mail_port || 465,
+          tls: (data.mail_encryption || "TLS").toUpperCase() !== "NONE",
+          username: data.mail_username || envUser,
+          password: envPassword, // Always from env secret, never from DB
+          fromAddress: data.mail_from_address || data.mail_username || envUser,
+          fromName: data.mail_from_name || "Forum Indonesia Muda",
+        };
+      }
+    } catch (e) {
+      console.log("Could not fetch email_settings, using env fallback:", e);
+    }
+  }
+
+  return {
+    host: "smtp.gmail.com",
+    port: 465,
+    tls: true,
+    username: envUser,
+    password: envPassword,
+    fromAddress: envUser,
+    fromName: "Forum Indonesia Muda",
+  };
+}
+
+/**
+ * Check daily email rate limit. Returns true if allowed.
+ */
+export async function checkDailyRateLimit(supabase: any): Promise<{ allowed: boolean; sent: number; limit: number }> {
+  // Get configured limit
+  let dailyLimit = 2000;
+  try {
+    const { data } = await supabase
+      .from("email_settings")
+      .select("daily_rate_limit")
+      .limit(1)
+      .maybeSingle();
+    if (data?.daily_rate_limit) dailyLimit = data.daily_rate_limit;
+  } catch { /* use default */ }
+
+  // Count emails sent today via notification_queue
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const { count } = await supabase
+    .from("notification_queue")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "sent")
+    .gte("processed_at", todayStart.toISOString());
+
+  const sent = count || 0;
+  return { allowed: sent < dailyLimit, sent, limit: dailyLimit };
+}
+
+/**
+ * Send email via SMTP with provided config.
+ * Connection is always closed in finally block to prevent leaks.
+ */
+export async function sendEmailWithConfig(config: SmtpConfig, params: EmailParams): Promise<NotificationResult> {
+  if (!config.username || !config.password) {
+    return { success: false, error: "Email service not configured (missing credentials)" };
   }
 
   const client = new SMTPClient({
     connection: {
-      hostname: "smtp.gmail.com",
-      port: 465,
-      tls: true,
+      hostname: config.host,
+      port: config.port,
+      tls: config.tls,
       auth: {
-        username: GMAIL_USER,
-        password: GMAIL_APP_PASSWORD,
+        username: config.username,
+        password: config.password,
       },
     },
   });
 
   try {
     const recipients = Array.isArray(params.to) ? params.to : [params.to];
-    
+
     await client.send({
-      from: `Forum Indonesia Muda <${GMAIL_USER}>`,
+      from: `${config.fromName} <${config.fromAddress}>`,
       to: recipients,
       subject: params.subject,
       content: params.text || "",
@@ -58,26 +137,44 @@ export async function sendGmailEmail(params: EmailParams): Promise<NotificationR
       replyTo: params.replyTo,
     });
 
-    await client.close();
-
     return {
       success: true,
       messageId: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
     };
   } catch (error) {
     console.error("Failed to send email:", error);
-    await client.close();
-    
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  } finally {
+    try { await client.close(); } catch { /* already closed */ }
   }
 }
 
 /**
- * Email template types
+ * Send email using default Gmail SMTP (env secrets).
+ * Convenience wrapper around sendEmailWithConfig.
  */
+export async function sendGmailEmail(params: EmailParams): Promise<NotificationResult> {
+  const config = await getSmtpConfig();
+  return sendEmailWithConfig(config, params);
+}
+
+/**
+ * Create a service-role Supabase client for use in edge functions.
+ */
+export function createServiceClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+}
+
+// =====================================================
+// EMAIL TEMPLATES
+// =====================================================
+
 export type TemplateName =
   | "selection-stage-change"
   | "final-result"
@@ -91,9 +188,6 @@ export type TemplateName =
   | "login-notification"
   | "unauthorized-access";
 
-/**
- * Get email template HTML
- */
 export function getEmailTemplate(
   templateName: TemplateName,
   variables: Record<string, string>
@@ -214,8 +308,11 @@ export function getEmailTemplate(
             <div style="text-align: center; margin: 30px 0;">
               <a href="${variables.verification_url}" style="background: #e53935; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verifikasi Email</a>
             </div>
-            <p style="color: #666; font-size: 14px;">Link ini akan kadaluarsa dalam 24 jam.</p>
-            <p style="color: #666; font-size: 14px;">Terima kasih,<br><strong>Tim Forum Indonesia Muda</strong></p>
+            <p>Atau salin link berikut ke browser Anda:</p>
+            <p style="word-break: break-all; color: #666;">${variables.verification_url}</p>
+            <p style="color: #666; font-size: 14px;">Link ini akan kadaluarsa dalam 7 hari.</p>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+            <p style="color: #666; font-size: 12px;">Jika Anda tidak mendaftar di FIM, abaikan email ini.</p>
           </div>
         </body>
         </html>
@@ -308,7 +405,7 @@ export function getEmailTemplate(
               <p style="margin: 0;"><strong>Judul:</strong> ${variables.title}</p>
             </div>
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <strong>Catatan Revisi:</strong>
+              <strong>Catatan Revisi dari ${variables.admin_name}:</strong>
               <p style="margin: 10px 0 0;">${variables.revision_notes}</p>
             </div>
             <p>Silakan login untuk melakukan revisi.</p>

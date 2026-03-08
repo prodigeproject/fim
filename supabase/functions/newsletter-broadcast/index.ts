@@ -1,17 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
+import { sendGmailEmail, checkDailyRateLimit, createServiceClient } from "../_shared/notification-service.ts";
 
 interface BroadcastRequest {
   subject: string;
   content: string;
-  testEmail?: string; // If provided, only send to this email as test
-  scheduled_id?: string; // If triggered by scheduler
+  testEmail?: string;
+  scheduled_id?: string;
 }
 
 function escapeHtml(input: string) {
@@ -27,76 +23,53 @@ function buildEmailHtml(name: string | null, safeHtml: string) {
   return `
     <!DOCTYPE html>
     <html>
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </head>
+      <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
       <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#111;max-width:640px;margin:0 auto;padding:24px;">
         <p>Halo${name ? ` <strong>${escapeHtml(name)}</strong>` : ""},</p>
         <div style="margin-top:16px;">${safeHtml}</div>
         <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
-        <p style="color:#666;font-size:12px;">
-          Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.
-        </p>
+        <p style="color:#666;font-size:12px;">Anda menerima email ini karena berlangganan newsletter Forum Indonesia Muda.</p>
       </body>
-    </html>
-  `;
+    </html>`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 405, headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseUser.auth.getUser();
-
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createServiceClient();
 
-    const { data: isSuperAdmin, error: roleErr } = await supabaseAdmin.rpc(
-      "has_role",
-      { _user_id: user.id, _role: "super_admin" }
-    );
-
-    if (roleErr) {
-      console.error("Role check error:", roleErr);
-      return new Response(JSON.stringify({ error: "Gagal memverifikasi role" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
+    const { data: isSuperAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: user.id, _role: "super_admin",
+    });
 
     if (!isSuperAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
@@ -106,47 +79,26 @@ const handler = async (req: Request): Promise<Response> => {
     const testEmail = body.testEmail?.toLowerCase().trim();
     const scheduledId = body.scheduled_id;
 
-    if (!subject) {
-      return new Response(JSON.stringify({ error: "Subject wajib diisi" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    if (!content) {
-      return new Response(JSON.stringify({ error: "Konten wajib diisi" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+    if (!subject || !content) {
+      return new Response(JSON.stringify({ error: "Subject dan konten wajib diisi" }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
     const safeHtml = escapeHtml(content).replace(/\n/g, "<br/>");
-    const from = "Forum Indonesia Muda <onboarding@resend.dev>";
 
-    // Test mode: only send to testEmail
+    // Test mode
     if (testEmail) {
-      console.log(`Sending test email to: ${testEmail}`);
-
       const html = buildEmailHtml("Admin", safeHtml);
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to: [testEmail],
-          subject: `[TEST] ${subject}`,
-          html,
-        }),
+      const result = await sendGmailEmail({
+        to: testEmail,
+        subject: `[TEST] ${subject}`,
+        html,
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("Resend test error:", errData);
+      if (!result.success) {
         return new Response(
-          JSON.stringify({ error: "Gagal mengirim email test", details: errData }),
+          JSON.stringify({ error: "Gagal mengirim email test", details: result.error }),
           { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
@@ -157,45 +109,45 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Full broadcast mode
+    // Check daily rate limit before broadcast
+    const rateLimit = await checkDailyRateLimit(supabaseAdmin);
+
+    // Full broadcast
     const { data: subscribers, error: subErr } = await supabaseAdmin
       .from("newsletter_subscribers")
       .select("email, name")
       .eq("is_active", true)
       .not("confirmed_at", "is", null);
 
-    if (subErr) {
-      console.error("Subscriber select error:", subErr);
-      return new Response(JSON.stringify({ error: "Gagal mengambil subscriber" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
+    if (subErr) throw subErr;
 
     const recipients = (subscribers ?? []).map((s) => ({
       email: (s.email as string).toLowerCase().trim(),
       name: (s.name as string | null) ?? null,
     }));
 
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: `Daily rate limit reached (${rateLimit.sent}/${rateLimit.limit}). Coba lagi besok.` }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Cap sending to remaining daily allowance
+    const maxToSend = Math.min(recipients.length, rateLimit.limit - rateLimit.sent);
+
     let sent = 0;
     let failed = 0;
 
-    for (const r of recipients) {
+    for (let i = 0; i < maxToSend; i++) {
+      const r = recipients[i];
       try {
         const html = buildEmailHtml(r.name, safeHtml);
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ from, to: [r.email], subject, html }),
-        });
+        const result = await sendGmailEmail({ to: r.email, subject, html });
 
-        if (!res.ok) {
+        if (!result.success) {
           failed++;
-          const errData = await res.json().catch(() => ({}));
-          console.error("Resend error:", r.email, errData);
+          console.error("Send failed:", r.email, result.error);
         } else {
           sent++;
         }
@@ -205,7 +157,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Update scheduled_broadcasts row if applicable
     if (scheduledId) {
       await supabaseAdmin
         .from("scheduled_broadcasts")
@@ -225,9 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
         p_action: "newsletter_broadcast",
         p_details: { subject, total: recipients.length, sent, failed },
       })
-      .then(({ error }) => {
-        if (error) console.error("Audit log failed:", error);
-      });
+      .then(({ error }) => { if (error) console.error("Audit log failed:", error); });
 
     return new Response(
       JSON.stringify({ success: true, total: recipients.length, sent, failed }),
