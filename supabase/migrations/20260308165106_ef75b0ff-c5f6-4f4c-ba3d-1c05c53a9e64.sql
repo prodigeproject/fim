@@ -1,0 +1,1 @@
+ALTER TABLE public.email_settings ADD COLUMN IF NOT EXISTS reply_to_address text DEFAULT NULL;

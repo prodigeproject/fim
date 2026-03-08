@@ -27,6 +27,12 @@ export default function RegistrationLogin() {
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
+  };
 
   // Dynamic error state
   const [errorType, setErrorType] = useState<string | null>(null);
