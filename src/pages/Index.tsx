@@ -453,7 +453,7 @@ const Index = () => {
             {featuredArticles?.length ? featuredArticles.map((article) => (
               <motion.div key={article.id} variants={fadeUp}>
                 <Link to={`/blog/${article.slug}`} className="group">
-                  <div className="bg-card rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 relative">
+                  <div className="bg-card rounded-xl overflow-hidden shadow-[var(--shadow-sm)] border border-border/40 hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 relative">
                     {article.is_pinned && (
                       <div className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full font-medium z-10">{t("home.news.featured", "Unggulan")}</div>
                     )}
