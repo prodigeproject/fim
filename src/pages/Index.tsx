@@ -412,9 +412,9 @@ const Index = () => {
               <StaggerItem key={program.title}>
                 <Link to={program.link} className="group block h-full">
                   <motion.article
-                    className="bg-card rounded-xl p-6 shadow-lg h-full border border-transparent group-hover:border-primary/20"
-                    whileHover={{ y: -8, boxShadow: "0 20px 40px -12px hsl(var(--primary) / 0.15)" }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="bg-card rounded-xl p-6 shadow-[var(--shadow-sm)] h-full border border-border/40 group-hover:border-primary/20 transition-colors"
+                    whileHover={{ y: -6, boxShadow: "var(--shadow-xl)" }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
                     <motion.div
                       className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
