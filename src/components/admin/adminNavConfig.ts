@@ -40,13 +40,13 @@ export const adminNavConfig: NavItem[] = [
     ],
   },
   {
-    label: "Newsletter",
-    href: "/admin/newsletter",
+    label: "Email & Newsletter",
+    href: "/admin/email-settings",
     icon: Mail,
-    permissionKey: "newsletter",
+    permissionKey: "email_settings",
     children: [
+      { label: "Pengaturan Email", href: "/admin/email-settings", icon: Settings, permissionKey: "email_settings" },
       { label: "Subscribers", href: "/admin/newsletter", icon: Mail, permissionKey: "newsletter" },
-      { label: "Email Settings", href: "/admin/email-settings", icon: Settings, permissionKey: "email_settings" },
     ],
   },
   {
