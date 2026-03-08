@@ -90,7 +90,7 @@ const Footer = () => {
               />
               <Button
                 type="submit"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 min-w-[120px]"
                 disabled={isLoading}
               >
                 {isLoading ? (

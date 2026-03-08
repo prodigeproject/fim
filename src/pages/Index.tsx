@@ -241,7 +241,7 @@ const Index = () => {
               animate="visible" 
               className="text-sm lg:text-base text-accent font-semibold mb-4"
             >
-              Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia
+              {t("home.hero.trusted", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
             </motion.p>
             <motion.p 
               variants={heroSubtitle} 
@@ -258,7 +258,7 @@ const Index = () => {
               className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block"
             >
               <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
-                <span className="animate-pulse">🔥</span> Pendaftaran Angkatan Baru Segera Dibuka!
+                <span className="animate-pulse">🔥</span> {t("home.hero.announcement", "Pendaftaran Angkatan Baru Segera Dibuka!")}
               </p>
             </motion.div>
             <motion.div 
@@ -301,7 +301,7 @@ const Index = () => {
             <div className="flex justify-center gap-3 mt-4">
               {bannerImages.map((_, index) => (
                 <button key={index} className="relative w-6 h-6 flex items-center justify-center" onClick={() => emblaApi?.scrollTo(index)} aria-label={`Go to slide ${index + 1}`}>
-                  <span className={`w-2 h-2 rounded-full transition-colors ${index === selectedIndex ? "bg-primary" : "bg-muted hover:bg-muted-foreground/50"}`} />
+                  <span className={`w-2.5 h-2.5 rounded-full transition-colors ${index === selectedIndex ? "bg-primary" : "bg-muted hover:bg-muted-foreground/50"}`} />
                 </button>
               ))}
             </div>
@@ -499,16 +499,11 @@ const Index = () => {
               </>
             ) : (
               <>
-                {[...partnerLogos, ...partnerLogos, ...partnerLogos].map((logo, index) => (
+                {Array.from({ length: 12 }).map((_, index) => (
                   <div key={index} className="flex-shrink-0 mx-4 md:mx-6">
-                    <motion.div 
-                      className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3"
-                      style={{ perspective: 800 }}
-                      whileHover={{ scale: 1.25, y: -10, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
-                      <img src={logo} alt={`Partner ${(index % partnerLogos.length) + 1}`} loading="lazy" className="max-h-full max-w-full object-contain" />
-                    </motion.div>
+                    <div className="h-14 w-28 md:h-16 md:w-32 bg-card rounded-lg shadow-sm flex items-center justify-center p-3 animate-pulse">
+                      <div className="h-8 w-20 bg-muted rounded" />
+                    </div>
                   </div>
                 ))}
               </>
