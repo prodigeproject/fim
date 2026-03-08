@@ -18,6 +18,7 @@ export interface SmtpConfig {
   password: string;
   fromAddress: string;
   fromName: string;
+  replyTo?: string;
 }
 
 export interface EmailParams {
@@ -48,7 +49,7 @@ export async function getSmtpConfig(supabase?: any): Promise<SmtpConfig> {
     try {
       const { data } = await supabase
         .from("email_settings")
-        .select("mail_host, mail_port, mail_encryption, mail_from_address, mail_from_name, mail_username")
+        .select("mail_host, mail_port, mail_encryption, mail_from_address, mail_from_name, mail_username, reply_to_address")
         .limit(1)
         .maybeSingle();
 
@@ -61,6 +62,7 @@ export async function getSmtpConfig(supabase?: any): Promise<SmtpConfig> {
           password: envPassword,
           fromAddress: data.mail_from_address || data.mail_username || envUser,
           fromName: data.mail_from_name || "Forum Indonesia Muda",
+          replyTo: data.reply_to_address || undefined,
         };
       }
     } catch (e) {
@@ -133,7 +135,7 @@ export async function sendEmailWithConfig(config: SmtpConfig, params: EmailParam
       subject: params.subject,
       content: params.text || "",
       html: params.html,
-      replyTo: params.replyTo,
+      replyTo: params.replyTo || config.replyTo,
     });
 
     return {

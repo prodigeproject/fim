@@ -33,6 +33,12 @@ export default function AdminLogin() {
   const [redirecting, setRedirecting] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null);
+    setTurnstileKey(prev => prev + 1);
+  };
 
   // Redirect if already logged in with role
   useEffect(() => {
@@ -78,12 +84,13 @@ export default function AdminLogin() {
       });
       if (tsError || !tsData?.success) {
         setError("Verifikasi Turnstile gagal. Silakan coba lagi.");
-        setTurnstileToken(null);
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
     } catch {
       setError("Gagal memverifikasi Turnstile");
+      resetTurnstile();
       setIsLoading(false);
       return;
     }
@@ -126,14 +133,14 @@ export default function AdminLogin() {
         } else if ((signInResult as any).remainingAttempts !== undefined) {
           setError(`Email atau password salah. Tersisa ${(signInResult as any).remainingAttempts} percobaan.`);
         } else {
-          // Generic error message for security
           setError("Email atau password salah. Silakan coba lagi.");
         }
+        resetTurnstile();
         setIsLoading(false);
       }
-      // Don't set isLoading to false on success - let redirect happen
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
+      resetTurnstile();
       setIsLoading(false);
     }
   };
@@ -249,9 +256,10 @@ export default function AdminLogin() {
               )}
 
               <TurnstileWidget
+                key={turnstileKey}
                 onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                onError={() => setTurnstileToken(null)}
+                onExpire={() => resetTurnstile()}
+                onError={() => resetTurnstile()}
               />
 
               <Button
@@ -281,3 +289,4 @@ export default function AdminLogin() {
     </>
   );
 }
+

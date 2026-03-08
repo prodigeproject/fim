@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,30 @@ export default function EmailSettings() {
   const [testEmail, setTestEmail] = useState("");
   
   // Email provider settings (stored in database in production)
-  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("resend");
+  const [emailProvider, setEmailProvider] = useState<"resend" | "gmail">("gmail");
   const [resendApiKey, setResendApiKey] = useState("");
   const [gmailEmail, setGmailEmail] = useState("");
   const [gmailAppPassword, setGmailAppPassword] = useState("");
+  const [replyToAddress, setReplyToAddress] = useState("");
+  const [fromName, setFromName] = useState("Forum Indonesia Muda");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await supabase
+        .from("email_settings")
+        .select("mail_from_name, mail_from_address, reply_to_address")
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setFromName(data.mail_from_name || "Forum Indonesia Muda");
+        setGmailEmail(data.mail_from_address || "");
+        setReplyToAddress((data as any).reply_to_address || "");
+      }
+    };
+    loadSettings();
+  }, []);
   
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -80,11 +100,23 @@ export default function EmailSettings() {
   };
 
   const handleSaveSettings = async () => {
+    setIsSaving(true);
     try {
-      // In production, save to database
+      const { error } = await supabase
+        .from("email_settings")
+        .update({
+          mail_from_name: fromName,
+          mail_from_address: gmailEmail || undefined,
+          reply_to_address: replyToAddress || null,
+        } as any)
+        .not("id", "is", null); // update all rows
+
+      if (error) throw error;
       toast.success("Pengaturan berhasil disimpan");
-    } catch (error) {
-      toast.error("Gagal menyimpan pengaturan");
+    } catch (error: any) {
+      toast.error("Gagal menyimpan: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -240,7 +272,20 @@ export default function EmailSettings() {
 
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="gmail-email">Email Gmail</Label>
+                    <Label htmlFor="from-name">Nama Pengirim</Label>
+                    <Input
+                      id="from-name"
+                      type="text"
+                      placeholder="Forum Indonesia Muda"
+                      value={fromName}
+                      onChange={(e) => setFromName(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Nama yang muncul sebagai pengirim email
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gmail-email">Email Pengirim (From)</Label>
                     <Input
                       id="gmail-email"
                       type="email"
@@ -249,6 +294,22 @@ export default function EmailSettings() {
                       onChange={(e) => setGmailEmail(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reply-to">Reply-To Address</Label>
+                    <Input
+                      id="reply-to"
+                      type="email"
+                      placeholder="info@forumindonesiamuda.org"
+                      value={replyToAddress}
+                      onChange={(e) => setReplyToAddress(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Alamat email tujuan balasan. Kosongkan jika sama dengan email pengirim.
+                    </p>
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-2">
                     <Label htmlFor="gmail-password">App Password</Label>
                     <Input
@@ -259,7 +320,7 @@ export default function EmailSettings() {
                       onChange={(e) => setGmailAppPassword(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Buat App Password di Google Account → Security → 2-Step Verification → App Passwords
+                      Kredensial disimpan sebagai secret dan tidak ditampilkan. Kosongkan jika tidak ingin mengubah.
                     </p>
                   </div>
                 </div>
@@ -316,8 +377,8 @@ export default function EmailSettings() {
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleSaveSettings}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button onClick={handleSaveSettings} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Simpan Pengaturan Provider
             </Button>
           </div>

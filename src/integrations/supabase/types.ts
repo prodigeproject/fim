@@ -833,6 +833,7 @@ export type Database = {
           mail_port: number
           mail_username: string | null
           queue_enabled: boolean
+          reply_to_address: string | null
           retry_delay_seconds: number
           retry_max_attempts: number
           updated_at: string | null
@@ -849,6 +850,7 @@ export type Database = {
           mail_port?: number
           mail_username?: string | null
           queue_enabled?: boolean
+          reply_to_address?: string | null
           retry_delay_seconds?: number
           retry_max_attempts?: number
           updated_at?: string | null
@@ -865,6 +867,7 @@ export type Database = {
           mail_port?: number
           mail_username?: string | null
           queue_enabled?: boolean
+          reply_to_address?: string | null
           retry_delay_seconds?: number
           retry_max_attempts?: number
           updated_at?: string | null
