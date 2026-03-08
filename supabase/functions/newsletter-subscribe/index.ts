@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
-import { sendGmailEmail } from "../_shared/notification-service.ts";
+import { sendGmailEmail, getEmailTemplate } from "../_shared/notification-service.ts";
 
 interface SubscribeRequest {
   email: string;
@@ -78,40 +78,20 @@ const handler = async (req: Request): Promise<Response> => {
       if (insertError) throw insertError;
     }
 
-    // Send welcome email via centralized Gmail SMTP
+    // Send welcome email using centralized template
     const siteUrl = Deno.env.get("SITE_URL") || "https://fim.lovable.app";
     const unsubscribeUrl = `${siteUrl}/unsubscribe?email=${encodeURIComponent(normalizedEmail)}`;
 
     try {
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; margin-bottom: 10px;">Selamat Datang! 🎉</h1>
-          </div>
-          <p>Halo${name ? ` <strong>${name}</strong>` : ""},</p>
-          <p>Terima kasih telah berlangganan newsletter <strong>Forum Indonesia Muda</strong>!</p>
-          <p>Anda akan menerima update terbaru seputar:</p>
-          <ul>
-            <li>🎯 Program dan kegiatan FIM</li>
-            <li>🏆 Prestasi alumni dan peserta</li>
-            <li>📢 Pengumuman penting</li>
-            <li>💡 Tips dan inspirasi dari komunitas</li>
-          </ul>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-          <p style="color: #666; font-size: 12px;">
-            Jika tidak ingin menerima email lagi, <a href="${unsubscribeUrl}" style="color: #666;">klik di sini untuk berhenti berlangganan</a>.
-          </p>
-          <p style="color: #666; font-size: 12px;">© ${new Date().getFullYear()} Forum Indonesia Muda</p>
-        </body>
-        </html>`;
+      const template = getEmailTemplate("newsletter-welcome", {
+        name: name?.trim() || "",
+        unsubscribe_url: unsubscribeUrl,
+      });
 
       await sendGmailEmail({
         to: normalizedEmail,
-        subject: "Selamat Datang di Newsletter FIM! 🎉",
-        html: emailHtml,
+        subject: template.subject,
+        html: template.html,
       });
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
