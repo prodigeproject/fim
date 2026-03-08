@@ -11,6 +11,8 @@ import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import FeaturedVideoSection from "@/components/FeaturedVideoSection";
+import FIMJourneyTimeline from "@/components/FIMJourneyTimeline";
+import { ScrollReveal, TextReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLanguage } from "@/contexts/LanguageContext";
 // Import partner logos
