@@ -462,7 +462,7 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
 - **State Management**: TanStack Query
 - **Routing**: React Router DOM v6
 - **Backend**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
-- **Email**: Resend API
+- **Email**: Gmail SMTP (denomailer)
 
 ## 2. Halaman Publik
 
