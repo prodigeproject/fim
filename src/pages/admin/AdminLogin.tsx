@@ -136,14 +136,14 @@ export default function AdminLogin() {
         } else if ((signInResult as any).remainingAttempts !== undefined) {
           setError(`Email atau password salah. Tersisa ${(signInResult as any).remainingAttempts} percobaan.`);
         } else {
-          // Generic error message for security
           setError("Email atau password salah. Silakan coba lagi.");
         }
+        resetTurnstile();
         setIsLoading(false);
       }
-      // Don't set isLoading to false on success - let redirect happen
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.");
+      resetTurnstile();
       setIsLoading(false);
     }
   };
