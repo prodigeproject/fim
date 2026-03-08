@@ -276,8 +276,8 @@ export default function EmailSettings() {
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                 />
-                <Button onClick={handleTestEmail} disabled={isTestingResend}>
-                  {isTestingResend ? (
+                <Button onClick={handleTestEmail} disabled={isTesting}>
+                  {isTesting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <Send className="h-4 w-4 mr-2" />

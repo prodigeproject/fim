@@ -628,7 +628,7 @@ Generated: ${new Date().toLocaleDateString("id-ID", { dateStyle: "full" })}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Email</span>
-                  <span>Resend</span>
+                  <span>Gmail SMTP</span>
                 </div>
               </CardContent>
             </Card>
