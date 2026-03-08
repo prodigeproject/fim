@@ -258,7 +258,7 @@ export default function DashboardHome() {
 
       {/* Article Stats Grid */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Statistik Artikel</h2>
+        <h2 className="text-lg font-semibold mb-4">Ringkasan Artikel</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {articleStatCards.map((stat) => (
             <Card key={stat.title}>
@@ -375,7 +375,7 @@ export default function DashboardHome() {
       {/* Article Stats Charts */}
       {isSuperAdmin && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">Statistik Artikel</h2>
+          <h2 className="text-lg font-semibold mb-4">Grafik Performa Artikel</h2>
           <ArticleStatsCharts />
         </div>
       )}

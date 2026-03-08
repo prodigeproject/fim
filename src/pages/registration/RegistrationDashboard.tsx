@@ -335,7 +335,7 @@ export default function RegistrationDashboard() {
                 </div>
                 
                 {/* Progress Line */}
-                <div className="absolute top-6 left-0 right-0 h-0.5 bg-muted -z-10">
+                <div className="absolute top-6 left-0 right-0 h-0.5 bg-muted z-0">
                   <div 
                     className="h-full bg-green-500 transition-all duration-500"
                     style={{ width: `${Math.min(100, (currentStageIndex / (SELECTION_STAGES.length - 1)) * 100)}%` }}

@@ -125,9 +125,9 @@ export default function RegistrationLanding() {
         setCountdown("");
         return;
       }
-      if (days > 0) setCountdown(`${days} hari ${hours} jam lagi`);
-      else if (hours > 0) setCountdown(`${hours} jam ${minutes} menit lagi`);
-      else setCountdown(`${minutes} menit lagi`);
+      if (days > 0) setCountdown(`${days} ${t('portal.countdown.days', 'hari')} ${hours} ${t('portal.countdown.hours', 'jam')} ${t('portal.countdown.remaining', 'lagi')}`);
+      else if (hours > 0) setCountdown(`${hours} ${t('portal.countdown.hours', 'jam')} ${minutes} ${t('portal.countdown.minutes', 'menit')} ${t('portal.countdown.remaining', 'lagi')}`);
+      else setCountdown(`${minutes} ${t('portal.countdown.minutes', 'menit')} ${t('portal.countdown.remaining', 'lagi')}`);
     };
 
     updateCountdown();

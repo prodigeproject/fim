@@ -28,10 +28,23 @@ export default function RegistrationLogin() {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileKey, setTurnstileKey] = useState(0);
+  const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileRetries, setTurnstileRetries] = useState(0);
 
   const resetTurnstile = () => {
     setTurnstileToken(null);
     setTurnstileKey(prev => prev + 1);
+  };
+
+  const handleTurnstileError = () => {
+    setTurnstileError(true);
+    setTurnstileRetries(prev => prev + 1);
+    resetTurnstile();
+  };
+
+  const handleTurnstileRetry = () => {
+    setTurnstileError(false);
+    resetTurnstile();
   };
 
   // Dynamic error state
@@ -64,6 +77,7 @@ export default function RegistrationLogin() {
     // Validate Turnstile
     if (!turnstileToken) {
       toast.error("Silakan selesaikan verifikasi Turnstile");
+      setIsSubmitting(false);
       return;
     }
 
@@ -361,10 +375,41 @@ export default function RegistrationLogin() {
                 )}
                 <TurnstileWidget
                   key={turnstileKey}
-                  onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => resetTurnstile()}
-                  onError={() => resetTurnstile()}
+                  onVerify={(token) => { setTurnstileToken(token); setTurnstileError(false); }}
+                  onExpire={() => handleTurnstileError()}
+                  onError={() => handleTurnstileError()}
                 />
+                {turnstileError && (
+                  <div className="text-center space-y-2">
+                    {turnstileRetries >= 3 ? (
+                      <div className="text-sm text-destructive">
+                        <p>Verifikasi gagal berulang kali.</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => window.location.reload()}
+                        >
+                          Muat Ulang Halaman
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        <p>Verifikasi gagal dimuat.</p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto"
+                          onClick={handleTurnstileRetry}
+                        >
+                          Coba Lagi Verifikasi
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <Button 
                   type="submit" 
                   className="w-full" 

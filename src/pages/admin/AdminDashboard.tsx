@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useRealtimeLoginNotifications } from "@/hooks/useRealtimeLoginNotifications";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SEO } from "@/components/SEO";
 import { NotificationDropdown } from "@/components/admin/NotificationDropdown";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { adminNavConfig } from "@/components/admin/adminNavConfig";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,6 +22,24 @@ export default function AdminDashboard() {
   const { user, profile, role, isLoading, signOut, isSuperAdmin } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+
+  // Resolve current page title from nav config
+  const pageTitle = useMemo(() => {
+    const path = location.pathname;
+    for (const item of adminNavConfig) {
+      if (item.href === path) return item.label;
+      if (item.children) {
+        for (const child of item.children) {
+          if (child.href === path || path.startsWith(child.href + "/")) return child.label;
+        }
+      }
+    }
+    // Fallback for special pages
+    if (path.includes("/profile")) return "Profil";
+    if (path.includes("/change-password")) return "Ubah Password";
+    if (path.includes("/article-editor")) return "Editor Artikel";
+    return "";
+  }, [location.pathname]);
 
   // Enable realtime login notifications for super admins
   useRealtimeLoginNotifications();
@@ -129,13 +148,16 @@ export default function AdminDashboard() {
                   <AdminSidebar onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <h1 className="text-lg font-bold">FIM Admin</h1>
+              <h1 className="text-lg font-bold truncate">
+                {pageTitle || "FIM Admin"}
+              </h1>
             </div>
             <NotificationDropdown />
           </header>
 
           {/* Desktop Header with Notification */}
-          <header className="hidden lg:flex items-center justify-end p-4 border-b bg-card">
+          <header className="hidden lg:flex items-center justify-between p-4 border-b bg-card">
+            <h1 className="text-lg font-semibold text-foreground">{pageTitle}</h1>
             <NotificationDropdown />
           </header>
 
