@@ -360,9 +360,10 @@ export default function RegistrationLogin() {
                   />
                 )}
                 <TurnstileWidget
+                  key={turnstileKey}
                   onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => setTurnstileToken(null)}
-                  onError={() => setTurnstileToken(null)}
+                  onExpire={() => resetTurnstile()}
+                  onError={() => resetTurnstile()}
                 />
                 <Button 
                   type="submit" 
