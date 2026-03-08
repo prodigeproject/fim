@@ -241,7 +241,7 @@ const Index = () => {
               animate="visible" 
               className="text-sm lg:text-base text-accent font-semibold mb-4"
             >
-              Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia
+              {t("home.hero.socialProof", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
             </motion.p>
             <motion.p 
               variants={heroSubtitle} 
