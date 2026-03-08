@@ -42,6 +42,20 @@ const categoryLabels: Record<string, string> = {
   tips: "Tips",
 };
 
+const categoryColors: Record<string, string> = {
+  pengumuman: "bg-primary/10 text-primary border-primary/20",
+  prestasi: "bg-accent/10 text-accent-foreground border-accent/20",
+  kegiatan: "bg-supporting/10 text-supporting border-supporting/20",
+  sosial: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  opini: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+  tips: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
+};
+
+function estimateReadingTime(content: string): number {
+  const words = content.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
 const Blog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
