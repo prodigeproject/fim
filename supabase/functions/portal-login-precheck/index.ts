@@ -1,25 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 interface PrecheckRequest {
   email: string;
 }
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const cors = getCorsHeaders(req);
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json", ...cors },
+    });
+
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
@@ -34,7 +31,28 @@ serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Check block list first
+    // ── Rate limiting ───────────────────────────────────────
+    const realIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                   req.headers.get("x-real-ip") ||
+                   req.headers.get("cf-connecting-ip") ||
+                   "unknown";
+
+    const { data: rateData } = await supabase.rpc("check_rate_limit", {
+      p_identifier: realIp,
+      p_endpoint: "portal-login",
+      p_max_requests: 10,
+      p_window_seconds: 900, // 15 minutes
+    });
+
+    if (rateData?.[0] && !rateData[0].allowed) {
+      console.log(`Portal login rate limited for IP: ${realIp}`);
+      return json({
+        error: "Terlalu banyak percobaan. Coba lagi dalam 15 menit.",
+        rate_limited: true,
+      }, 429);
+    }
+
+    // Check block list
     const { data: blocked } = await supabase
       .from("blocked_registrations")
       .select("id, blocked_reason")
@@ -49,7 +67,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // Check registration existence & verification flag
+    // Check registration
     const { data: reg, error: regError } = await supabase
       .from("fim_registrations")
       .select("id, auth_user_id, email_verified")

@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 interface UnauthorizedAccessRequest {
   userId: string;
@@ -18,166 +13,80 @@ interface UnauthorizedAccessRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const cors = getCorsHeaders(req);
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json", ...cors },
+    });
 
   try {
-    const { 
-      userId, 
-      username, 
-      email,
-      attemptedPath,
-      userRole,
-      ipAddress, 
-      userAgent 
+    // ── Auth check ──────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: userErr } = await supabaseUser.auth.getUser();
+    if (userErr || !user) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    const {
+      userId, username, email, attemptedPath, userRole, ipAddress, userAgent,
     }: UnauthorizedAccessRequest = await req.json();
 
     console.log("Recording unauthorized access attempt for user:", username);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Record the attempt
     const { error: insertError } = await supabase
       .from("unauthorized_access_attempts")
       .insert({
-        user_id: userId,
-        username,
-        email,
-        attempted_path: attemptedPath,
-        user_role: userRole,
-        ip_address: ipAddress,
-        user_agent: userAgent,
+        user_id: userId, username, email,
+        attempted_path: attemptedPath, user_role: userRole,
+        ip_address: ipAddress, user_agent: userAgent,
       });
 
-    if (insertError) {
-      console.error("Error inserting unauthorized access attempt:", insertError);
-    }
+    if (insertError) console.error("Error inserting unauthorized access attempt:", insertError);
 
-    // Check how many attempts this user has made in the last hour
+    // Count recent attempts
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { data: recentAttempts, error: countError } = await supabase
+    const { data: recentAttempts } = await supabase
       .from("unauthorized_access_attempts")
       .select("id")
       .eq("user_id", userId)
       .gte("created_at", oneHourAgo);
 
-    if (countError) {
-      console.error("Error counting attempts:", countError);
-    }
-
     const attemptCount = recentAttempts?.length || 0;
-    console.log(`User ${username} has ${attemptCount} unauthorized attempts in the last hour`);
 
-    // If this is the 3rd attempt or more, send email notification
+    // Send email alert at threshold
     if (attemptCount >= 3 && attemptCount % 3 === 0) {
-      console.log("Threshold reached, sending email notification to super admins");
-
       const resendApiKey = Deno.env.get("RESEND_API_KEY");
-      if (!resendApiKey) {
-        throw new Error("RESEND_API_KEY is not configured");
-      }
+      if (!resendApiKey) throw new Error("RESEND_API_KEY is not configured");
 
       const formattedTime = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
+        timeZone: "Asia/Jakarta", weekday: "long", year: "numeric",
+        month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit",
       });
 
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: #f9f9f9; padding: 20px; border: 1px solid #e0e0e0; }
-            .info-table { width: 100%; border-collapse: collapse; }
-            .info-table td { padding: 10px; border-bottom: 1px solid #e0e0e0; }
-            .info-table td:first-child { font-weight: bold; color: #666; width: 140px; }
-            .footer { background: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 8px 8px; }
-            .alert-box { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; padding: 15px; border-radius: 8px; margin: 15px 0; }
-            .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-            .badge-danger { background: #fee2e2; color: #dc2626; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1 style="margin: 0;">🚨 Peringatan Keamanan</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Percobaan Akses Tidak Sah Terdeteksi</p>
-            </div>
-            <div class="content">
-              <div class="alert-box">
-                <strong>⚠️ Perhatian!</strong><br>
-                Pengguna berikut telah mencoba mengakses halaman yang tidak diizinkan sebanyak <strong>${attemptCount} kali</strong> dalam 1 jam terakhir.
-              </div>
-              
-              <p>Detail percobaan terakhir:</p>
-              
-              <table class="info-table">
-                <tr>
-                  <td>Username</td>
-                  <td><strong>${username}</strong></td>
-                </tr>
-                <tr>
-                  <td>Email</td>
-                  <td>${email}</td>
-                </tr>
-                <tr>
-                  <td>Role</td>
-                  <td><span class="badge badge-danger">${userRole === 'moderator' ? 'Moderator' : userRole}</span></td>
-                </tr>
-                <tr>
-                  <td>Halaman Dituju</td>
-                  <td><code>${attemptedPath}</code></td>
-                </tr>
-                <tr>
-                  <td>Waktu</td>
-                  <td>${formattedTime} WIB</td>
-                </tr>
-                <tr>
-                  <td>IP Address</td>
-                  <td><code>${ipAddress || 'Tidak tersedia'}</code></td>
-                </tr>
-                <tr>
-                  <td>Browser/Device</td>
-                  <td style="font-size: 11px; word-break: break-all;">${userAgent || 'Tidak tersedia'}</td>
-                </tr>
-              </table>
+      const emailHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:20px;text-align:center;border-radius:8px 8px 0 0}.content{background:#f9f9f9;padding:20px;border:1px solid #e0e0e0}.info-table{width:100%;border-collapse:collapse}.info-table td{padding:10px;border-bottom:1px solid #e0e0e0}.info-table td:first-child{font-weight:bold;color:#666;width:140px}.footer{background:#f0f0f0;padding:15px;text-align:center;font-size:12px;color:#666;border-radius:0 0 8px 8px}.alert-box{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;padding:15px;border-radius:8px;margin:15px 0}</style></head><body><div class="container"><div class="header"><h1 style="margin:0">🚨 Peringatan Keamanan</h1><p style="margin:10px 0 0;opacity:.9">Percobaan Akses Tidak Sah Terdeteksi</p></div><div class="content"><div class="alert-box"><strong>⚠️ Perhatian!</strong><br>Pengguna berikut telah mencoba mengakses halaman yang tidak diizinkan sebanyak <strong>${attemptCount} kali</strong> dalam 1 jam terakhir.</div><table class="info-table"><tr><td>Username</td><td><strong>${username}</strong></td></tr><tr><td>Email</td><td>${email}</td></tr><tr><td>Role</td><td>${userRole}</td></tr><tr><td>Halaman Dituju</td><td><code>${attemptedPath}</code></td></tr><tr><td>Waktu</td><td>${formattedTime} WIB</td></tr><tr><td>IP Address</td><td><code>${ipAddress || "N/A"}</code></td></tr></table></div><div class="footer"><p>© ${new Date().getFullYear()} Forum Indonesia Muda</p></div></div></body></html>`;
 
-              <p style="margin-top: 20px; padding: 15px; background: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <strong>📋 Tindakan yang Disarankan:</strong><br>
-                1. Periksa aktivitas user di Audit Logs<br>
-                2. Pertimbangkan untuk menonaktifkan akun jika mencurigakan<br>
-                3. Hubungi user untuk klarifikasi jika diperlukan
-              </p>
-            </div>
-            <div class="footer">
-              <p>Email ini dikirim secara otomatis oleh sistem keamanan Admin Panel FIM.</p>
-              <p>© ${new Date().getFullYear()} Forum Indonesia Muda</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const response = await fetch("https://api.resend.com/emails", {
+      await fetch("https://api.resend.com/emails", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "FIM Security <onboarding@resend.dev>",
           to: ["web@forumindonesiamuda.org"],
@@ -186,50 +95,13 @@ const handler = async (req: Request): Promise<Response> => {
         }),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("Resend API error:", result);
-        throw new Error(result.message || "Failed to send email");
-      }
-
-      console.log("Security alert email sent successfully:", result);
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          emailSent: true, 
-          attemptCount,
-          messageId: result.id 
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      return json({ success: true, emailSent: true, attemptCount });
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        emailSent: false, 
-        attemptCount,
-        message: "Attempt recorded" 
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return json({ success: true, emailSent: false, attemptCount });
   } catch (error: any) {
     console.error("Error in notify-unauthorized-access:", error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return json({ success: false, error: error.message }, 500);
   }
 };
 
