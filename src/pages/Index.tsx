@@ -338,7 +338,7 @@ const Index = () => {
             <TextReveal
               as="p"
               text={`"${t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"`}
-              className="text-xl lg:text-2xl text-foreground italic mb-4"
+              className="text-lg sm:text-xl lg:text-2xl text-foreground italic mb-4 px-2"
               delay={0.2}
             />
             <ScrollReveal type="fade-up" delay={0.6}>
