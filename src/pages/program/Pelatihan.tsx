@@ -153,11 +153,11 @@ const Pelatihan = () => {
       </section>
 
       {/* About Program */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Apa itu Kaderisasi FIM?</h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6">Apa itu Kaderisasi FIM?</h2>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               Program Kaderisasi FIM adalah program pelatihan kepemimpinan tahunan yang telah berjalan sejak 2003.
               Program ini dirancang untuk membentuk karakter, mengembangkan potensi, dan membangun jaringan pemuda
               Indonesia dari berbagai latar belakang. Setiap tahun, FIM merekrut dan melatih ratusan pemuda terpilih
