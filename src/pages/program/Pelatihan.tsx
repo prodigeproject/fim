@@ -134,18 +134,18 @@ const Pelatihan = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-secondary">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="py-8 sm:py-12 bg-secondary">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                className="bg-card rounded-xl p-6 text-center shadow-lg animate-fade-in"
+                className="bg-card rounded-xl p-4 sm:p-6 text-center shadow-lg animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <stat.icon className="h-8 w-8 text-primary mx-auto mb-3" />
-                <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <stat.icon className="h-6 sm:h-8 w-6 sm:w-8 text-primary mx-auto mb-2 sm:mb-3" />
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-1">{stat.value}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
