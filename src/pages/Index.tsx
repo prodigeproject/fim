@@ -407,7 +407,7 @@ const Index = () => {
           <ScrollReveal type="fade-up" delay={0.1}>
             <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
+          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
             {programUnggulan.map((program) => (
               <StaggerItem key={program.title}>
                 <Link to={program.link} className="group block h-full">
