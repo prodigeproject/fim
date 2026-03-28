@@ -399,10 +399,10 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan */}
-      <section className="py-20 bg-secondary/50" aria-labelledby="program-section-heading">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-20 bg-secondary/50" aria-labelledby="program-section-heading">
+        <div className="container mx-auto px-4 sm:px-6">
           <ScrollReveal type="fade-up">
-            <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
+            <h2 id="program-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
           </ScrollReveal>
           <ScrollReveal type="fade-up" delay={0.1}>
             <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</p>
