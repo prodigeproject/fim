@@ -394,7 +394,7 @@ const Blog = () => {
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
                         onSelect={setDateRange}
-                        numberOfMonths={2}
+                        numberOfMonths={1}
                       />
                     </PopoverContent>
                   </Popover>
