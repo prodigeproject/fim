@@ -118,12 +118,12 @@ const Tentang = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <motion.section className="py-16 bg-background" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-        <div className="container mx-auto px-4">
+      <motion.section className="py-10 sm:py-16 bg-background" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-8 lg:p-12">
-              <div className="absolute top-4 left-4 text-6xl text-accent/30">"</div>
-              <blockquote className="text-xl lg:text-2xl text-foreground font-medium italic mb-6">Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa.</blockquote>
+            <div className="relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12">
+              <div className="absolute top-3 sm:top-4 left-3 sm:left-4 text-4xl sm:text-6xl text-accent/30">"</div>
+              <blockquote className="text-lg sm:text-xl lg:text-2xl text-foreground font-medium italic mb-4 sm:mb-6">Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa.</blockquote>
               <div className="w-16 h-1 bg-accent mx-auto mb-4" />
               <p className="text-muted-foreground font-semibold">Filosofi Kunang-Kunang FIM</p>
             </div>
