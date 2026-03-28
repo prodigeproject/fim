@@ -211,7 +211,7 @@ const Index = () => {
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
         
-        <div className="relative container mx-auto px-4 py-16 lg:py-32">
+        <div className="relative container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-32">
           <div className="flex flex-col items-center text-center">
             <motion.img 
               variants={heroTitle} 
@@ -219,13 +219,13 @@ const Index = () => {
               animate="visible" 
               src={logoFim} 
               alt="Forum Indonesia Muda" 
-              className="h-24 lg:h-36 mb-8 brightness-0 invert drop-shadow-2xl" 
+              className="h-16 sm:h-24 lg:h-36 mb-6 sm:mb-8 brightness-0 invert drop-shadow-2xl" 
             />
             <motion.h1 
               variants={heroTitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-4xl lg:text-7xl font-bold text-primary-foreground mb-4 leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight"
             >
               {t("home.hero.title", "Forum Indonesia Muda")}<br />
               <motion.span 
