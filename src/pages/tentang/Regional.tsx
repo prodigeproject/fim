@@ -77,12 +77,12 @@ const Regional = () => {
               />
             </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center sm:overflow-visible">
             {islands.map((island) => (
               <button 
                 key={island} 
                 onClick={() => setSelectedIsland(island)} 
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 min-h-[40px] ${
                   selectedIsland === island 
                     ? "bg-primary text-primary-foreground" 
                     : "bg-card text-foreground hover:bg-muted border border-border"

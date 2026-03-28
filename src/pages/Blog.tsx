@@ -285,8 +285,8 @@ const Blog = () => {
       />
 
       {/* Blog Grid */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="relative">
@@ -296,7 +296,7 @@ const Blog = () => {
                 placeholder="Cari artikel..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-12 pr-12 py-6 text-lg rounded-full"
+                className="pl-10 sm:pl-12 pr-10 sm:pr-12 py-4 sm:py-6 text-base sm:text-lg rounded-full"
               />
               {searchQuery && (
                 <Button
@@ -312,12 +312,12 @@ const Blog = () => {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 mb-6 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center sm:overflow-visible">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => handleCategoryChange(category)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === category
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-card text-foreground hover:bg-primary hover:text-primary-foreground border-border"
@@ -394,7 +394,7 @@ const Blog = () => {
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
                         onSelect={setDateRange}
-                        numberOfMonths={2}
+                        numberOfMonths={1}
                       />
                     </PopoverContent>
                   </Popover>
@@ -439,7 +439,7 @@ const Blog = () => {
             </div>
           ) : paginatedPosts.length > 0 ? (
             <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
               {paginatedPosts.map((post, index) => {
                 const readTime = estimateReadingTime(post.content);
                 const catColor = categoryColors[post.category] || "bg-primary/10 text-primary border-primary/20";

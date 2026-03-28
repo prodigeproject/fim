@@ -95,18 +95,18 @@ const Tentang = () => {
       <PageHero title={t("about.hero.title", "Tentang Forum Indonesia Muda")} subtitle={t("about.hero.subtitle", "Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin")} />
 
       {/* Visi Misi */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <motion.div className="grid lg:grid-cols-2 gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
+      <section className="py-10 sm:py-16 lg:py-20 bg-secondary">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg">
               <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6"><Target className="h-8 w-8 text-primary" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.vision", "Visi")}</h2>
-              <p className="text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">{t("about.vision", "Visi")}</h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
             </motion.div>
-            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
-              <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6"><Compass className="h-8 w-8 text-supporting" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.mission", "Misi")}</h2>
-              <ul className="space-y-3 text-muted-foreground">
+            <motion.div variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg">
+              <div className="w-12 sm:w-16 h-12 sm:h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-4 sm:mb-6"><Compass className="h-6 sm:h-8 w-6 sm:w-8 text-supporting" /></div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">{t("about.mission", "Misi")}</h2>
+              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-muted-foreground">
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">1.</span>Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.</li>
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">2.</span>Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).</li>
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">3.</span>Menyatukan dan mengoptimalkan berbagai potensi pemuda dan mahasiswa dalam forum silaturahim dengan berbagai latar belakang.</li>
@@ -118,12 +118,12 @@ const Tentang = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <motion.section className="py-16 bg-background" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-        <div className="container mx-auto px-4">
+      <motion.section className="py-10 sm:py-16 bg-background" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-3xl p-8 lg:p-12">
-              <div className="absolute top-4 left-4 text-6xl text-accent/30">"</div>
-              <blockquote className="text-xl lg:text-2xl text-foreground font-medium italic mb-6">Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa.</blockquote>
+            <div className="relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12">
+              <div className="absolute top-3 sm:top-4 left-3 sm:left-4 text-4xl sm:text-6xl text-accent/30">"</div>
+              <blockquote className="text-lg sm:text-xl lg:text-2xl text-foreground font-medium italic mb-4 sm:mb-6">Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda Indonesia memiliki cahaya yang dapat menerangi jalan bagi sesama dan bangsa.</blockquote>
               <div className="w-16 h-1 bg-accent mx-auto mb-4" />
               <p className="text-muted-foreground font-semibold">Filosofi Kunang-Kunang FIM</p>
             </div>
@@ -180,10 +180,10 @@ const Tentang = () => {
       </section>
 
       {/* Struktur Pengurus - Now from DB */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("about.structure", "Struktur Pengurus")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("about.structure", "Struktur Pengurus")}</motion.h2>
+          <motion.p className="text-sm sm:text-base text-muted-foreground text-center max-w-2xl mx-auto mb-8 sm:mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
 
           {/* Yayasan */}
           {strukturYayasan.length > 0 && (
@@ -192,7 +192,7 @@ const Tentang = () => {
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
                 <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
               </div>
-              <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+              <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
                 {strukturYayasan.map((person, index) => (
                   <motion.div key={person.id} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''}`}>
                     <div className="flex items-center gap-4">

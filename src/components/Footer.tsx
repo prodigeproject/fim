@@ -78,19 +78,19 @@ const Footer = () => {
             <p className="text-background/70 text-sm mb-4">
               {t("footer.getUpdatesDesc", "Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.")}
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md mx-auto">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <Input
                 type="email"
                 placeholder={t("home.newsletter.placeholder", "Masukkan email Anda")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-background/10 border-background/20 text-background placeholder:text-background/50"
+                className="bg-background/10 border-background/20 text-background placeholder:text-background/50 min-h-[44px]"
                 required
                 disabled={isLoading}
               />
               <Button
                 type="submit"
-                className="bg-accent text-accent-foreground hover:bg-accent/90 min-w-[120px]"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 min-w-[120px] min-h-[44px]"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -106,10 +106,10 @@ const Footer = () => {
       </div>
 
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-12 lg:py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      <div className="container mx-auto px-4 py-10 sm:py-12 lg:py-16">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
           {/* Brand Column */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-4">
               <img src={logoFim} alt="FIM" className="h-12" />
               <span className="font-bold text-xl">Forum Indonesia Muda</span>

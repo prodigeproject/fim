@@ -193,7 +193,7 @@ const Index = () => {
         description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
       {/* Hero Section with enhanced motion */}
-      <section className="relative overflow-hidden min-h-[70vh] flex items-center">
+      <section className="relative overflow-hidden min-h-[60vh] sm:min-h-[70vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-hero opacity-95" />
         <motion.div 
           className="absolute top-20 right-10 w-40 h-40 bg-accent/20 rounded-full blur-3xl"
@@ -211,7 +211,7 @@ const Index = () => {
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
         
-        <div className="relative container mx-auto px-4 py-16 lg:py-32">
+        <div className="relative container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-32">
           <div className="flex flex-col items-center text-center">
             <motion.img 
               variants={heroTitle} 
@@ -219,13 +219,13 @@ const Index = () => {
               animate="visible" 
               src={logoFim} 
               alt="Forum Indonesia Muda" 
-              className="h-24 lg:h-36 mb-8 brightness-0 invert drop-shadow-2xl" 
+              className="h-16 sm:h-24 lg:h-36 mb-6 sm:mb-8 brightness-0 invert drop-shadow-2xl" 
             />
             <motion.h1 
               variants={heroTitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-4xl lg:text-7xl font-bold text-primary-foreground mb-4 leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight"
             >
               {t("home.hero.title", "Forum Indonesia Muda")}<br />
               <motion.span 
@@ -241,7 +241,7 @@ const Index = () => {
               variants={heroSubtitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-sm lg:text-base text-accent font-semibold mb-4"
+              className="text-xs sm:text-sm lg:text-base text-accent font-semibold mb-3 sm:mb-4 px-2"
             >
               {t("home.hero.trusted", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
             </motion.p>
@@ -249,7 +249,7 @@ const Index = () => {
               variants={heroSubtitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6"
+              className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-5 sm:mb-6 px-2"
             >
               {t("home.hero.subtitle", "Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.")}
             </motion.p>
@@ -257,9 +257,9 @@ const Index = () => {
               variants={heroCTA} 
               initial="hidden" 
               animate="visible"
-              className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block"
+              className="bg-accent/20 border border-accent/50 rounded-lg px-3 sm:px-4 py-2 mb-5 sm:mb-6 inline-block"
             >
-              <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
+              <p className="text-xs sm:text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
                 <span className="animate-pulse">🔥</span> {t("home.hero.announcement", "Pendaftaran Angkatan Baru Segera Dibuka!")}
               </p>
             </motion.div>
@@ -312,8 +312,8 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-secondary/50">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 bg-secondary/50">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div 
             className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             initial="hidden"
@@ -329,8 +329,8 @@ const Index = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
             <ScrollReveal type="scale">
               <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
@@ -338,7 +338,7 @@ const Index = () => {
             <TextReveal
               as="p"
               text={`"${t("home.quote", "Seperti kunang-kunang yang kecil namun mampu menerangi kegelapan, kami percaya setiap pemuda memiliki cahaya untuk menerangi Indonesia.")}"`}
-              className="text-xl lg:text-2xl text-foreground italic mb-4"
+              className="text-lg sm:text-xl lg:text-2xl text-foreground italic mb-4 px-2"
               delay={0.2}
             />
             <ScrollReveal type="fade-up" delay={0.6}>
@@ -352,17 +352,17 @@ const Index = () => {
       <FIMJourneyTimeline />
 
       {/* Alumni Testimonials */}
-      <section className="py-20 bg-background" aria-labelledby="alumni-section-heading">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-20 bg-background" aria-labelledby="alumni-section-heading">
+        <div className="container mx-auto px-4 sm:px-6">
           <ScrollReveal type="fade-up">
-            <h2 id="alumni-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
+            <h2 id="alumni-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4">{t("home.alumniSection.title", "Jejak Alumni FIM")}</h2>
           </ScrollReveal>
           <ScrollReveal type="fade-up" delay={0.1}>
             <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
               {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
             </p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
+          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
               <StaggerItem key={testimonial.name}>
                 <motion.div
@@ -399,15 +399,15 @@ const Index = () => {
       </section>
 
       {/* Program Unggulan */}
-      <section className="py-20 bg-secondary/50" aria-labelledby="program-section-heading">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-20 bg-secondary/50" aria-labelledby="program-section-heading">
+        <div className="container mx-auto px-4 sm:px-6">
           <ScrollReveal type="fade-up">
-            <h2 id="program-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
+            <h2 id="program-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4">{t("home.programs.title", "Program Unggulan")}</h2>
           </ScrollReveal>
           <ScrollReveal type="fade-up" delay={0.1}>
             <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">{t("home.programs.subtitle", "Berbagai program untuk mengembangkan potensi pemuda Indonesia")}</p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
+          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto" staggerDelay={0.12}>
             {programUnggulan.map((program) => (
               <StaggerItem key={program.title}>
                 <Link to={program.link} className="group block h-full">
@@ -444,7 +444,7 @@ const Index = () => {
           <motion.h2 id="news-section-heading" className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("home.news.title", "Kabar FIM")}</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>{t("home.news.subtitle", "Berita dan kegiatan terbaru dari Forum Indonesia Muda")}</motion.p>
           <motion.div 
-            className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+            className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -543,7 +543,7 @@ const Index = () => {
         variants={staggerContainer}
       >
         <div className="container mx-auto px-4 text-center">
-          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
+          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-foreground mb-3 sm:mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
           <motion.p variants={fadeUp} custom={1} className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("home.cta.subtitle", "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi")}</motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/portal">

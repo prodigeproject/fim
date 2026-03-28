@@ -257,6 +257,15 @@
   }
 }
 
+/* Hide scrollbar for horizontal scroll filters */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom scrollbar for admin sidebar */
 .scrollbar-thin {
   scrollbar-width: thin;

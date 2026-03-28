@@ -128,13 +128,13 @@ const ProgramUnggulan = () => {
       </section>
 
       {/* Programs Detail */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto space-y-16">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto space-y-10 sm:space-y-16">
             {programs.map((program, index) => (
               <div
                 key={program.title}
-                className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-8 animate-fade-in`}
+                className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-6 sm:gap-8 animate-fade-in`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Content */}
@@ -143,7 +143,7 @@ const ProgramUnggulan = () => {
                     <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
                       <program.icon className="h-7 w-7 text-primary" />
                     </div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground">{program.title}</h2>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">{program.title}</h2>
                   </div>
                   
                   <p className="text-muted-foreground mb-6 leading-relaxed">{program.description}</p>

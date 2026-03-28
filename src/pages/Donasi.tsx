@@ -39,14 +39,14 @@ const Donasi = () => {
       <SEO title="Donasi" description="Dukung Forum Indonesia Muda untuk mencetak lebih banyak pemimpin muda Indonesia." />
       <PageHero title="Dukung Forum Indonesia Muda" subtitle="Kontribusi Anda membantu kami mencetak lebih banyak pemimpin muda untuk Indonesia" />
 
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
-            <div className="lg:col-span-2 space-y-12">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+            <div className="md:col-span-2 lg:col-span-2 space-y-8 sm:space-y-12">
               {/* Why Donate */}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Mengapa Mendukung FIM?</motion.h2>
-                <motion.p variants={fadeUp} className="text-lg text-muted-foreground leading-relaxed mb-8">Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami menjangkau lebih banyak pemuda dari berbagai latar belakang.</motion.p>
+                <motion.h2 variants={fadeUp} className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6">Mengapa Mendukung FIM?</motion.h2>
+                <motion.p variants={fadeUp} className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-6 sm:mb-8">Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami menjangkau lebih banyak pemuda dari berbagai latar belakang.</motion.p>
                 <motion.div variants={stagger} className="grid sm:grid-cols-3 gap-4">
                   {[
                     { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda sejak 2003" },
@@ -128,8 +128,8 @@ const Donasi = () => {
             </div>
 
             {/* Disaster Relief */}
-            <motion.div className="lg:col-span-1" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-              <div className="bg-destructive/5 rounded-2xl p-6 lg:p-8 border-2 border-destructive/20 sticky top-24">
+            <motion.div className="md:col-span-2 lg:col-span-1" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+              <div className="bg-destructive/5 rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 border-2 border-destructive/20 lg:sticky lg:top-24">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-destructive/20 rounded-xl flex items-center justify-center"><AlertTriangle className="h-7 w-7 text-destructive" /></div>
                   <div><h2 className="text-2xl font-bold text-foreground">Donasi Bencana</h2><p className="text-sm text-destructive font-medium">🆘 FIM Tanggap Bencana</p></div>
