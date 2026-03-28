@@ -128,9 +128,9 @@ const ProgramUnggulan = () => {
       </section>
 
       {/* Programs Detail */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto space-y-16">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto space-y-10 sm:space-y-16">
             {programs.map((program, index) => (
               <div
                 key={program.title}
