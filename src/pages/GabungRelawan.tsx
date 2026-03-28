@@ -61,11 +61,11 @@ const GabungRelawan = () => {
         </div>
       </section>
 
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Cara Bergabung</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Ada dua jalur utama untuk menjadi relawan FIM</motion.p>
-          <motion.div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+      <section className="py-10 sm:py-16 lg:py-20 bg-secondary">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Cara Bergabung</motion.h2>
+          <motion.p className="text-sm sm:text-base text-muted-foreground text-center max-w-2xl mx-auto mb-8 sm:mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Ada dua jalur utama untuk menjadi relawan FIM</motion.p>
+          <motion.div className="max-w-4xl mx-auto grid sm:grid-cols-2 gap-4 sm:gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             {joinSteps.map((step) => (
               <motion.div key={step.step} variants={fadeUp} className="bg-card rounded-2xl p-6 shadow-lg">
                 <div className="flex items-start gap-4">
