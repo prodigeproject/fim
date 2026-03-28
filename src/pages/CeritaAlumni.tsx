@@ -118,7 +118,7 @@ const CeritaAlumni = () => {
             ))}
           </div>
           {storiesLoading ? <AlumniGridSkeleton /> : filteredStories.length > 0 ? (
-            <motion.div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
               {filteredStories.map((story: any) => {
                 const Icon = getSectorIcon(story.sector);
                 return (
