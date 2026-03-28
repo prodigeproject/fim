@@ -112,9 +112,9 @@ const CeritaAlumni = () => {
         <div className="container mx-auto px-4">
           <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Kisah Mereka, Inspirasi Kita</motion.h2>
           <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-8" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Dari Sabang sampai Merauke, alumni FIM telah memberikan dampak nyata di berbagai bidang.</motion.p>
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 mb-8 sm:mb-12 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center sm:overflow-visible">
             {sectors.map((sector) => (
-              <button key={sector} onClick={() => setSelectedSector(sector)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedSector === sector ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted border border-border"}`}>{sector}</button>
+              <button key={sector} onClick={() => setSelectedSector(sector)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedSector === sector ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted border border-border"}`}>{sector}</button>
             ))}
           </div>
           {storiesLoading ? <AlumniGridSkeleton /> : filteredStories.length > 0 ? (
