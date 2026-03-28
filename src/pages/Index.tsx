@@ -249,7 +249,7 @@ const Index = () => {
               variants={heroSubtitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-6"
+              className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-5 sm:mb-6 px-2"
             >
               {t("home.hero.subtitle", "Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.")}
             </motion.p>
