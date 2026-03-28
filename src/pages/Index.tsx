@@ -257,9 +257,9 @@ const Index = () => {
               variants={heroCTA} 
               initial="hidden" 
               animate="visible"
-              className="bg-accent/20 border border-accent/50 rounded-lg px-4 py-2 mb-6 inline-block"
+              className="bg-accent/20 border border-accent/50 rounded-lg px-3 sm:px-4 py-2 mb-5 sm:mb-6 inline-block"
             >
-              <p className="text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
+              <p className="text-xs sm:text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
                 <span className="animate-pulse">🔥</span> {t("home.hero.announcement", "Pendaftaran Angkatan Baru Segera Dibuka!")}
               </p>
             </motion.div>
