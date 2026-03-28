@@ -45,8 +45,8 @@ const Donasi = () => {
             <div className="md:col-span-2 lg:col-span-2 space-y-8 sm:space-y-12">
               {/* Why Donate */}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Mengapa Mendukung FIM?</motion.h2>
-                <motion.p variants={fadeUp} className="text-lg text-muted-foreground leading-relaxed mb-8">Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami menjangkau lebih banyak pemuda dari berbagai latar belakang.</motion.p>
+                <motion.h2 variants={fadeUp} className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6">Mengapa Mendukung FIM?</motion.h2>
+                <motion.p variants={fadeUp} className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-6 sm:mb-8">Selama lebih dari 20 tahun, FIM telah mencetak ribuan pemimpin muda yang kini berkontribusi di berbagai sektor. Dukungan Anda membantu kami menjangkau lebih banyak pemuda dari berbagai latar belakang.</motion.p>
                 <motion.div variants={stagger} className="grid sm:grid-cols-3 gap-4">
                   {[
                     { icon: Heart, title: "4000+ Alumni", desc: "Pemimpin muda sejak 2003" },
