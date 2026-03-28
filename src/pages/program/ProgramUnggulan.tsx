@@ -134,7 +134,7 @@ const ProgramUnggulan = () => {
             {programs.map((program, index) => (
               <div
                 key={program.title}
-                className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-8 animate-fade-in`}
+                className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-6 sm:gap-8 animate-fade-in`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Content */}
