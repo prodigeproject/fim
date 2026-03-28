@@ -180,10 +180,10 @@ const Tentang = () => {
       </section>
 
       {/* Struktur Pengurus - Now from DB */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("about.structure", "Struktur Pengurus")}</motion.h2>
-          <motion.p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-3 sm:mb-4" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>{t("about.structure", "Struktur Pengurus")}</motion.h2>
+          <motion.p className="text-sm sm:text-base text-muted-foreground text-center max-w-2xl mx-auto mb-8 sm:mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>Organisasi yang menggerakkan Forum Indonesia Muda</motion.p>
 
           {/* Yayasan */}
           {strukturYayasan.length > 0 && (
