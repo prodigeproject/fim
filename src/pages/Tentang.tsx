@@ -192,7 +192,7 @@ const Tentang = () => {
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div>
                 <h3 className="text-2xl font-bold text-foreground">Struktur Yayasan</h3>
               </div>
-              <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+              <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
                 {strukturYayasan.map((person, index) => (
                   <motion.div key={person.id} variants={fadeUp} className={`bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${index < 2 ? 'lg:col-span-1 border-2 border-primary/20' : ''}`}>
                     <div className="flex items-center gap-4">

@@ -128,8 +128,8 @@ const Donasi = () => {
             </div>
 
             {/* Disaster Relief */}
-            <motion.div className="lg:col-span-1" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-              <div className="bg-destructive/5 rounded-2xl p-6 lg:p-8 border-2 border-destructive/20 sticky top-24">
+            <motion.div className="md:col-span-2 lg:col-span-1" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+              <div className="bg-destructive/5 rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 border-2 border-destructive/20 lg:sticky lg:top-24">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-destructive/20 rounded-xl flex items-center justify-center"><AlertTriangle className="h-7 w-7 text-destructive" /></div>
                   <div><h2 className="text-2xl font-bold text-foreground">Donasi Bencana</h2><p className="text-sm text-destructive font-medium">🆘 FIM Tanggap Bencana</p></div>

@@ -82,7 +82,7 @@ const GabungRelawan = () => {
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 sm:gap-12 items-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             <motion.div variants={fadeUp}>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Manfaat Menjadi Relawan</h2>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6">Manfaat Menjadi Relawan</h2>
               <p className="text-muted-foreground mb-8">Bergabung sebagai relawan FIM tidak hanya memberikan pengalaman berharga, tetapi juga membuka pintu untuk berbagai kesempatan pengembangan diri.</p>
               <ul className="space-y-4">
                 {benefits.map((benefit) => (

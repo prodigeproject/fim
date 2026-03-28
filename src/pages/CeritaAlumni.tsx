@@ -122,7 +122,7 @@ const CeritaAlumni = () => {
               {filteredStories.map((story: any) => {
                 const Icon = getSectorIcon(story.sector);
                 return (
-                  <motion.div key={story.id} variants={fadeUp} className="bg-card rounded-2xl p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all">
+                  <motion.div key={story.id} variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-lg hover:shadow-xl transition-all">
                     <div className="flex items-start gap-4 mb-6">
                       <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {story.photo_url ? <img src={story.photo_url} alt={story.name} className="w-full h-full object-cover" /> : <span className="text-2xl font-bold text-primary">{story.name.split(" ").map((n: string) => n[0]).join("")}</span>}
