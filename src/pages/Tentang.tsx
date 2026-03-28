@@ -100,8 +100,8 @@ const Tentang = () => {
           <motion.div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             <motion.div variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg">
               <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6"><Target className="h-8 w-8 text-primary" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.vision", "Visi")}</h2>
-              <p className="text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">{t("about.vision", "Visi")}</h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
             </motion.div>
             <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
               <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6"><Compass className="h-8 w-8 text-supporting" /></div>
