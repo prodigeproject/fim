@@ -439,7 +439,7 @@ const Blog = () => {
             </div>
           ) : paginatedPosts.length > 0 ? (
             <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
               {paginatedPosts.map((post, index) => {
                 const readTime = estimateReadingTime(post.content);
                 const catColor = categoryColors[post.category] || "bg-primary/10 text-primary border-primary/20";

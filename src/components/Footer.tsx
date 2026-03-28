@@ -109,7 +109,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-10 sm:py-12 lg:py-16">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
           {/* Brand Column */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-4">
               <img src={logoFim} alt="FIM" className="h-12" />
               <span className="font-bold text-xl">Forum Indonesia Muda</span>
