@@ -312,7 +312,7 @@ const Blog = () => {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 mb-6 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center sm:overflow-visible">
             {categories.map((category) => (
               <button
                 key={category}
