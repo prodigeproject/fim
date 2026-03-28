@@ -193,7 +193,7 @@ const Index = () => {
         description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
       {/* Hero Section with enhanced motion */}
-      <section className="relative overflow-hidden min-h-[70vh] flex items-center">
+      <section className="relative overflow-hidden min-h-[60vh] sm:min-h-[70vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-hero opacity-95" />
         <motion.div 
           className="absolute top-20 right-10 w-40 h-40 bg-accent/20 rounded-full blur-3xl"
