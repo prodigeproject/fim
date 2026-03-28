@@ -285,8 +285,8 @@ const Blog = () => {
       />
 
       {/* Blog Grid */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="relative">
