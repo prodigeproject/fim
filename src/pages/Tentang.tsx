@@ -95,10 +95,10 @@ const Tentang = () => {
       <PageHero title={t("about.hero.title", "Tentang Forum Indonesia Muda")} subtitle={t("about.hero.subtitle", "Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin")} />
 
       {/* Visi Misi */}
-      <section className="py-16 lg:py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <motion.div className="grid lg:grid-cols-2 gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
+      <section className="py-10 sm:py-16 lg:py-20 bg-secondary">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+            <motion.div variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg">
               <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6"><Target className="h-8 w-8 text-primary" /></div>
               <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.vision", "Visi")}</h2>
               <p className="text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
