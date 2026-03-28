@@ -42,7 +42,7 @@ const Donasi = () => {
       <section className="py-10 sm:py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
-            <div className="lg:col-span-2 space-y-12">
+            <div className="md:col-span-2 lg:col-span-2 space-y-8 sm:space-y-12">
               {/* Why Donate */}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
                 <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Mengapa Mendukung FIM?</motion.h2>
