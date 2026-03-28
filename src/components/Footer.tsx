@@ -78,19 +78,19 @@ const Footer = () => {
             <p className="text-background/70 text-sm mb-4">
               {t("footer.getUpdatesDesc", "Berlangganan newsletter untuk info kegiatan, pendaftaran, dan berita terbaru dari FIM.")}
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md mx-auto">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
               <Input
                 type="email"
                 placeholder={t("home.newsletter.placeholder", "Masukkan email Anda")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-background/10 border-background/20 text-background placeholder:text-background/50"
+                className="bg-background/10 border-background/20 text-background placeholder:text-background/50 min-h-[44px]"
                 required
                 disabled={isLoading}
               />
               <Button
                 type="submit"
-                className="bg-accent text-accent-foreground hover:bg-accent/90 min-w-[120px]"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 min-w-[120px] min-h-[44px]"
                 disabled={isLoading}
               >
                 {isLoading ? (
