@@ -46,10 +46,10 @@ const GabungRelawan = () => {
         </div>
       </motion.section>
 
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <motion.h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Tentang Relawan FIM</motion.h2>
-          <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-8 sm:mb-12" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>Tentang Relawan FIM</motion.h2>
+          <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
             {volunteerInfo.map((info) => (
               <motion.div key={info.title} variants={fadeUp} className="bg-card rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4"><info.icon className="h-6 w-6 text-primary" /></div>
