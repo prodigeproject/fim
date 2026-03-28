@@ -39,9 +39,9 @@ const Donasi = () => {
       <SEO title="Donasi" description="Dukung Forum Indonesia Muda untuk mencetak lebih banyak pemimpin muda Indonesia." />
       <PageHero title="Dukung Forum Indonesia Muda" subtitle="Kontribusi Anda membantu kami mencetak lebih banyak pemimpin muda untuk Indonesia" />
 
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-8 lg:gap-10">
+      <section className="py-10 sm:py-16 lg:py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             <div className="lg:col-span-2 space-y-12">
               {/* Why Donate */}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
