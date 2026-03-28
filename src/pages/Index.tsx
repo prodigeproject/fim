@@ -329,8 +329,8 @@ const Index = () => {
       </section>
 
       {/* Kunang-kunang Quote */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
             <ScrollReveal type="scale">
               <Quote className="h-12 w-12 text-accent mx-auto mb-4" />
