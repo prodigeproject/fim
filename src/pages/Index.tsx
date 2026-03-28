@@ -312,8 +312,8 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-secondary/50">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 bg-secondary/50">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div 
             className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             initial="hidden"
