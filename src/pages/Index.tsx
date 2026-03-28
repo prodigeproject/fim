@@ -543,7 +543,7 @@ const Index = () => {
         variants={staggerContainer}
       >
         <div className="container mx-auto px-4 text-center">
-          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
+          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-foreground mb-3 sm:mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
           <motion.p variants={fadeUp} custom={1} className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("home.cta.subtitle", "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi")}</motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/portal">
