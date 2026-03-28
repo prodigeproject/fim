@@ -296,7 +296,7 @@ const Blog = () => {
                 placeholder="Cari artikel..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-12 pr-12 py-6 text-lg rounded-full"
+                className="pl-10 sm:pl-12 pr-10 sm:pr-12 py-4 sm:py-6 text-base sm:text-lg rounded-full"
               />
               {searchQuery && (
                 <Button
