@@ -362,7 +362,7 @@ const Index = () => {
               {t("home.alumniSection.subtitle", "Ribuan alumni telah berkontribusi di berbagai sektor strategis Indonesia")}
             </p>
           </ScrollReveal>
-          <StaggerContainer className="grid md:grid-cols-3 gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
+          <StaggerContainer className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
             {alumniTestimonials.map((testimonial) => (
               <StaggerItem key={testimonial.name}>
                 <motion.div
