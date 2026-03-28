@@ -103,10 +103,10 @@ const Tentang = () => {
               <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">{t("about.vision", "Visi")}</h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hadirnya para pemimpin bangsa yang memiliki semangat nasionalisme dan patriotisme tinggi, berakhlak mulia, sehat dan cerdas paripurna baik secara fisik, rohani, spiritual maupun intelektual. Terwujudnya Indonesia sebagai bangsa yang mandiri dalam ekonomi, berdaulat dalam politik dan berkepribadian dalam kebudayaan.</p>
             </motion.div>
-            <motion.div variants={fadeUp} className="bg-card rounded-2xl p-8 shadow-lg">
-              <div className="w-16 h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-6"><Compass className="h-8 w-8 text-supporting" /></div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">{t("about.mission", "Misi")}</h2>
-              <ul className="space-y-3 text-muted-foreground">
+            <motion.div variants={fadeUp} className="bg-card rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg">
+              <div className="w-12 sm:w-16 h-12 sm:h-16 bg-supporting/10 rounded-xl flex items-center justify-center mb-4 sm:mb-6"><Compass className="h-6 sm:h-8 w-6 sm:w-8 text-supporting" /></div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">{t("about.mission", "Misi")}</h2>
+              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-muted-foreground">
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">1.</span>Pembinaan pemuda dan mahasiswa untuk diarahkan kepada gagasan jiwa mandiri (entrepreneurship) dan collective leadership.</li>
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">2.</span>Meningkatkan pemahaman akan pentingnya arti kompetensi bagi generasi muda yang berbasis pada soft skill (7 pilar dasar kepemimpinan dan 7 pilar karakter) dan hard skill (teknologi dan profesionalisme).</li>
                 <li className="flex items-start gap-2"><span className="text-primary font-bold">3.</span>Menyatukan dan mengoptimalkan berbagai potensi pemuda dan mahasiswa dalam forum silaturahim dengan berbagai latar belakang.</li>
