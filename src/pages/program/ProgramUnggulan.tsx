@@ -143,7 +143,7 @@ const ProgramUnggulan = () => {
                     <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
                       <program.icon className="h-7 w-7 text-primary" />
                     </div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground">{program.title}</h2>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">{program.title}</h2>
                   </div>
                   
                   <p className="text-muted-foreground mb-6 leading-relaxed">{program.description}</p>
