@@ -241,7 +241,7 @@ const Index = () => {
               variants={heroSubtitle} 
               initial="hidden" 
               animate="visible" 
-              className="text-sm lg:text-base text-accent font-semibold mb-4"
+              className="text-xs sm:text-sm lg:text-base text-accent font-semibold mb-3 sm:mb-4 px-2"
             >
               {t("home.hero.trusted", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
             </motion.p>
