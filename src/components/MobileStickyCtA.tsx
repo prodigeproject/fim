@@ -18,7 +18,11 @@ export default function MobileStickyCTA() {
     setVisible(latest > 400);
   });
 
+  // Disabled as per user request to remove bottom register action on mobile
+  return null;
+
   if (!isPublicPage) return null;
+
 
   return (
     <motion.div

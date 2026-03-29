@@ -225,9 +225,11 @@ const Index = () => {
 
         {/* Bottom wave divider */}
         <div className="absolute bottom-0 left-0 right-0 z-10">
-          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" preserveAspectRatio="none">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none">
             <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="hsl(var(--background))" opacity="1"/>
           </svg>
+          {/* 2px strip to cover sub-pixel SVG anti-aliasing gap during SPA transitions */}
+          <div style={{ height: "2px", backgroundColor: "hsl(var(--background))", marginTop: "-1px" }} />
         </div>
 
         <motion.div
@@ -343,12 +345,17 @@ const Index = () => {
               </Link>
             </motion.div>
 
-            {/* Scroll indicator */}
+            {/* Scroll indicator - clickable to scroll to featured video */}
             <motion.div
-              className="absolute bottom-16 left-1/2 -translate-x-1/2"
+              className="absolute bottom-16 left-1/2 -translate-x-1/2 cursor-pointer z-20 group"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
+              whileHover={{ y: -5, scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ delay: 1.5, type: "spring", stiffness: 400, damping: 17 }}
+              onClick={() => document.getElementById('featured-video')?.scrollIntoView({ behavior: 'smooth' })}
+              role="button"
+              aria-label="Scroll ke video inspiratif"
             >
               <motion.div
                 className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"

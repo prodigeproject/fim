@@ -154,7 +154,7 @@ export default function FeaturedVideoSection() {
   };
 
   return (
-    <section className="py-10 lg:py-14 bg-gradient-to-b from-background via-secondary/20 to-background">
+    <section id="featured-video" className="py-10 lg:py-14 bg-gradient-to-b from-background via-secondary/20 to-background">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Compact Header */}
