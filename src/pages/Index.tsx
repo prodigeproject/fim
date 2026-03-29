@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare, Sparkles, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useAnimation } from "framer-motion";
 import { useRef, useCallback, useEffect, useState } from "react";
@@ -361,32 +361,51 @@ const Index = () => {
               </Link>
             </motion.div>
 
-            {/* Scroll indicator - clickable to scroll to featured video */}
+          </div>
+        </motion.div>
+
+        {/* Scroll indicator - clickable to scroll to featured video */}
+        <motion.div
+          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 cursor-pointer z-20"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5, duration: 0.8 }}
+        >
+          <motion.div
+            className="flex flex-col items-center group"
+            onClick={handleScrollIndicatorClick}
+            role="button"
+            aria-label="Scroll ke video inspiratif"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
             <motion.div
-              className="absolute bottom-10 md:bottom-12 left-1/2 -translate-x-1/2 cursor-pointer z-20 group"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              whileHover={{ y: -5, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ delay: 1.5, type: "spring", stiffness: 400, damping: 17 }}
-              onClick={handleScrollIndicatorClick}
-              role="button"
-              aria-label="Scroll ke video inspiratif"
+              className="w-8 h-12 border-2 border-white/30 rounded-full flex flex-col items-center pt-2 glass-dark"
+              animate={{ borderColor: ["rgba(255,255,255,0.2)", "rgba(255,255,255,0.5)", "rgba(255,255,255,0.2)"] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
               <motion.div
-                className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                animate={{ 
+                  y: [0, 8, 0],
+                  opacity: [0.3, 1, 0.3]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
               >
-                <motion.div
-                  className="w-1 h-2 bg-white/60 rounded-full"
-                  animate={dotControls}
-                  initial={{ y: [0, 12, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                />
+                <ChevronDown className="h-5 w-5 text-accent" />
               </motion.div>
             </motion.div>
-          </div>
+            <motion.span 
+              className="mt-2 text-[10px] font-bold text-white/50 tracking-widest uppercase group-hover:text-accent transition-colors"
+              animate={{ opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              Scroll
+            </motion.span>
+          </motion.div>
         </motion.div>
       </section>
 
