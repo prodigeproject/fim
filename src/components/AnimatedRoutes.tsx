@@ -3,6 +3,9 @@ import { AnimatePresence } from "framer-motion";
 import { lazy, Suspense } from "react";
 import PageTransition from "./PageTransition";
 import { Loader2 } from "lucide-react";
+import BackToTop from "./BackToTop";
+import ScrollProgress from "./ScrollProgress";
+import MobileStickyCTA from "./MobileStickyCtA";
 
 // Critical: Load Index synchronously for fast initial render
 import Index from "@/pages/Index";
@@ -102,105 +105,113 @@ const AnimatedRoutes = () => {
         ? "/portal"
         : location.pathname;
 
+  const isPublicPage = !location.pathname.startsWith("/admin");
+  const isPortalPage = location.pathname.startsWith("/portal");
+
   return (
-    <AnimatePresence mode="wait">
-      <Suspense fallback={<PageLoader />}>
-        <Routes location={location} key={routeKey}>
-          {/* Public routes */}
-          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-          <Route path="/tentang" element={<PageTransition><Tentang /></PageTransition>} />
-          <Route path="/tentang/regional" element={<PageTransition><Regional /></PageTransition>} />
-          <Route path="/tentang/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
-          <Route path="/program/pelatihan" element={<PageTransition><Pelatihan /></PageTransition>} />
-          <Route path="/program/program-unggulan" element={<PageTransition><ProgramUnggulan /></PageTransition>} />
-          <Route path="/gabung-relawan" element={<PageTransition><GabungRelawan /></PageTransition>} />
-          <Route path="/cerita-alumni" element={<PageTransition><CeritaAlumni /></PageTransition>} />
-          <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
-          <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
-          <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
-          <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-          <Route path="/unsubscribe" element={<PageTransition><NewsletterUnsubscribe /></PageTransition>} />
-          <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
-          
-          {/* Legacy routes redirect */}
-          <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
-          <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
+    <>
+      {isPublicPage && <ScrollProgress />}
+      <AnimatePresence mode="wait">
+        <Suspense fallback={<PageLoader />}>
+          <Routes location={location} key={routeKey}>
+            {/* Public routes */}
+            <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+            <Route path="/tentang" element={<PageTransition><Tentang /></PageTransition>} />
+            <Route path="/tentang/regional" element={<PageTransition><Regional /></PageTransition>} />
+            <Route path="/tentang/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
+            <Route path="/program/pelatihan" element={<PageTransition><Pelatihan /></PageTransition>} />
+            <Route path="/program/program-unggulan" element={<PageTransition><ProgramUnggulan /></PageTransition>} />
+            <Route path="/gabung-relawan" element={<PageTransition><GabungRelawan /></PageTransition>} />
+            <Route path="/cerita-alumni" element={<PageTransition><CeritaAlumni /></PageTransition>} />
+            <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+            <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
+            <Route path="/donasi" element={<PageTransition><Donasi /></PageTransition>} />
+            <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+            <Route path="/unsubscribe" element={<PageTransition><NewsletterUnsubscribe /></PageTransition>} />
+            <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
+            
+            {/* Legacy routes redirect */}
+            <Route path="/program/regional" element={<PageTransition><Regional /></PageTransition>} />
+            <Route path="/program/fim-club" element={<PageTransition><FimClub /></PageTransition>} />
 
-          {/* Registration routes - /portal */}
-          <Route path="/portal" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mengakses Portal Pendaftaran FIM"><RegistrationLanding /></TurnstileGuard>} />
-          <Route path="/portal/login" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk masuk ke Portal Pendaftaran"><RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
-          <Route path="/portal/signup" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mendaftar di Portal FIM"><RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
-          <Route path="/portal/closed" element={<RegistrationClosed />} />
-          <Route path="/portal/success" element={<RegistrationSuccess />} />
-          <Route path="/portal/verify" element={<VerifyEmail />} />
-          <Route path="/portal/forgot-password" element={<RegistrationForgotPassword />} />
-          <Route path="/portal/reset-password" element={<RegistrationResetPassword />} />
-          <Route path="/portal/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
-          <Route path="/portal/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
-          <Route path="/portal/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
-          
-          {/* Legacy /daftar routes removed - all redirects handled by _redirects */}
-          {/* Admin routes - wrapped in AdminAuthProvider */}
-          <Route path="/admin" element={<TurnstileGuard title="Verifikasi Keamanan Admin" description="Selesaikan verifikasi untuk mengakses Panel Admin FIM"><AdminAuthProvider><AdminLogin /></AdminAuthProvider></TurnstileGuard>} />
-          <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
-          <Route path="/admin/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
-          <Route path="/admin/*" element={
-            <AdminAuthProvider>
-              <Routes>
-                <Route element={<AdminDashboard />}>
-                  {/* Routes accessible by all admins (moderator, admin, super_admin) */}
-                  <Route path="dashboard" element={<DashboardHome />} />
-                  <Route path="articles" element={<ArticlesManagement />} />
-                  <Route path="articles/new" element={<ArticleEditor />} />
-                  <Route path="articles/edit/:id" element={<ArticleEditor />} />
-                  <Route path="analytics" element={<AnalyticsDashboard />} />
-                  <Route path="approvals" element={<ArticleApprovals />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
-                  <Route path="change-password" element={<ChangePassword />} />
-                  <Route path="profile" element={<ProfileSettings />} />
-                  <Route path="sessions" element={<SessionsManagement />} />
-                  <Route path="online" element={<OnlineAdminsDashboard />} />
-                  
-                  {/* Routes accessible based on dynamic permissions */}
-                  <Route path="newsletter" element={<RequireAdmin permissionKey="newsletter"><NewsletterManagement /></RequireAdmin>} />
-                  <Route path="email-settings" element={<RequireAdmin permissionKey="email_settings"><EmailSettings /></RequireAdmin>} />
-                  <Route path="clubs" element={<RequireAdmin permissionKey="clubs"><ClubsManagement /></RequireAdmin>} />
-                  <Route path="regionals" element={<RequireAdmin permissionKey="regionals"><RegionalsManagement /></RequireAdmin>} />
-                  <Route path="alumni" element={<RequireAdmin permissionKey="alumni"><AlumniManagement /></RequireAdmin>} />
-                  <Route path="audit-logs" element={<RequireAdmin permissionKey="audit_logs"><AuditLogs /></RequireAdmin>} />
-                  <Route path="security-dashboard" element={<RequireAdmin permissionKey="security"><SecurityDashboard /></RequireAdmin>} />
-                  <Route path="registrations" element={<RequireAdmin permissionKey="registrations"><RegistrationsManagement /></RequireAdmin>} />
-                  <Route path="registration-settings" element={<RequireAdmin permissionKey="registration_settings"><RegistrationSettingsManagement /></RequireAdmin>} />
-                  <Route path="registration-stats" element={<RequireAdmin permissionKey="registration_stats"><RegistrationStatsDashboard /></RequireAdmin>} />
-                  <Route path="partners" element={<RequireAdmin permissionKey="partners"><PartnersManagement /></RequireAdmin>} />
-                  <Route path="featured-videos" element={<RequireAdmin permissionKey="featured_videos"><FeaturedVideosManagement /></RequireAdmin>} />
-                  {/* email-templates route removed - consolidated into email-settings */}
-                  <Route path="interview-calendar" element={<RequireAdmin permissionKey="interview_calendar"><InterviewCalendar /></RequireAdmin>} />
-                  <Route path="recruiter-assignments" element={<RequireAdmin permissionKey="recruiter_assignments"><RecruiterAssignmentsManagement /></RequireAdmin>} />
-                  
-                  {/* Super Admin only routes */}
-                  <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
-                  <Route path="roles" element={<RequireSuperAdmin><RolesManagement /></RequireSuperAdmin>} />
-                  <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
-                  <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
-                  <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
-                  <Route path="tools" element={<RequireSuperAdmin><ToolsSettings /></RequireSuperAdmin>} />
-                  <Route path="about-profiles" element={<RequireAdmin permissionKey="about_profiles"><AboutProfilesManagement /></RequireAdmin>} />
-                  <Route path="article-calendar" element={<RequireAdmin permissionKey="article_scheduling"><ArticleSchedulingCalendar /></RequireAdmin>} />
-                  
-                  <Route path="*" element={<AdminNotFound />} />
-                </Route>
-              </Routes>
-            </AdminAuthProvider>
-          } />
-          
-          {/* Legacy admin route redirect */}
-          <Route path="/fim-admin-portal-2024/*" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
+            {/* Registration routes - /portal */}
+            <Route path="/portal" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mengakses Portal Pendaftaran FIM"><RegistrationLanding /></TurnstileGuard>} />
+            <Route path="/portal/login" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk masuk ke Portal Pendaftaran"><RegistrationGate><RegistrationAuthProvider><RegistrationLogin /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
+            <Route path="/portal/signup" element={<TurnstileGuard title="Verifikasi Keamanan" description="Selesaikan verifikasi untuk mendaftar di Portal FIM"><RegistrationGate><RegistrationAuthProvider><RegistrationSignup /></RegistrationAuthProvider></RegistrationGate></TurnstileGuard>} />
+            <Route path="/portal/closed" element={<RegistrationClosed />} />
+            <Route path="/portal/success" element={<RegistrationSuccess />} />
+            <Route path="/portal/verify" element={<VerifyEmail />} />
+            <Route path="/portal/forgot-password" element={<RegistrationForgotPassword />} />
+            <Route path="/portal/reset-password" element={<RegistrationResetPassword />} />
+            <Route path="/portal/dashboard" element={<RegistrationAuthProvider><RegistrationDashboard /></RegistrationAuthProvider>} />
+            <Route path="/portal/profile" element={<RegistrationAuthProvider><RegistrationProfile /></RegistrationAuthProvider>} />
+            <Route path="/portal/pelatihan" element={<RegistrationAuthProvider><TrainingRegistration /></RegistrationAuthProvider>} />
+            
+            {/* Legacy /daftar routes removed - all redirects handled by _redirects */}
+            {/* Admin routes - wrapped in AdminAuthProvider */}
+            <Route path="/admin" element={<TurnstileGuard title="Verifikasi Keamanan Admin" description="Selesaikan verifikasi untuk mengakses Panel Admin FIM"><AdminAuthProvider><AdminLogin /></AdminAuthProvider></TurnstileGuard>} />
+            <Route path="/admin/forgot-password" element={<AdminAuthProvider><ForgotPassword /></AdminAuthProvider>} />
+            <Route path="/admin/reset-password" element={<AdminAuthProvider><ResetPassword /></AdminAuthProvider>} />
+            <Route path="/admin/*" element={
+              <AdminAuthProvider>
+                <Routes>
+                  <Route element={<AdminDashboard />}>
+                    {/* Routes accessible by all admins (moderator, admin, super_admin) */}
+                    <Route path="dashboard" element={<DashboardHome />} />
+                    <Route path="articles" element={<ArticlesManagement />} />
+                    <Route path="articles/new" element={<ArticleEditor />} />
+                    <Route path="articles/edit/:id" element={<ArticleEditor />} />
+                    <Route path="analytics" element={<AnalyticsDashboard />} />
+                    <Route path="approvals" element={<ArticleApprovals />} />
+                    <Route path="notifications" element={<NotificationsPage />} />
+                    <Route path="change-password" element={<ChangePassword />} />
+                    <Route path="profile" element={<ProfileSettings />} />
+                    <Route path="sessions" element={<SessionsManagement />} />
+                    <Route path="online" element={<OnlineAdminsDashboard />} />
+                    
+                    {/* Routes accessible based on dynamic permissions */}
+                    <Route path="newsletter" element={<RequireAdmin permissionKey="newsletter"><NewsletterManagement /></RequireAdmin>} />
+                    <Route path="email-settings" element={<RequireAdmin permissionKey="email_settings"><EmailSettings /></RequireAdmin>} />
+                    <Route path="clubs" element={<RequireAdmin permissionKey="clubs"><ClubsManagement /></RequireAdmin>} />
+                    <Route path="regionals" element={<RequireAdmin permissionKey="regionals"><RegionalsManagement /></RequireAdmin>} />
+                    <Route path="alumni" element={<RequireAdmin permissionKey="alumni"><AlumniManagement /></RequireAdmin>} />
+                    <Route path="audit-logs" element={<RequireAdmin permissionKey="audit_logs"><AuditLogs /></RequireAdmin>} />
+                    <Route path="security-dashboard" element={<RequireAdmin permissionKey="security"><SecurityDashboard /></RequireAdmin>} />
+                    <Route path="registrations" element={<RequireAdmin permissionKey="registrations"><RegistrationsManagement /></RequireAdmin>} />
+                    <Route path="registration-settings" element={<RequireAdmin permissionKey="registration_settings"><RegistrationSettingsManagement /></RequireAdmin>} />
+                    <Route path="registration-stats" element={<RequireAdmin permissionKey="registration_stats"><RegistrationStatsDashboard /></RequireAdmin>} />
+                    <Route path="partners" element={<RequireAdmin permissionKey="partners"><PartnersManagement /></RequireAdmin>} />
+                    <Route path="featured-videos" element={<RequireAdmin permissionKey="featured_videos"><FeaturedVideosManagement /></RequireAdmin>} />
+                    {/* email-templates route removed - consolidated into email-settings */}
+                    <Route path="interview-calendar" element={<RequireAdmin permissionKey="interview_calendar"><InterviewCalendar /></RequireAdmin>} />
+                    <Route path="recruiter-assignments" element={<RequireAdmin permissionKey="recruiter_assignments"><RecruiterAssignmentsManagement /></RequireAdmin>} />
+                    
+                    {/* Super Admin only routes */}
+                    <Route path="users" element={<RequireSuperAdmin><UsersManagement /></RequireSuperAdmin>} />
+                    <Route path="roles" element={<RequireSuperAdmin><RolesManagement /></RequireSuperAdmin>} />
+                    <Route path="login-monitoring" element={<RequireSuperAdmin><LoginMonitoringDashboard /></RequireSuperAdmin>} />
+                    <Route path="prd" element={<RequireSuperAdmin><PRDDocumentation /></RequireSuperAdmin>} />
+                    <Route path="documentation" element={<RequireSuperAdmin><TechnicalDocumentation /></RequireSuperAdmin>} />
+                    <Route path="tools" element={<RequireSuperAdmin><ToolsSettings /></RequireSuperAdmin>} />
+                    <Route path="about-profiles" element={<RequireAdmin permissionKey="about_profiles"><AboutProfilesManagement /></RequireAdmin>} />
+                    <Route path="article-calendar" element={<RequireAdmin permissionKey="article_scheduling"><ArticleSchedulingCalendar /></RequireAdmin>} />
+                    
+                    <Route path="*" element={<AdminNotFound />} />
+                  </Route>
+                </Routes>
+              </AdminAuthProvider>
+            } />
+            
+            {/* Legacy admin route redirect */}
+            <Route path="/fim-admin-portal-2024/*" element={<AdminAuthProvider><AdminLogin /></AdminAuthProvider>} />
 
-          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-        </Routes>
-      </Suspense>
-    </AnimatePresence>
+            <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+          </Routes>
+        </Suspense>
+      </AnimatePresence>
+      {isPublicPage && !isPortalPage && <BackToTop />}
+      {isPublicPage && !isPortalPage && <MobileStickyCTA />}
+    </>
   );
 };
 
