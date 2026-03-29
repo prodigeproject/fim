@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare } from "lucide-react";
+import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useCallback, useEffect, useState } from "react";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useState } from "react";
 import Autoplay from "embla-carousel-autoplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import FIMJourneyTimeline from "@/components/FIMJourneyTimeline";
 import { ScrollReveal, TextReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { FloatingShapes } from "@/components/FloatingShapes";
 // Import partner logos
 import logo1 from "@/assets/partners/logo-1.png";
 import logo2 from "@/assets/partners/logo-2.png";
@@ -186,97 +187,183 @@ const Index = () => {
     onSelect();
   }, [emblaApi]);
 
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
   return (
     <Layout>
-      <SEO 
-        title="Forum Indonesia Muda - Membangun Pemimpin Masa Depan Indonesia" 
+      <SEO
+        title="Forum Indonesia Muda - Membangun Pemimpin Masa Depan Indonesia"
         description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
-      {/* Hero Section with enhanced motion */}
-      <section className="relative overflow-hidden min-h-[60vh] sm:min-h-[70vh] flex items-center">
-        <div className="absolute inset-0 bg-gradient-hero opacity-95" />
-        <motion.div 
-          className="absolute top-20 right-10 w-40 h-40 bg-accent/20 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      {/* Hero Section - Enhanced 3D with Parallax */}
+      <section ref={heroRef} className="relative overflow-hidden min-h-[75vh] sm:min-h-[85vh] flex items-center">
+        {/* Background gradient layers */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-hero-enhanced"
+          style={{ y: heroY }}
         />
-        <motion.div 
-          className="absolute bottom-20 left-10 w-56 h-56 bg-accent/10 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        {/* Noise overlay for texture */}
+        <div className="absolute inset-0 opacity-30 mix-blend-overlay"
+          style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
+          }}
         />
-        <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px]"
-          animate={{ scale: [0.8, 1.1, 0.8] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+
+        {/* 3D Floating Shapes */}
+        <FloatingShapes variant="hero" />
+
+        {/* Radial glow - center */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,215,0,0.08) 0%, transparent 70%)",
+          }}
         />
-        
-        <div className="relative container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-32">
+
+        {/* Bottom wave divider */}
+        <div className="absolute bottom-0 left-0 right-0 z-10">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" preserveAspectRatio="none">
+            <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="hsl(var(--background))" opacity="1"/>
+          </svg>
+        </div>
+
+        <motion.div
+          className="relative z-10 container mx-auto px-4 sm:px-6 py-16 sm:py-20 lg:py-36"
+          style={{ opacity: heroOpacity }}
+        >
           <div className="flex flex-col items-center text-center">
-            <motion.img 
-              variants={heroTitle} 
-              initial="hidden" 
-              animate="visible" 
-              src={logoFim} 
-              alt="Forum Indonesia Muda" 
-              className="h-16 sm:h-24 lg:h-36 mb-6 sm:mb-8 brightness-0 invert drop-shadow-2xl" 
-            />
-            <motion.h1 
-              variants={heroTitle} 
-              initial="hidden" 
-              animate="visible" 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-primary-foreground mb-3 sm:mb-4 leading-tight"
+            {/* Logo with glow */}
+            <motion.div
+              variants={heroTitle}
+              initial="hidden"
+              animate="visible"
+              className="relative mb-6 sm:mb-8"
             >
-              {t("home.hero.title", "Forum Indonesia Muda")}<br />
-              <motion.span 
+              <motion.div
+                className="absolute inset-0 blur-2xl bg-white/20 rounded-full scale-150"
+                animate={{ opacity: [0.2, 0.4, 0.2] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <img
+                src={logoFim}
+                alt="Forum Indonesia Muda"
+                className="h-16 sm:h-24 lg:h-32 relative z-10 brightness-0 invert drop-shadow-2xl"
+              />
+            </motion.div>
+
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5 sm:mb-6 backdrop-blur-sm"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
+              <span className="text-xs sm:text-sm text-accent font-semibold">
+                {t("home.hero.trusted", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
+              </span>
+            </motion.div>
+
+            {/* Title */}
+            <motion.h1
+              variants={heroTitle}
+              initial="hidden"
+              animate="visible"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-3 sm:mb-5 leading-[1.1] tracking-tight"
+            >
+              {t("home.hero.title", "Forum Indonesia Muda")}
+              <br />
+              <motion.span
                 className="text-accent inline-block"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
+                style={{ textShadow: "0 0 40px rgba(255,215,0,0.4)" }}
               >
                 Membangun Pemimpin Masa Depan
               </motion.span>
             </motion.h1>
-            <motion.p 
-              variants={heroSubtitle} 
-              initial="hidden" 
-              animate="visible" 
-              className="text-xs sm:text-sm lg:text-base text-accent font-semibold mb-3 sm:mb-4 px-2"
-            >
-              {t("home.hero.trusted", "Dipercaya lebih dari 4000+ alumni di 60+ regional Indonesia")}
-            </motion.p>
-            <motion.p 
-              variants={heroSubtitle} 
-              initial="hidden" 
-              animate="visible" 
-              className="text-base sm:text-lg lg:text-xl text-primary-foreground/90 max-w-2xl mb-5 sm:mb-6 px-2"
+
+            {/* Subtitle */}
+            <motion.p
+              variants={heroSubtitle}
+              initial="hidden"
+              animate="visible"
+              className="text-base sm:text-lg lg:text-xl text-white/85 max-w-2xl mb-6 sm:mb-8 px-2 leading-relaxed"
             >
               {t("home.hero.subtitle", "Komunitas anak muda Indonesia yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata.")}
             </motion.p>
-            <motion.div 
-              variants={heroCTA} 
-              initial="hidden" 
+
+            {/* Announcement badge */}
+            <motion.div
+              variants={heroCTA}
+              initial="hidden"
               animate="visible"
-              className="bg-accent/20 border border-accent/50 rounded-lg px-3 sm:px-4 py-2 mb-5 sm:mb-6 inline-block"
+              className="mb-6 sm:mb-8"
             >
-              <p className="text-xs sm:text-sm lg:text-base text-accent font-semibold flex items-center gap-2">
-                <span className="animate-pulse">🔥</span> {t("home.hero.announcement", "Pendaftaran Angkatan Baru Segera Dibuka!")}
-              </p>
+              <div className="inline-flex items-center gap-2 bg-accent/15 border border-accent/40 rounded-full px-4 py-2 backdrop-blur-sm">
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  🔥
+                </motion.span>
+                <p className="text-xs sm:text-sm text-accent font-semibold">
+                  {t("home.hero.announcement", "Pendaftaran Angkatan Baru Segera Dibuka!")}
+                </p>
+              </div>
             </motion.div>
-            <motion.div 
-              variants={heroCTA} 
-              initial="hidden" 
-              animate="visible" 
+
+            {/* CTA Buttons */}
+            <motion.div
+              variants={heroCTA}
+              initial="hidden"
+              animate="visible"
               className="flex flex-col sm:flex-row gap-4"
             >
               <Link to="/tentang">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
+                <Button
+                  size="lg"
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold px-8 shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all hover:-translate-y-0.5"
+                >
                   {t("home.hero.learnMore", "Pelajari Lebih Lanjut")} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
+              <Link to="/portal">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-semibold px-8"
+                >
+                  Daftar Sekarang
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Scroll indicator */}
+            <motion.div
+              className="absolute bottom-16 left-1/2 -translate-x-1/2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5 }}
+            >
+              <motion.div
+                className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <motion.div
+                  className="w-1 h-2 bg-white/60 rounded-full"
+                  animate={{ y: [0, 12, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </motion.div>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <FeaturedVideoSection />
@@ -311,10 +398,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-10 sm:py-16 bg-secondary/50">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div 
+      {/* Stats Section - Enhanced 3D */}
+      <section className="py-10 sm:py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary/80 via-secondary/50 to-background" />
+        <FloatingShapes variant="section" />
+        <div className="relative container mx-auto px-4 sm:px-6">
+          <motion.div
             className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             initial="hidden"
             whileInView="visible"
@@ -533,26 +622,68 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <motion.section 
-        className="py-20 bg-gradient-hero" 
+      {/* CTA Section - Enhanced with 3D depth */}
+      <motion.section
+        className="py-24 relative overflow-hidden"
         aria-labelledby="cta-section-heading"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
         variants={staggerContainer}
       >
-        <div className="container mx-auto px-4 text-center">
-          <motion.h2 variants={fadeUp} id="cta-section-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-foreground mb-3 sm:mb-4">{t("home.cta.title", "Siap Bergabung dengan FIM?")}</motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="text-primary-foreground/90 max-w-xl mx-auto mb-8">{t("home.cta.subtitle", "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi")}</motion.p>
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-hero-enhanced" />
+        <FloatingShapes variant="hero" />
+        {/* Mesh gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,215,0,0.1) 0%, transparent 60%)",
+          }}
+        />
+        {/* Top wave */}
+        <div className="absolute top-0 left-0 right-0">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" preserveAspectRatio="none">
+            <path d="M0,40 C240,0 480,80 720,40 C960,0 1200,80 1440,40 L1440,0 L0,0 Z" fill="hsl(var(--background))" />
+          </svg>
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 text-center">
+          <motion.div
+            variants={fadeUp}
+            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm"
+          >
+            <span className="text-accent text-sm font-semibold">🚀 Bergabunglah Bersama Kami</span>
+          </motion.div>
+          <motion.h2
+            variants={fadeUp}
+            id="cta-section-heading"
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight"
+          >
+            {t("home.cta.title", "Siap Bergabung dengan FIM?")}
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            custom={1}
+            className="text-white/80 max-w-xl mx-auto mb-10 text-lg"
+          >
+            {t("home.cta.subtitle", "Jadilah bagian dari komunitas pemuda Indonesia yang berpengaruh dan berkontribusi")}
+          </motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/portal">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 font-semibold text-accent-foreground">
+              <Button
+                size="lg"
+                className="bg-accent hover:bg-accent/90 font-bold text-accent-foreground px-10 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:-translate-y-0.5 transition-all"
+              >
                 {t("home.cta.register", "Daftar Sekarang")} <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/donasi">
-              <Button size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-semibold px-10"
+              >
                 {t("home.cta.support", "Dukung FIM")}
               </Button>
             </Link>
@@ -574,15 +705,41 @@ function HomeStatItem({ stat, index }: { stat: { icon: React.ComponentType<{ cla
   return (
     <motion.div
       ref={ref}
-      className="bg-card rounded-xl p-6 text-center shadow-[var(--shadow-sm)] border border-border/40"
+      className="bg-card rounded-2xl p-6 text-center border border-border/50 relative overflow-hidden group cursor-default"
       variants={fadeUp}
       custom={index}
+      whileHover={{
+        y: -8,
+        rotateX: 3,
+        rotateY: -3,
+        boxShadow: "0 30px 60px -10px rgba(230, 0, 18, 0.12), 0 0 0 1px rgba(230, 0, 18, 0.05)",
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      style={{ transformStyle: "preserve-3d", perspective: "800px" }}
     >
-      <div className="w-12 h-12 rounded-xl bg-primary/8 flex items-center justify-center mx-auto mb-3">
-        <stat.icon className="h-6 w-6 text-primary" />
+      {/* Gradient overlay on hover */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
+      />
+      {/* Animated background glow */}
+      <motion.div
+        className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      <div className="relative z-10">
+        <motion.div
+          className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-4 border border-primary/10"
+          whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <stat.icon className="h-7 w-7 text-primary" />
+        </motion.div>
+        <div className="text-3xl lg:text-4xl font-bold mb-1 tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+          {formattedCount}
+        </div>
+        <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
       </div>
-      <div className="text-3xl lg:text-4xl font-bold text-foreground mb-1 tracking-tight">{formattedCount}</div>
-      <div className="text-sm text-muted-foreground">{stat.label}</div>
     </motion.div>
   );
 }

@@ -149,34 +149,74 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Use server-side Edge Function for rate limiting and authentication
-      const response = await supabase.functions.invoke("admin-auth-login", {
-        body: { email, password },
+      const realIp = "client";
+
+      // Check rate limit via RPC
+      const { data: rateLimitData, error: rateLimitError } = await supabase.rpc(
+        "check_login_rate_limit",
+        { p_email: email.toLowerCase(), p_ip: realIp }
+      );
+
+      if (!rateLimitError && rateLimitData?.[0]?.is_blocked) {
+        await supabase.from("login_attempts").insert({
+          email: email.toLowerCase(), ip_address: realIp, success: false,
+        });
+        return {
+          error: new Error("Terlalu banyak percobaan login. Coba lagi dalam 15 menit."),
+          blocked: true,
+        } as any;
+      }
+
+      // Login langsung ke Supabase Auth (tidak via edge function)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email, password,
       });
 
-      if (response.error) {
-        console.error("Login function error:", response.error);
-        return { error: new Error(response.error.message || "Login gagal") };
+      // Log percobaan login
+      await supabase.from("login_attempts").insert({
+        email: email.toLowerCase(), ip_address: realIp, success: !authError,
+      });
+
+      if (authError) {
+        const attemptsCount = (rateLimitData?.[0]?.attempts_count || 0) + 1;
+        return {
+          error: new Error(
+            authError.message === "Invalid login credentials"
+              ? "Email atau password salah"
+              : authError.message
+          ),
+          remainingAttempts: Math.max(0, 5 - attemptsCount),
+        } as any;
       }
 
-      const data = response.data;
+      if (!authData.user) return { error: new Error("Login gagal") };
 
-      // Check for error response
-      if (data.error) {
-        return { 
-          error: new Error(data.error),
-          blocked: data.blocked,
-          shouldShowCaptcha: data.shouldShowCaptcha,
-          remainingAttempts: data.remainingAttempts,
-        };
+      // Cek apakah user punya role admin
+      const { data: isSuper } = await supabase.rpc("has_role", {
+        _user_id: authData.user.id, _role: "super_admin",
+      });
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: authData.user.id, _role: "admin",
+      });
+      const { data: isMod } = await supabase.rpc("has_role", {
+        _user_id: authData.user.id, _role: "moderator",
+      });
+
+      if (!isSuper && !isAdmin && !isMod) {
+        await supabase.auth.signOut();
+        return { error: new Error("Akun tidak memiliki akses admin") };
       }
 
-      // Set session from Edge Function response
-      if (data.session?.access_token && data.session?.refresh_token) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
+      // Cek apakah akun aktif
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("is_active")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (profileData && !profileData.is_active) {
+        await supabase.auth.signOut();
+        return { error: new Error("Akun telah dinonaktifkan. Hubungi Super Admin.") };
       }
 
       return { error: null };
@@ -185,6 +225,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       return { error: err as Error };
     }
   };
+
 
   // Sign in with username instead of email
   const signInWithUsername = async (username: string, password: string) => {

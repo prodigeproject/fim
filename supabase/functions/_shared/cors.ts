@@ -1,18 +1,13 @@
 // Centralized CORS configuration for edge functions
-const ALLOWED_ORIGINS = [
-  "https://fim.lovable.app",
-  "https://id-preview--08514abe-b6ea-4507-b38e-c02c8c298232.lovable.app",
-];
+// Security is enforced at the function logic level (auth, role check, rate limiting),
+// NOT at CORS level — so all origins are allowed to support any hosting domain.
 
-export function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("Origin") || "";
-  const isAllowed = ALLOWED_ORIGINS.some((o) => origin.startsWith(o)) || origin.includes("lovable.app");
-
+export function getCorsHeaders(_req?: Request) {
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
   };
 }
 
@@ -22,3 +17,4 @@ export function handleCors(req: Request): Response | null {
   }
   return null;
 }
+

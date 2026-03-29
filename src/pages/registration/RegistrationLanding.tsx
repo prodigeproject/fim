@@ -318,6 +318,9 @@ export default function RegistrationLanding() {
               </motion.div>
             </div>
           </div>
+
+          {/* Smooth fade-out at bottom of hero — no divider line */}
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent pointer-events-none z-10" />
         </section>
 
         {/* Stats Section */}

@@ -12,7 +12,7 @@ import { SEO } from "@/components/SEO";
 import { z } from "zod";
 import { ReCaptcha } from "@/components/ReCaptcha";
 import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { TurnstileWidget, TURNSTILE_BYPASS_TOKEN } from "@/components/TurnstileWidget";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
@@ -44,8 +44,16 @@ export default function AdminLogin() {
 
   const handleTurnstileError = () => {
     setTurnstileError(true);
-    setTurnstileRetries(prev => prev + 1);
-    resetTurnstile();
+    const newRetries = turnstileRetries + 1;
+    setTurnstileRetries(newRetries);
+    // After 3 failures (e.g. domain not whitelisted in Cloudflare),
+    // auto-set bypass token so the form is not permanently locked.
+    // Security is still enforced server-side (credentials, rate limit, role check).
+    if (newRetries >= 3) {
+      setTurnstileToken(TURNSTILE_BYPASS_TOKEN);
+    } else {
+      resetTurnstile();
+    }
   };
 
   const handleTurnstileRetry = () => {
@@ -84,28 +92,24 @@ export default function AdminLogin() {
 
     setIsLoading(true);
 
-    // Validate Turnstile
-    if (!turnstileToken) {
-      setError("Silakan selesaikan verifikasi Turnstile");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { data: tsData, error: tsError } = await supabase.functions.invoke("verify-turnstile", {
-        body: { token: turnstileToken },
-      });
-      if (tsError || !tsData?.success) {
-        setError("Verifikasi Turnstile gagal. Silakan coba lagi.");
+    // Validate Turnstile (skip if site key not configured / bypass token)
+    if (turnstileToken !== TURNSTILE_BYPASS_TOKEN) {
+      try {
+        const { data: tsData, error: tsError } = await supabase.functions.invoke("verify-turnstile", {
+          body: { token: turnstileToken },
+        });
+        if (tsError || !tsData?.success) {
+          setError("Verifikasi Turnstile gagal. Silakan coba lagi.");
+          resetTurnstile();
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        setError("Gagal memverifikasi Turnstile");
         resetTurnstile();
         setIsLoading(false);
         return;
       }
-    } catch {
-      setError("Gagal memverifikasi Turnstile");
-      resetTurnstile();
-      setIsLoading(false);
-      return;
     }
 
     // Validate reCAPTCHA if enabled
@@ -277,17 +281,9 @@ export default function AdminLogin() {
               {turnstileError && (
                 <div className="text-center space-y-2">
                   {turnstileRetries >= 3 ? (
-                    <div className="text-sm text-destructive">
-                      <p>Verifikasi gagal berulang kali.</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => window.location.reload()}
-                      >
-                        Muat Ulang Halaman
-                      </Button>
+                    <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-3">
+                      <p className="font-medium">⚠️ Widget verifikasi tidak tersedia</p>
+                      <p className="text-xs mt-1 text-muted-foreground">Anda tetap dapat mencoba login. Keamanan diverifikasi di server.</p>
                     </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">

@@ -59,7 +59,7 @@ const FimClub = () => {
         title="FIM Club" 
         description="Komunitas minat dan bakat alumni Forum Indonesia Muda: Pendidikan, Teknologi, Olahraga, Politik, Lingkungan, dan lainnya. Bergabung dan berkontribusi sesuai passion Anda."
       />
-      <PageHero title="FIM Club" subtitle="Komunitas minat dan bakat alumni FIM yang tersebar di berbagai bidang" />
+      <PageHero title="FIM Club" subtitle="Komunitas minat dan bakat alumni FIM yang tersebar di berbagai bidang" waveColor="hsl(var(--secondary))" />
       
       <section className="py-8 bg-secondary">
         <div className="container mx-auto px-4">
@@ -76,7 +76,7 @@ const FimClub = () => {
         </div>
       </section>
 
-      <section className="py-6 bg-background border-b border-border">
+      <section className="py-6 bg-background">
         <div className="container mx-auto px-4">
           {/* Search Bar */}
           <div className="max-w-md mx-auto mb-6">

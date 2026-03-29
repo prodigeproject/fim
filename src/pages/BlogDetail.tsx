@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useEffect } from "react";
 import DOMPurify from "dompurify";
+import { Helmet } from "react-helmet-async";
 
 const categoryLabels: Record<string, string> = {
   pengumuman: "Pengumuman",
@@ -183,12 +184,55 @@ export default function BlogDetail() {
 
   return (
     <Layout>
-      <SEO 
+      <SEO
         title={article.title}
         description={article.excerpt || article.content.replace(/<[^>]*>/g, "").substring(0, 160)}
         image={article.featured_image_url}
         type="article"
       />
+      {/* Article JSON-LD Structured Data */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": article.title,
+            "description": article.excerpt || article.content.replace(/<[^>]*>/g, "").substring(0, 160),
+            "image": article.featured_image_url ? [article.featured_image_url] : [],
+            "datePublished": article.published_at,
+            "dateModified": article.updated_at || article.published_at,
+            "author": {
+              "@type": "Person",
+              "name": article.profiles?.full_name || article.profiles?.username || "Tim FIM",
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Forum Indonesia Muda",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://forumindonesiamuda.or.id/favicon.png",
+              },
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": `https://forumindonesiamuda.or.id/blog/${article.slug}`,
+            },
+            "articleSection": article.category,
+            "inLanguage": "id-ID",
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Beranda", "item": "https://forumindonesiamuda.or.id" },
+              { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://forumindonesiamuda.or.id/blog" },
+              { "@type": "ListItem", "position": 3, "name": article.title, "item": `https://forumindonesiamuda.or.id/blog/${article.slug}` },
+            ],
+          })}
+        </script>
+      </Helmet>
 
       <article className="min-h-screen">
         {/* Hero Section */}
@@ -273,7 +317,7 @@ export default function BlogDetail() {
                   __html: DOMPurify.sanitize(article.content, {
                     ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'img', 'br', 'hr', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'iframe'],
                     ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen'],
-                    ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)/i,
+                    ALLOWED_URI_REGEXP: /^https?:\/\/(?:www\.)?(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)(\/|$)/i,
                     FORBID_ATTR: ['style', 'onerror', 'onload'],
                     ALLOW_DATA_ATTR: false
                   })

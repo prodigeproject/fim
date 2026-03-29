@@ -603,9 +603,11 @@ function TemplatesTab() {
                     __html: DOMPurify.sanitize(
                       selectedTemplate ? replaceVariables(selectedTemplate.html_content, testVariables) : "",
                       {
-                        ALLOWED_TAGS: ['p','b','i','em','strong','a','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','img','br','hr','span','div','table','thead','tbody','tr','td','th','style','head','body','html','meta','title','center'],
-                        ALLOWED_ATTR: ['href','src','alt','title','class','target','rel','width','height','style','charset','name','content','align','valign','bgcolor','border','cellpadding','cellspacing'],
+                        // 'style','head','body','html','meta','title' dihapus — potensi CSS injection & meta refresh redirect
+                        ALLOWED_TAGS: ['p','b','i','em','strong','a','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','img','br','hr','span','div','table','thead','tbody','tr','td','th','center'],
+                        ALLOWED_ATTR: ['href','src','alt','title','class','target','rel','width','height','style','align','valign','bgcolor','border','cellpadding','cellspacing'],
                         ALLOW_DATA_ATTR: false,
+                        FORBID_ATTR: ['onerror','onload','onmouseover','onclick','oninput','onfocus'],
                       }
                     ),
                   }}

@@ -34,7 +34,7 @@ const GabungRelawan = () => {
   return (
     <Layout>
       <SEO title="Gabung Relawan" description="Jadilah relawan Forum Indonesia Muda dan berkontribusi untuk kemajuan bangsa." />
-      <PageHero title="Gabung Relawan FIM" subtitle="Jadilah bagian dari gerakan pemuda Indonesia yang berkontribusi untuk kemajuan bangsa" />
+      <PageHero title="Gabung Relawan FIM" subtitle="Jadilah bagian dari gerakan pemuda Indonesia yang berkontribusi untuk kemajuan bangsa" waveColor="hsl(var(--secondary))" />
 
       <motion.section className="py-16 bg-secondary" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
         <div className="container mx-auto px-4">

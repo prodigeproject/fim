@@ -92,7 +92,7 @@ const Tentang = () => {
   return (
     <Layout>
       <SEO title={t("about.hero.title", "Tentang FIM")} description={t("about.hero.subtitle", "Sejarah, visi misi, struktur organisasi, dan nilai-nilai Forum Indonesia Muda.")} />
-      <PageHero title={t("about.hero.title", "Tentang Forum Indonesia Muda")} subtitle={t("about.hero.subtitle", "Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin")} />
+      <PageHero title={t("about.hero.title", "Tentang Forum Indonesia Muda")} subtitle={t("about.hero.subtitle", "Lebih dari dua dekade membangun generasi muda Indonesia yang berkarakter dan berjiwa pemimpin")} waveColor="hsl(var(--secondary))" />
 
       {/* Visi Misi */}
       <section className="py-10 sm:py-16 lg:py-20 bg-secondary">

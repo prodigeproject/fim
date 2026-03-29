@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useRegistrationAuth } from "@/contexts/RegistrationAuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,12 +8,53 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, ArrowRight, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, UserPlus, AlertCircle, CheckCircle, ShieldAlert, Timer } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import logoFim from "@/assets/logo-fim.png";
 import { ReCaptcha } from "@/components/ReCaptcha";
 import { useRecaptchaConfig } from "@/hooks/useRecaptchaConfig";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
+
+// ── Client-side rate limiting ────────────────────────────────────
+const SOFT_LIMIT = 3;                       // attempts → 5 min lockout
+const HARD_LIMIT = 5;                       // attempts → 15 min lockout
+const SOFT_LOCKOUT_MS = 5 * 60 * 1000;
+const HARD_LOCKOUT_MS = 15 * 60 * 1000;
+
+function getRateLimitKey(email: string) {
+  return `fim_rl_${btoa(email.trim().toLowerCase())}`;
+}
+function getRateData(email: string): { count: number; lockedUntil: number | null } {
+  try {
+    const raw = localStorage.getItem(getRateLimitKey(email));
+    return raw ? JSON.parse(raw) : { count: 0, lockedUntil: null };
+  } catch { return { count: 0, lockedUntil: null }; }
+}
+function setRateData(email: string, count: number, lockedUntil: number | null) {
+  localStorage.setItem(getRateLimitKey(email), JSON.stringify({ count, lockedUntil }));
+}
+function clearRateData(email: string) {
+  localStorage.removeItem(getRateLimitKey(email));
+}
+function recordFailedAttempt(email: string): { locked: boolean; lockedUntil: number } {
+  const data = getRateData(email);
+  const newCount = data.count + 1;
+  let lockedUntil: number | null = null;
+  if (newCount >= HARD_LIMIT) {
+    lockedUntil = Date.now() + HARD_LOCKOUT_MS;
+  } else if (newCount >= SOFT_LIMIT) {
+    lockedUntil = Date.now() + SOFT_LOCKOUT_MS;
+  }
+  setRateData(email, newCount, lockedUntil);
+  return { locked: lockedUntil !== null, lockedUntil: lockedUntil ?? 0 };
+}
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return "0:00";
+  const totalSec = Math.ceil(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toString().padStart(2, "0")}`;
+}
 
 export default function RegistrationLogin() {
   const navigate = useNavigate();
@@ -30,6 +71,46 @@ export default function RegistrationLogin() {
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [turnstileError, setTurnstileError] = useState(false);
   const [turnstileRetries, setTurnstileRetries] = useState(0);
+
+  // ── Client-side rate limiting state ─────────────────────────────
+  const [clientLocked, setClientLocked] = useState(false);
+  const [clientLockedUntil, setClientLockedUntil] = useState<number | null>(null);
+  const [lockCountdown, setLockCountdown] = useState("");
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Check existing lockout on email change
+  useEffect(() => {
+    if (!email) { setClientLocked(false); setClientLockedUntil(null); return; }
+    const data = getRateData(email);
+    if (data.lockedUntil && data.lockedUntil > Date.now()) {
+      setClientLocked(true);
+      setClientLockedUntil(data.lockedUntil);
+    } else {
+      setClientLocked(false);
+      setClientLockedUntil(null);
+    }
+  }, [email]);
+
+  // Countdown ticker
+  useEffect(() => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    if (!clientLocked || !clientLockedUntil) { setLockCountdown(""); return; }
+    const tick = () => {
+      const remaining = clientLockedUntil - Date.now();
+      if (remaining <= 0) {
+        setClientLocked(false);
+        setClientLockedUntil(null);
+        setLockCountdown("");
+        clearRateData(email);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+      } else {
+        setLockCountdown(formatCountdown(remaining));
+      }
+    };
+    tick();
+    countdownRef.current = setInterval(tick, 1000);
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  }, [clientLocked, clientLockedUntil, email]);
 
   const resetTurnstile = () => {
     setTurnstileToken(null);
@@ -61,9 +142,20 @@ export default function RegistrationLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Email dan password harus diisi");
+      return;
+    }
+
+    // ── Client-side lockout check ──────────────────────────────────
+    const rateData = getRateData(email);
+    if (rateData.lockedUntil && rateData.lockedUntil > Date.now()) {
+      setClientLocked(true);
+      setClientLockedUntil(rateData.lockedUntil);
+      const remaining = rateData.lockedUntil - Date.now();
+      const isHard = rateData.count >= HARD_LIMIT;
+      toast.error(`Terlalu banyak percobaan. Coba lagi dalam ${formatCountdown(remaining)}${isHard ? " (15 menit)" : " (5 menit)"}.`);
       return;
     }
 
@@ -144,8 +236,21 @@ export default function RegistrationLogin() {
         return;
       }
       if (error.message.includes("salah") || error.message.includes("Invalid login credentials")) {
-        setErrorType("invalid_credentials");
-        setErrorMessage("Email atau password salah. Silakan periksa kembali.");
+        // Record failed attempt for client-side rate limiting
+        const { locked, lockedUntil } = recordFailedAttempt(email);
+        const data = getRateData(email);
+        const remaining = HARD_LIMIT - data.count;
+        if (locked) {
+          setClientLocked(true);
+          setClientLockedUntil(lockedUntil);
+          setErrorType("rate_limited");
+          const lockMins = data.count >= HARD_LIMIT ? 15 : 5;
+          setErrorMessage(`Terlalu banyak percobaan gagal. Login diblokir selama ${lockMins} menit.`);
+        } else {
+          setErrorType("invalid_credentials");
+          const attemptsLeft = Math.max(0, SOFT_LIMIT - data.count);
+          setErrorMessage(`Email atau password salah. Silakan periksa kembali.${attemptsLeft > 0 && attemptsLeft <= 2 ? ` (${attemptsLeft} percobaan tersisa sebelum dikunci)` : ""}`);
+        }
         resetTurnstile();
         setIsSubmitting(false);
         return;
@@ -169,6 +274,10 @@ export default function RegistrationLogin() {
       resetTurnstile();
       setIsSubmitting(false);
     } else {
+      // Clear rate limit data on successful login
+      clearRateData(email);
+      setClientLocked(false);
+      setClientLockedUntil(null);
       toast.success("Login berhasil!");
       navigate("/portal/dashboard");
     }
@@ -248,6 +357,25 @@ export default function RegistrationLogin() {
                       >
                         {isResendingVerification ? "Mengirim..." : "Kirim ulang email verifikasi"}
                       </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Client-side rate limit lockout banner */}
+                {(clientLocked || errorType === "rate_limited") && (
+                  <Alert className="border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950">
+                    <ShieldAlert className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    <AlertDescription className="ml-2 text-orange-800 dark:text-orange-200">
+                      <strong>Login Sementara Diblokir</strong>
+                      <p className="mt-1 text-sm">
+                        {errorMessage || "Terlalu banyak percobaan gagal. Silakan tunggu beberapa menit."}
+                      </p>
+                      {lockCountdown && (
+                        <div className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-orange-700 dark:text-orange-300">
+                          <Timer className="h-4 w-4" />
+                          Dapat dicoba lagi dalam: {lockCountdown}
+                        </div>
+                      )}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -410,17 +538,24 @@ export default function RegistrationLogin() {
                     )}
                   </div>
                 )}
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isSubmitting || !turnstileToken || (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key && !recaptchaToken)}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={
+                    isSubmitting ||
+                    clientLocked ||
+                    !turnstileToken ||
+                    (recaptchaConfig?.enabled_login && recaptchaConfig?.site_key && !recaptchaToken)
+                  }
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : clientLocked ? (
+                    <Timer className="h-4 w-4 mr-2" />
                   ) : (
                     <ArrowRight className="h-4 w-4 mr-2" />
                   )}
-                  Masuk
+                  {clientLocked ? `Dikunci (${lockCountdown})` : "Masuk"}
                 </Button>
 
                 <div className="text-center text-sm">

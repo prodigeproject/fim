@@ -46,7 +46,7 @@ const Regional = () => {
         title="Regional FIM" 
         description="Regional Forum Indonesia Muda tersebar di seluruh Indonesia: Sumatra, Jawa, Kalimantan, Sulawesi, Bali & Nusa Tenggara, dan Papua. Temukan regional terdekat Anda."
       />
-      <PageHero title="Regional FIM" subtitle="Jaringan alumni FIM yang tersebar di seluruh Indonesia" />
+      <PageHero title="Regional FIM" subtitle="Jaringan alumni FIM yang tersebar di seluruh Indonesia" waveColor="hsl(var(--secondary))" />
       
       <section className="py-8 bg-secondary">
         <div className="container mx-auto px-4">
@@ -63,7 +63,7 @@ const Regional = () => {
         </div>
       </section>
 
-      <section className="py-6 bg-background border-b border-border">
+      <section className="py-6 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto mb-6">
             <div className="relative">

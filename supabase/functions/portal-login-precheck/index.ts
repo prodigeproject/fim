@@ -32,22 +32,40 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // ── Rate limiting ───────────────────────────────────────
+    // Check both IP-based and email-based limits (stricter)
     const realIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                    req.headers.get("x-real-ip") ||
                    req.headers.get("cf-connecting-ip") ||
                    "unknown";
 
-    const { data: rateData } = await supabase.rpc("check_rate_limit", {
+    // IP rate limit: 5 attempts per 15 minutes
+    const { data: ipRateData } = await supabase.rpc("check_rate_limit", {
       p_identifier: realIp,
       p_endpoint: "portal-login",
-      p_max_requests: 10,
-      p_window_seconds: 900, // 15 minutes
+      p_max_requests: 5,
+      p_window_seconds: 900,
     });
 
-    if (rateData?.[0] && !rateData[0].allowed) {
-      console.log(`Portal login rate limited for IP: ${realIp}`);
+    if (ipRateData?.[0] && !ipRateData[0].allowed) {
+      console.log(`Portal login IP rate limited: ${realIp}`);
       return json({
-        error: "Terlalu banyak percobaan. Coba lagi dalam 15 menit.",
+        error: "Terlalu banyak percobaan dari jaringan ini. Coba lagi dalam 15 menit.",
+        rate_limited: true,
+      }, 429);
+    }
+
+    // Email rate limit: 5 attempts per 15 minutes per email
+    const { data: emailRateData } = await supabase.rpc("check_rate_limit", {
+      p_identifier: `email:${normalizedEmail}`,
+      p_endpoint: "portal-login",
+      p_max_requests: 5,
+      p_window_seconds: 900,
+    });
+
+    if (emailRateData?.[0] && !emailRateData[0].allowed) {
+      console.log(`Portal login email rate limited: ${normalizedEmail}`);
+      return json({
+        error: "Terlalu banyak percobaan untuk akun ini. Coba lagi dalam 15 menit.",
         rate_limited: true,
       }, 429);
     }

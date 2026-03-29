@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import mermaid from "mermaid";
+import DOMPurify from "dompurify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,7 +30,7 @@ interface MermaidDiagramProps {
 mermaid.initialize({
   startOnLoad: false,
   theme: "default",
-  securityLevel: "loose",
+  securityLevel: "strict",
   fontFamily: "Inter, sans-serif",
   flowchart: {
     useMaxWidth: true,
@@ -61,10 +62,16 @@ export function MermaidDiagram({ chart, title, className }: MermaidDiagramProps)
         
         // Render the diagram
         const { svg } = await mermaid.render(id, chart);
-        
+
         if (containerRef.current) {
-          containerRef.current.innerHTML = svg;
-          setSvgContent(svg);
+          // Sanitize SVG output before injecting into DOM
+          const sanitizedSvg = DOMPurify.sanitize(svg, {
+            USE_PROFILES: { svg: true, svgFilters: true },
+            ADD_TAGS: ["foreignObject"],
+            ADD_ATTR: ["xmlns", "xlink:href", "xml:space"],
+          });
+          containerRef.current.innerHTML = sanitizedSvg;
+          setSvgContent(sanitizedSvg);
         }
       } catch (err) {
         console.error("Mermaid render error:", err);

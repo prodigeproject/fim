@@ -65,7 +65,7 @@ const CeritaAlumni = () => {
   return (
     <Layout>
       <SEO title="Cerita Alumni" description="Kisah inspiratif dari ribuan alumni Forum Indonesia Muda." />
-      <PageHero title="Cerita Alumni" subtitle="Kisah inspiratif dari ribuan alumni FIM yang telah berkontribusi di berbagai sektor untuk kemajuan Indonesia" />
+      <PageHero title="Cerita Alumni" subtitle="Kisah inspiratif dari ribuan alumni FIM yang telah berkontribusi di berbagai sektor untuk kemajuan Indonesia" waveColor="hsl(var(--secondary))" />
 
       <motion.section className="py-12 bg-secondary" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
         <div className="container mx-auto px-4">

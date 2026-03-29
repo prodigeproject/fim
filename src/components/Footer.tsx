@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { motion } from "framer-motion";
 import logoFim from "@/assets/logo-fim.png";
 
 const Footer = () => {
@@ -69,9 +70,16 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-foreground text-background">
+    <footer className="bg-foreground text-background relative overflow-hidden">
+      {/* Subtle background texture */}
+      <div
+        className="absolute inset-0 opacity-5 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle at 20% 80%, rgba(230,0,18,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,215,0,0.2) 0%, transparent 50%)",
+        }}
+      />
       {/* Newsletter Section */}
-      <div className="border-b border-background/10">
+      <div className="relative border-b border-background/10">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
             <h3 className="text-xl font-bold mb-2">{t("footer.getUpdates", "Dapatkan Update Terbaru")}</h3>
@@ -120,17 +128,23 @@ const Footer = () => {
             
             {/* Social Links */}
             <div className="flex gap-3">
-              {socialLinks.map((social) => (
-                <a
+              {socialLinks.map((social, i) => (
+                <motion.a
                   key={social.label}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors"
                   aria-label={social.label}
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
                 >
                   <social.icon className="h-5 w-5" />
-                </a>
+                </motion.a>
               ))}
             </div>
           </div>

@@ -19,7 +19,14 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   try {
-    const { email, password }: LoginRequest = await req.json();
+    let email: string, password: string;
+    try {
+      const body: LoginRequest = await req.json();
+      email = body.email;
+      password = body.password;
+    } catch {
+      return json({ error: "Request body tidak valid" }, 400);
+    }
 
     if (!email || !password) {
       return json({ error: "Email dan password wajib diisi" }, 400);

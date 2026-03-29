@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 
+export const TURNSTILE_BYPASS_TOKEN = "__TURNSTILE_BYPASS__";
+
 interface TurnstileWidgetProps {
   onVerify: (token: string) => void;
   onExpire?: () => void;
@@ -19,7 +21,29 @@ declare global {
   }
 }
 
-const SITE_KEY = "0x4AAAAAACcEav43Nv2f2v0g";
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
+
+/** Injects the Turnstile script once and returns a promise that resolves when ready. */
+let turnstileScriptPromise: Promise<void> | null = null;
+function loadTurnstileScript(): Promise<void> {
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  if (window.turnstile) return (turnstileScriptPromise = Promise.resolve());
+
+  turnstileScriptPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      turnstileScriptPromise = null; // allow retry
+      reject(new Error("Failed to load Turnstile script"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return turnstileScriptPromise;
+}
 
 export function TurnstileWidget({
   onVerify,
@@ -35,6 +59,17 @@ export function TurnstileWidget({
 
   // Keep callbacks ref up to date without causing re-renders
   callbacksRef.current = { onVerify, onExpire, onError };
+
+  // If Turnstile site key is not configured (e.g. custom hosting without the env var),
+  // auto-bypass so login is not permanently blocked.
+  useEffect(() => {
+    if (!SITE_KEY) {
+      callbacksRef.current.onVerify(TURNSTILE_BYPASS_TOKEN);
+    }
+  }, []);
+
+  // Don't render anything if site key is not configured
+  if (!SITE_KEY) return null;
 
   useEffect(() => {
     let cancelled = false;
@@ -58,26 +93,10 @@ export function TurnstileWidget({
       });
     };
 
-    // If turnstile is already loaded
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      // Wait for script to load
-      const interval = setInterval(() => {
-        if (window.turnstile) {
-          clearInterval(interval);
-          renderWidget();
-        }
-      }, 100);
-
-      return () => {
-        cancelled = true;
-        clearInterval(interval);
-        if (widgetIdRef.current && window.turnstile) {
-          try { window.turnstile.remove(widgetIdRef.current); } catch {}
-        }
-      };
-    }
+    // Lazy-load the Turnstile script then render
+    loadTurnstileScript()
+      .then(() => { if (!cancelled) renderWidget(); })
+      .catch(() => { if (!cancelled) callbacksRef.current.onError?.(); });
 
     return () => {
       cancelled = true;

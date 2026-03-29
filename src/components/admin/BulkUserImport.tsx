@@ -46,12 +46,11 @@ const SYSTEM_ROLES = {
 };
 
 function generateSecurePassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-  let password = '';
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password.slice(0, 8) + 'A1!x';
+  // Gunakan Web Crypto API (kriptografis aman) — bukan Math.random()
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  const array = new Uint32Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, (x) => chars[x % chars.length]).join('').slice(0, 16);
 }
 
 async function extractFunctionErrorMessage(err: any): Promise<string> {
@@ -504,8 +503,22 @@ export default function BulkUserImport() {
                         <td className="p-2">{SYSTEM_ROLES[result.role as keyof typeof SYSTEM_ROLES] || result.role}</td>
                         <td className="p-2 font-mono">
                           {result.success ? (
-                            <span className="text-green-700 dark:text-green-300">
-                              {result.password}
+                            <span className="flex items-center gap-2">
+                              <span className="text-green-700 dark:text-green-300 tracking-widest">
+                                {"•".repeat(result.password?.length ?? 12)}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                                title="Salin password"
+                                onClick={async () => {
+                                  await navigator.clipboard.writeText(result.password ?? "");
+                                  toast({ title: "Password tersalin", duration: 2000 });
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
                             </span>
                           ) : (
                             <span className="text-red-700 dark:text-red-300">

@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 type AppRole = "super_admin" | "admin" | "moderator";
 
@@ -27,7 +22,8 @@ function usernameFromEmail(email: string) {
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("admin-create-user: Request received");
-  
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -77,7 +73,9 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log("admin-create-user: User authenticated:", user.id);
+    // Mask user ID in logs to avoid exposing identifiers in Supabase Logs Dashboard
+    const maskedId = user.id.slice(0, 8) + "****";
+    console.log("admin-create-user: User authenticated:", maskedId);
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
