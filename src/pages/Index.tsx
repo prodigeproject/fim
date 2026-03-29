@@ -215,7 +215,7 @@ const Index = () => {
         description="Forum Indonesia Muda adalah komunitas pemuda yang berkomitmen untuk berkontribusi pada pembangunan bangsa melalui kepemimpinan, inovasi, dan aksi nyata."
       />
       {/* Hero Section - Enhanced 3D with Parallax */}
-      <section ref={heroRef} className="relative overflow-hidden min-h-[75vh] sm:min-h-[85vh] flex items-center">
+      <section ref={heroRef} className="relative overflow-hidden min-h-[85vh] flex items-center">
         {/* Background gradient layers */}
         <motion.div
           className="absolute inset-0 bg-gradient-hero-enhanced"
@@ -249,7 +249,7 @@ const Index = () => {
         </div>
 
         <motion.div
-          className="relative z-10 container mx-auto px-4 sm:px-6 py-16 sm:py-20 lg:py-36"
+          className="relative z-10 container mx-auto px-4 sm:px-6 pt-16 pb-32 sm:pt-20 sm:pb-36 lg:py-36"
           style={{ opacity: heroOpacity }}
         >
           <div className="flex flex-col items-center text-center">
@@ -366,7 +366,7 @@ const Index = () => {
 
         {/* Scroll indicator - clickable to scroll to featured video */}
         <motion.div
-          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 cursor-pointer z-20"
+          className="absolute bottom-6 md:bottom-10 inset-x-0 mx-auto w-fit cursor-pointer z-20"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5, duration: 0.8 }}
