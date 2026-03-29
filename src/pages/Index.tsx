@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Calendar, MapPin, Award, Quote, ChevronLeft, ChevronRight, Building2, Briefcase, GraduationCap, MessageSquare, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useAnimation } from "framer-motion";
 import { useRef, useCallback, useEffect, useState } from "react";
 import logoFim from "@/assets/logo-fim.png";
 import Layout from "@/components/Layout";
@@ -191,6 +191,22 @@ const Index = () => {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const dotControls = useAnimation();
+
+  const handleScrollIndicatorClick = async () => {
+    // Animate dot surge to bottom
+    await dotControls.start({
+      y: [0, 20],
+      opacity: [1, 0],
+      transition: { duration: 0.4, ease: "easeIn" }
+    });
+    
+    // Trigger scroll
+    document.getElementById('featured-video')?.scrollIntoView({ behavior: 'smooth' });
+    
+    // Reset dot position
+    dotControls.set({ y: 0, opacity: 1 });
+  };
 
   return (
     <Layout>
@@ -347,13 +363,13 @@ const Index = () => {
 
             {/* Scroll indicator - clickable to scroll to featured video */}
             <motion.div
-              className="absolute bottom-16 left-1/2 -translate-x-1/2 cursor-pointer z-20 group"
+              className="absolute bottom-10 md:bottom-12 left-1/2 -translate-x-1/2 cursor-pointer z-20 group"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               whileHover={{ y: -5, scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               transition={{ delay: 1.5, type: "spring", stiffness: 400, damping: 17 }}
-              onClick={() => document.getElementById('featured-video')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={handleScrollIndicatorClick}
               role="button"
               aria-label="Scroll ke video inspiratif"
             >
@@ -364,7 +380,8 @@ const Index = () => {
               >
                 <motion.div
                   className="w-1 h-2 bg-white/60 rounded-full"
-                  animate={{ y: [0, 12, 0] }}
+                  animate={dotControls}
+                  initial={{ y: [0, 12, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 />
               </motion.div>
