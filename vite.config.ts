@@ -85,12 +85,12 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs'],
-          'vendor-charts': ['recharts'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-i18n': ['i18next', 'react-i18next'],
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) return 'vendor-react';
+          if (id.includes('node_modules/@radix-ui/')) return 'vendor-ui';
+          if (id.includes('node_modules/recharts/')) return 'vendor-charts';
+          if (id.includes('node_modules/framer-motion/')) return 'vendor-motion';
+          if (id.includes('node_modules/i18next/') || id.includes('node_modules/react-i18next/')) return 'vendor-i18n';
         }
       }
     }

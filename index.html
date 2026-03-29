@@ -2,27 +2,32 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7NPLPNCN77"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-7NPLPNCN77');
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', {
+        cookie_expires: 63072000
+      });
     </script>
     <title>Forum Indonesia Muda - Wadah Pemuda Indonesia</title>
     <meta name="description" content="Wadah bagi pemuda Indonesia untuk bertumbuh, berkolaborasi, dan menjadi cahaya kunang-kunang. Organisasi kaderisasi pemuda sejak 2003." />
     <meta name="author" content="Forum Indonesia Muda" />
     <meta name="theme-color" content="#E60012" />
 
-    <!-- Turnstile preconnect and script -->
-    <link rel="preconnect" href="https://challenges.cloudflare.com">
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- Google Fonts - Enhanced Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Turnstile script is loaded lazily by TurnstileWidget when needed -->
 
     <meta property="og:title" content="Forum Indonesia Muda - Wadah Pemuda Indonesia" />
     <meta property="og:description" content="Organisasi kaderisasi pemuda Indonesia sejak 2003. Bergabunglah bersama 4000+ alumni dari 61 regional." />
@@ -32,6 +37,49 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@fimnews" />
     <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- JSON-LD Structured Data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Forum Indonesia Muda",
+      "alternateName": "FIM",
+      "url": "https://forumindonesiamuda.or.id",
+      "logo": "https://forumindonesiamuda.or.id/favicon.ico",
+      "description": "Organisasi kaderisasi pemuda Indonesia sejak 2003. Membangun pemimpin muda yang berintegritas dan berdedikasi.",
+      "foundingDate": "2003",
+      "areaServed": "ID",
+      "sameAs": [
+        "https://www.instagram.com/fim_official",
+        "https://twitter.com/fimnews"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "areaServed": "ID",
+        "availableLanguage": "Indonesian"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD Structured Data: WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Forum Indonesia Muda",
+      "url": "https://forumindonesiamuda.or.id",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://forumindonesiamuda.or.id/blog?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
 
   <body>
